@@ -1,0 +1,25 @@
+# Python / Backend specific
+venv/
+*.pyc
+__pycache__/
+.env
+instance/
+*.log
+
+# Node / Frontend specific
+node_modules/
+build/
+dist/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# If using Create React App, Angular CLI, Vue CLI, etc., they might have specific build folders
+
+# IDE / Editor specific
+.vscode/
+.idea/
+
+# Other
+secrets.yaml # Example if you store secrets here
+*.env.*.local # Common pattern for local env overrides
