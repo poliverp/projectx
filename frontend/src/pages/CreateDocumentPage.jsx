@@ -9,6 +9,7 @@ function CreateDocumentPage() {
     const [generatedContent, setGeneratedContent] = useState(null);
     const [availableDocTypes, setAvailableDocTypes] = useState([]); // New state for types
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     // ---test ---hjlj
     // --- Step 1: Fetch available document types on component mount ---
