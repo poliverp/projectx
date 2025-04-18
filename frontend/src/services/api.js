@@ -6,8 +6,6 @@ import axios from 'axios';
 // This is included here ONLY because you specifically requested it as an example.
 // Assume this key is for authenticating requests *to your own backend*,
 // and your backend then uses its *own* secure keys for 3rd party services.
-const YOUR_BACKEND_API_KEY = 'AIzaSyDeW2v8jkWWTdoooWEwmZJLTm-WTjAq8PQ'; // Example Key
-
 // Configure this to point to where your backend server will run
 const API_BASE_URL = 'http://localhost:5000/api'; // Example: Flask often runs on 5000 or 5001
 
@@ -18,7 +16,6 @@ const apiClient = axios.create({
     // Example of sending the key as a header (adapt based on your backend needs)
     // Common headers are 'Authorization': `Bearer ${YOUR_BACKEND_API_KEY}`
     // or a custom header like 'X-API-Key': YOUR_BACKEND_API_KEY
-    'X-API-Key': YOUR_BACKEND_API_KEY, // Adjust header name as needed by your backend
   },
 });
 
@@ -28,6 +25,7 @@ export const getCase = (caseId) => apiClient.get(`/cases/${caseId}`);
 export const createCase = (caseData) => apiClient.post('/cases', caseData);
 export const updateCase = (caseId, caseData) => apiClient.put(`/cases/${caseId}`, caseData);
 export const deleteCase = (caseId) => apiClient.delete(`/cases/${caseId}`);
+export const getDocumentTypes = () => apiClient.get('/generation/document-types');
 
 // --- Document Management ---
 export const getDocumentsForCase = (caseId) => apiClient.get(`/cases/${caseId}/documents`);
@@ -42,8 +40,6 @@ export const uploadDocument = async (caseId, file, options = {}) => {
     const response = await axios.post(`${API_BASE_URL}/cases/${caseId}/documents`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        // Also include API key for this endpoint if required by backend
-        'X-API-Key': YOUR_BACKEND_API_KEY, // Adjust as needed
       },
     });
     return response;
@@ -55,18 +51,19 @@ export const uploadDocument = async (caseId, file, options = {}) => {
 
 export const deleteDocument = (documentId) => apiClient.delete(`/documents/${documentId}`);
 
-// --- Analysis & Creation (Define based on your actual backend endpoints) ---
+// --- Analysis & Creation ---
 export const analyzeDocument = (documentId) => {
-    console.warn("analyzeDocument function called - implement backend endpoint");
-    // Example: return apiClient.post(`/documents/${documentId}/analyze`);
-    return Promise.resolve({ data: { message: "Analysis feature not implemented yet." } }); // Placeholder
-}
+  // Make the actual POST request to the backend endpoint
+  // The apiClient already has the base URL and necessary headers (like X-API-Key) configured
+  return apiClient.post(`/documents/${documentId}/analyze`);
+  // No request body is needed for this specific endpoint currently
+};
 
-export const createNewDocument = (caseId, creationData) => {
-    console.warn("createNewDocument function called - implement backend endpoint");
-    // Example: return apiClient.post(`/cases/${caseId}/create-document`, creationData);
-    return Promise.resolve({ data: { message: "Document creation feature not implemented yet." } }); // Placeholder
-}
+// Keep the createNewDocument placeholder for now
+export const generateDocument = (caseId, generationData) => {
+  // generationData should be like { document_type: "...", custom_instructions: "..." }
+  return apiClient.post(`/cases/${caseId}/generate_document`, generationData);
+};
 
 // Optional default export
 const api = {
@@ -79,7 +76,8 @@ const api = {
   uploadDocument,
   deleteDocument,
   analyzeDocument,
-  createNewDocument,
+  getDocumentTypes,
+  generateDocument,
 };
 
 export default api;
