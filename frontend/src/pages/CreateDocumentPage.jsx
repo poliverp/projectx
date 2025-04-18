@@ -9,7 +9,7 @@ function CreateDocumentPage() {
     const [loading, setLoading] = useState(false);
     const [generatedContent, setGeneratedContent] = useState(null);
     const [availableDocTypes, setAvailableDocTypes] = useState([]); // New state for types
-    
+    // ---test ---
     // --- Step 1: Fetch available document types on component mount ---
     useEffect(() => {
         const fetchDocTypes = async () => {
