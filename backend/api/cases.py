@@ -4,7 +4,7 @@ from flask import request, jsonify
 from ..extensions import db # Import db from extensions
 from ..models import Case, Document # Import necessary models
 from . import bp # Import the blueprint instance from api/__init__.py
-from services.case_service import (
+from ..services.case_service import (
     create_case, get_all_cases, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )
