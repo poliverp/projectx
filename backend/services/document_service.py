@@ -1,6 +1,6 @@
 # --- backend/services/document_service.py ---
-from .models import Case, Document # Import models
-from .extensions import db        # Import db instance
+from ..models import Case, Document # Import models
+from ..extensions import db        # Import db instance
 import os # May be needed if service handles file deletion later
 import uuid
 from werkzeug.utils import secure_filename

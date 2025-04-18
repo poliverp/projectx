@@ -3,7 +3,7 @@ import os
 import uuid # For potentially generating unique filenames
 from flask import request, jsonify, current_app # Import current_app
 from werkzeug.utils import secure_filename
-from .extensions import db
+from ..extensions import db
 from .models import Case, Document
 # Make sure this path is correct relative to the api folder
 from utils.document_parser import extract_text_from_pdf, extract_text_from_docx
