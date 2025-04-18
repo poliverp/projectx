@@ -6,7 +6,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from flask import current_app # Needed for config access
 # Make sure utils path is correct relative to services/
-from utils.document_parser import extract_text_from_pdf, extract_text_from_docx
+from ..utils.document_parser import extract_text_from_pdf, extract_text_from_docx
 
 
 # --- Define Exceptions ---
