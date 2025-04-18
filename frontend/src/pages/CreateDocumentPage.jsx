@@ -5,8 +5,7 @@ import api from '../services/api';
 function CreateDocumentPage() {
     const { caseId } = useParams();
     const [docType, setDocType] = useState('');
-    const [customData, setCustomData] = useState(''); // Example: Simple text input
-    const [loading, setLoading] = useState(false);
+    const [customInstructions, setCustomInstructions] = useState(''); // Use the preferred name    const [loading, setLoading] = useState(false);
     const [generatedContent, setGeneratedContent] = useState(null);
     const [availableDocTypes, setAvailableDocTypes] = useState([]); // New state for types
     const [error, setError] = useState(null);
