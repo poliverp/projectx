@@ -2,9 +2,9 @@
 
 import os
 from flask import Flask, request, jsonify
-from config import Config # Import the Config class
-from extensions import db, migrate, cors # Import extension instances
-from api import bp as api_blueprint
+from .config import Config # Import the Config class
+from .extensions import db, migrate, cors # Import extension instances
+from .api import bp as api_blueprint
 
 
 

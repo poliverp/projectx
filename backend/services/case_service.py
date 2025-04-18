@@ -1,6 +1,6 @@
 # --- backend/services/case_service.py ---
-from models import Case # Import the Case model
-from extensions import db # Import the db instance
+from .models import Case # Import the Case model
+from .extensions import db # Import the db instance
 
 class CaseServiceError(Exception):
     """Base exception for errors in the Case service."""

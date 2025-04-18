@@ -1,4 +1,4 @@
-from extensions import db # Import the 'db' object created in app.py
+from .extensions import db # Import the 'db' object created in app.py
 from datetime import datetime
 
 class Case(db.Model):
