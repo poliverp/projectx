@@ -7,7 +7,7 @@ import axios from 'axios';
 // Assume this key is for authenticating requests *to your own backend*,
 // and your backend then uses its *own* secure keys for 3rd party services.
 // Configure this to point to where your backend server will run
-const API_BASE_URL = 'http://localhost:5000/api'; // Example: Flask often runs on 5000 or 5001
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
