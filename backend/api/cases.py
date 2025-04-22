@@ -187,92 +187,165 @@ def delete_case_and_documents(case_id):
 
 @bp.route('/cases/<int:case_id>/download_word_document', methods=['POST'])
 def download_word_document(case_id):
-    """Generates and sends a Word document based on a specific template."""
+    """
+    Generates and sends a Word document based on a template name
+    provided in the request body.
+    """
     print(f"--- Handling POST /api/cases/{case_id}/download_word_document ---")
+
+    # --- Get Template Name from Request ---
+    request_data = request.get_json()
+    if not request_data:
+        print("Error: No JSON data provided in request body")
+        return jsonify({'error': 'No JSON data provided in request body'}), 400
+
+    template_name = request_data.get('template_name')
+    if not template_name:
+        print("Error: Missing 'template_name' in request body")
+        return jsonify({'error': 'Missing "template_name" in request body'}), 400
+
+    # Basic validation (optional but recommended): Check for potentially unsafe names
+    # Prevent directory traversal and check extension
+    if '..' in template_name or '/' in template_name or '\\' in template_name or not template_name.endswith('.docx'):
+         print(f"Error: Invalid template name format or characters: {template_name}")
+         return jsonify({'error': 'Invalid template name specified'}), 400
+    # Optional: Limit to known/allowed templates
+    # allowed_templates = ['jury_fees_template.docx', 'another_template.docx']
+    # if template_name not in allowed_templates:
+    #    print(f"Error: Template '{template_name}' is not allowed.")
+    #    return jsonify({'error': f"Template '{template_name}' not allowed"}), 400
+
+
+    print(f"--- Requested template: {template_name} ---")
 
     # --- 1. Fetch Case Data ---
     try:
-        # Use your existing service function
+        # Make sure get_case_by_id returns the ORM object
         case_data = get_case_by_id(case_id)
-        # NOTE: Fetch any other related data needed for the template here
-        # e.g., client_info = get_client_by_id(case_data.client_id)
     except CaseNotFoundError:
+        print(f"Error: Case ID {case_id} not found.")
         return jsonify({'error': 'Case not found'}), 404
     except Exception as e:
         print(f"Error fetching data for case {case_id} (Word Gen): {e}")
-        db.session.rollback()
+        # db might not be needed if get_case_by_id handles rollback, but good practice
+        if 'db' in locals() and db.session.is_active:
+             db.session.rollback()
         return jsonify({'error': 'Failed to fetch case data for document generation'}), 500
 
-    # --- 2. Define Template ---
-    # For now, we'll hardcode the jury fees template. Later, this could come from the request.
-    template_name = 'jury_fees_template.docx'
-    # Construct path relative to the blueprint's location (api folder)
-    # Assumes 'templates' folder is one level up from the 'api' folder
+    # --- 2. Construct Template Path ---
+    # Construct path relative to the application's template folder
+    # Assumes 'templates' folder is at the root of the backend app or configured
     try:
-        # bp.root_path should be the path to the 'api' directory
-        template_path = os.path.join(bp.root_path, '..', 'templates', template_name)
-        # Basic check if template exists
+        # Use current_app.root_path which points to the application root directory
+        # Ensure your 'templates' folder is located like 'backend/templates/'
+        template_dir = os.path.join(current_app.root_path, 'templates')
+        template_path = os.path.join(template_dir, template_name) # Use the DYNAMIC template_name
+
+        print(f"Attempting to use template path: {template_path}")
         if not os.path.exists(template_path):
-             # Try path relative to app root as fallback (if app.py is in backend/)
-             template_path_alt = os.path.join(current_app.root_path, 'templates', template_name)
-             if not os.path.exists(template_path_alt):
-                  print(f"Template file not found at primary path: {template_path} or alt path: {template_path_alt}")
-                  return jsonify({'error': f'Template file "{template_name}" not found'}), 400
-             else:
-                  template_path = template_path_alt # Use the alternative path
-        print(f"Using template: {template_path}")
+             # Fallback check (might be needed depending on blueprint/app structure)
+             # Path relative to blueprint folder if 'templates' is there
+             try:
+                  alt_template_path = os.path.join(bp.root_path, '..', 'templates', template_name)
+                  print(f"Attempting fallback template path: {alt_template_path}")
+                  if os.path.exists(alt_template_path):
+                       template_path = alt_template_path
+                  else:
+                       raise FileNotFoundError # Trigger the main FileNotFoundError catch
+             except Exception: # Catch potential errors if bp doesn't have root_path etc.
+                  raise FileNotFoundError # Ensure FileNotFoundError is raised if fallback fails
+
+
+        # This check should now happen after trying both primary and fallback paths
+        if not os.path.exists(template_path):
+             print(f"Error: Template file '{template_name}' not found at tested paths.")
+             return jsonify({'error': f'Template file "{template_name}" not found'}), 400
+
+        print(f"Using template file path: {template_path}")
+
+    except FileNotFoundError: # Catch specific error if path checks fail
+         print(f"Error: Template file '{template_name}' not found after checks.")
+         return jsonify({'error': f'Template file "{template_name}" not found'}), 400
     except Exception as e:
          print(f"Error constructing template path: {e}")
          return jsonify({'error': 'Could not determine template path'}), 500
 
-    # --- 3. !!! IMPORTANT: Create Context Dictionary !!! ---
-    # Map the placeholders in your Word doc (e.g., {{ case_num }})
-    # to the actual data from your 'case_data' object.
-    # ** YOU MUST REPLACE THE KEYS ('placeholder_1', etc.) WITH YOUR ACTUAL PLACEHOLDER NAMES **
-    context = {
-        'case_number': case_data.case_number or '',
-        'plaintiff': case_data.plaintiff or '',
-        'defendant': case_data.defendant or '',
-        'judge': case_data.judge or '',
-        # Accessing data from the case_details JSON blob (example)
-        # Add placeholders 9 and 10 based on your template and data
-        # The dictionary key 'complaint_filed' must match the {{ complaint_filed }} placeholder in your Word template
-        'complaint_filed': case_data.case_details.get('complaint_filed', ''), # Use .get() for safety, default to empty string '' or 'N/A'
-    
-        # Add any other fields needed by jury_fees_template.docx
-    }
-    print(f"Context dictionary created for template rendering.")
+
+    # --- 3. Create Context Dictionary ---
+    # !!! IMPORTANT !!!
+    # This context currently reads primarily from dedicated DB columns.
+    # It will likely only work correctly for templates (like jury_fees)
+    # that need these specific fields (plaintiff, defendant, judge etc.).
+    # We will need to make this context dynamic later to support
+    # different templates needing different data sources (e.g., more from case_details).
+    # For now, we keep the existing logic that reads from direct attributes:
+    try:
+         context = {
+             'case_number': case_data.case_number or '',
+             'plaintiff': case_data.plaintiff or '',
+             'defendant': case_data.defendant or '',
+             'judge': case_data.judge or '',
+             'complaint_filed': case_data.case_details.get('complaint_filed', '') if isinstance(case_data.case_details, dict) else '', # Safe access to JSON field
+             # Add other fields needed by the initial templates...
+             # Ensure data types are handled correctly (e.g., dates) if needed by docxtpl filters
+         }
+         print(f"Context dictionary created (reading from direct attributes mostly): {context}")
+    except AttributeError as e:
+         print(f"Error creating context, likely missing attribute on case_data: {e}")
+         return jsonify({'error': f"Failed to create document context: {e}"}), 500
+    except Exception as e:
+         print(f"Unexpected error creating context: {e}")
+         return jsonify({'error': "Failed to create document context"}), 500
 
 
     # --- 4. Load, Render, and Save Template to Memory ---
     try:
-        doc = DocxTemplate(template_path)
-        print("Rendering docx template...")
+        doc = DocxTemplate(template_path) # Uses dynamic path
+        print(f"Rendering docx template: {template_name}...")
         doc.render(context)
         print("Template rendered.")
 
-        # Save the rendered document to an in-memory stream
         file_stream = io.BytesIO()
         doc.save(file_stream)
-        file_stream.seek(0) # Go back to the beginning of the stream
+        file_stream.seek(0)
         print("Document saved to memory stream.")
 
-    except Exception as e:
+    except Exception as e: # Catch potential Jinja/DocxTemplate errors here
         print(f"Error rendering/saving template {template_name}: {e}")
-        return jsonify({'error': f'Failed to process document template: {e}'}), 500
+        # Check specifically for docxtpl rendering errors (e.g., missing context key)
+        # The exact error message might vary depending on Jinja/docxtpl version
+        if 'is not defined' in str(e) or isinstance(e, NameError): # Check for common Jinja errors
+             # Attempt to extract the missing key if possible (may not always work)
+             try:
+                  missing_key = str(e).split("'")[1]
+             except IndexError:
+                  missing_key = "(unknown)"
+             error_msg = f"Template '{template_name}' rendering failed: Missing data for placeholder like '{{ {missing_key} }}'."
+             print(f"Context provided was: {context}") # Log context when error occurs
+             return jsonify({'error': error_msg}), 400 # Return specific error
+        else:
+             # Generic processing error
+             return jsonify({'error': f'Failed to process document template: {e}'}), 500
+
 
     # --- 5. Send the File for Download ---
     try:
-        output_filename = f"Jury_Fees_{case_data.case_number or case_id}.docx"
+        # Make output filename dynamic based on template maybe?
+        # For now, use case number/id and maybe template base name
+        base_template_name = os.path.splitext(template_name)[0] # Get name without extension
+        # Sanitize names for filesystem/HTTP headers if necessary
+        safe_case_identifier = str(case_data.case_number or case_id).replace('/','_').replace('\\','_')
+        safe_template_name = base_template_name.replace('/','_').replace('\\','_')
+        output_filename = f"{safe_template_name}_{safe_case_identifier}.docx"
+
         print(f"Sending file: {output_filename}")
         return send_file(
             file_stream,
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            as_attachment=True, # Important: Tells browser to download
-            download_name=output_filename # Sets the default filename for the user
+            as_attachment=True,
+            download_name=output_filename # Suggest filename to browser
         )
     except Exception as e:
         print(f"Error sending file stream: {e}")
         return jsonify({'error': 'Failed to send document for download'}), 500
-
-# === End Add New Route ===
+# === End of updated function ===
