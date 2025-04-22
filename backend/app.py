@@ -6,11 +6,11 @@ from flask import Flask, request, jsonify
 # --- Use absolute imports assuming 'backend' is a package recognizable from project root ---
 # If these imports cause issues, change back to relative (e.g., from .config)
 # but you MUST run flask using `flask --app backend run` from the parent directory.
-from backend.config import Config
-from backend.extensions import db, migrate, cors
-from backend.api import bp as api_blueprint
-from backend.api.discovery import discovery_bp
-
+from .config import Config
+from .extensions import db, migrate, cors
+from .api import bp as api_blueprint
+from .api.discovery import discovery_bp
+#cheese
 # --- Application Factory Function ---
 def create_app(config_class=Config):
     """Creates and configures the Flask application."""
