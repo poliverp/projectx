@@ -1,6 +1,6 @@
 # backend/app/api/discovery.py (Example - New Blueprint)
 from flask import Blueprint, request, jsonify, current_app
-from app.services.discovery_service import generate_interrogatory_responses
+from ..services.discovery_service import generate_interrogatory_responses
 import PyMuPDF # fitz
 import io
 
