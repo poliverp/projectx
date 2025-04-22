@@ -9,6 +9,7 @@ from flask import Flask, request, jsonify
 from backend.config import Config
 from backend.extensions import db, migrate, cors
 from backend.api import bp as api_blueprint
+from backend.api.discovery import discovery_bp
 
 # --- Application Factory Function ---
 def create_app(config_class=Config):
@@ -37,7 +38,7 @@ def create_app(config_class=Config):
     # or added here: app.register_blueprint(api_blueprint, url_prefix='/api')
     app.register_blueprint(api_blueprint)
 
-
+    app.register_blueprint(discovery_bp)
     # --- Define Routes specific to this main app file (if any) ---
     @app.route('/api/health', methods=['GET'])
     def health_check():

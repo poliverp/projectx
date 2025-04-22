@@ -37,9 +37,11 @@ export const uploadDocument = async (caseId, file, options = {}) => {
   formData.append('options', JSON.stringify(options)); // Send options like { analyze: true }
 
   try {
+    // Use axios directly for multipart/form-data if apiClient has default json headers
     const response = await axios.post(`${API_BASE_URL}/cases/${caseId}/documents`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+         // Add any auth headers needed if not handled globally by axios instance
       },
     });
     return response;
@@ -65,14 +67,10 @@ export const generateDocument = (caseId, generationData) => {
   return apiClient.post(`/cases/${caseId}/generate_document`, generationData);
 };
 
-// --- *** ADD THIS NEW FUNCTION *** ---
 export const downloadWordDocument = async (caseId, data) => {
-  // data might include { template_name: '...' } if you want to pass it,
-  // though your backend route currently hardcodes 'jury_fees_template.docx'
+  // data might include { template_name: '...' }
   try {
     console.log(`API: Requesting Word download for case ${caseId}`);
-    // Make POST request to the new endpoint.
-    // CRUCIAL: Set responseType to 'blob' to handle the file download.
     const response = await apiClient.post(
       `/cases/${caseId}/download_word_document`, // The new backend route
       data, // Pass any data needed (like template_name)
@@ -82,16 +80,10 @@ export const downloadWordDocument = async (caseId, data) => {
     );
 
     // --- Handle the file download using Blob ---
-
-    // 1. Create a Blob URL from the response data (the .docx file content)
     const url = window.URL.createObjectURL(new Blob([response.data]));
-
-    // 2. Create a temporary invisible link element
     const link = document.createElement('a');
     link.href = url;
 
-    // 3. Set the download filename
-    // Try to get filename from backend's 'Content-Disposition' header
     let filename = `Generated_Document_Case_${caseId}.docx`; // Default
     const disposition = response.headers['content-disposition'];
     if (disposition && disposition.includes('attachment')) {
@@ -101,39 +93,55 @@ export const downloadWordDocument = async (caseId, data) => {
     }
     link.setAttribute('download', filename);
 
-    // 4. Append link to body, click it programmatically, remove link
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    // 5. Clean up the Blob URL
     window.URL.revokeObjectURL(url);
 
     console.log("API: Word document download successfully initiated.");
-    return { success: true }; // Return simple success or potentially blob info if needed
+    return { success: true };
 
   } catch (error) {
     console.error("API Error downloading Word document:", error);
-    // Attempt to parse backend error if response exists and is JSON blob
      if (error.response && error.response.data instanceof Blob && error.response.data.type === "application/json") {
        try {
-         // Read the blob as text, then parse as JSON
          const errorJson = JSON.parse(await error.response.data.text());
-         // Throw a new error with the backend's message
          throw new Error(errorJson.error || 'Failed to download Word document due to server error.');
        } catch (parseError) {
-          console.error("Failed to parse error blob:", parseError);
-          // Fallback if parsing fails
-          throw new Error('Failed to download Word document and could not parse error details.');
+         console.error("Failed to parse error blob:", parseError);
+         throw new Error('Failed to download Word document and could not parse error details.');
        }
      }
-    // Re-throw the error (original or parsed) for the component to catch
     throw error;
   }
 };
-// --- *** END ADD NEW FUNCTION *** ---
 
-// Optional default export
+// --- NEW: Discovery Response Generation ---
+export const generateInterrogatoryResponses = async (caseId, file) => {
+    const formData = new FormData();
+    formData.append('file', file); // Key 'file' must match backend request.files['file']
+
+    // Use axios directly if apiClient default headers interfere with FormData.
+    // Otherwise, apiClient.post might work if configured correctly.
+    // Using axios directly for clarity with multipart/form-data:
+    try {
+        // The path assumes '/api' is in API_BASE_URL and '/discovery' is the blueprint prefix
+        const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/interrogatory-responses`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                 // Add any necessary auth headers like apiClient might have
+            }
+        });
+        return response; // Return the full response object
+    } catch (error) {
+        console.error("Generate Interrogatory Responses error details:", error.response || error.message);
+        throw error; // Re-throw to be caught by calling function
+    }
+};
+// --- END NEW FUNCTION ---
+
+
+// Optional default export combining all functions
 const api = {
   getCases,
   getCase,
@@ -147,6 +155,7 @@ const api = {
   getDocumentTypes,
   generateDocument,
   downloadWordDocument,
+  generateInterrogatoryResponses // <-- Added new function here
 };
 
 export default api;
