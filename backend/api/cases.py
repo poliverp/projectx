@@ -11,37 +11,34 @@ from ..services.case_service import (
     create_case, get_all_cases, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )
-# === NEW: Configuration Map for Template Context ===
-# Maps template filename to the context data it requires.
-# 'source': where to get the data ('case_details' JSON or 'direct' Case attribute)
-# 'key'/'attribute': the key name in JSON or the attribute name on the Case object
-# 'default': value to use if data is missing/None
+# === REPLACE the entire TEMPLATE_CONTEXT_MAP dictionary near the top of cases.py with this ===
+# === Make sure the previous incorrect one is fully deleted first ===
 TEMPLATE_CONTEXT_MAP = {
     'jury_fees_template.docx': {
-        # Context keys needed by the template -> How to get the data
         'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
         'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
-        'judge': {'source': 'case_details', 'key': 'judge', 'default': details.get('judge_doc', '')}, # Example trying judge then judge_doc key
-        'case_number': {'source': 'case_details', 'key': 'case_number', 'default': details.get('case_number_doc', '')}, # Example trying case_number then case_number_doc key
+        # CORRECTED DEFAULT: Use lambda for fallback logic
+        'judge': {'source': 'case_details', 'key': 'judge', 'default': lambda details: details.get('judge_doc', '')},
+        # CORRECTED DEFAULT: Use lambda for fallback logic (accessing details and case)
+        'case_number': {'source': 'case_details', 'key': 'case_number', 'default': lambda details, case: details.get('case_number_doc', getattr(case, 'case_number', ''))},
         'complaint_filed': {'source': 'case_details', 'key': 'complaint_filed', 'default': ''},
-        # Add other fields needed by jury_fees_template.docx here
+        # Add/verify other fields needed by jury_fees_template.docx here
     },
-    'demand_letter_template.docx': { # EXAMPLE for another template
+    'demand_letter_template.docx': { # EXAMPLE
         'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': 'UNKNOWN PLAINTIFF'},
         'defendant': {'source': 'case_details', 'key': 'defendant', 'default': 'UNKNOWN DEFENDANT'},
         'amount_demanded': {'source': 'case_details', 'key': 'demand_amount', 'default': '[AMOUNT NOT FOUND]'},
         'demand_deadline': {'source': 'case_details', 'key': 'demand_deadline_date', 'default': '[DATE NOT FOUND]'},
-        # Add other fields needed by demand_letter_template.docx here
     },
-     'case_summary_template.docx': { # EXAMPLE for another template
+     'case_summary_template.docx': { # EXAMPLE
         'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
         'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
-        'summary': {'source': 'case_details', 'key': 'summary', 'default': 'No summary available.'}, # Assuming AI analysis adds a 'summary' key
-        # Read case_number directly from the model attribute?
+        'summary': {'source': 'case_details', 'key': 'summary', 'default': 'No summary available.'},
         'case_number': {'source': 'direct', 'attribute': 'case_number', 'default': 'N/A'},
      }
     # --- Add entries for your other templates here ---
 }
+# === END REPLACEMENT ===
 # == Case Management Endpoints ==
 
 # Consolidated route for /cases handling GET and POST (relative to /api prefix)
