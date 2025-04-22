@@ -1,93 +1,100 @@
+// src/pages/CreateDocumentPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 
 function CreateDocumentPage() {
     const { caseId } = useParams();
+    // State for AI document generation (if keeping this feature on this page)
     const [docType, setDocType] = useState('');
-    const [customInstructions, setCustomInstructions] = useState(''); 
+    const [customInstructions, setCustomInstructions] = useState('');
     const [generatedContent, setGeneratedContent] = useState(null);
-    const [availableDocTypes, setAvailableDocTypes] = useState([]); // New state for types
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [availableDocTypes, setAvailableDocTypes] = useState([]);
 
-    // ---test ---hjlj
-    // --- Step 1: Fetch available document types on component mount ---
+    // --- NEW State for Word Template Download ---
+    // Hardcode a list of available template filenames for now
+    // IMPORTANT: These names MUST exactly match the .docx files in your backend/templates/ folder
+    const [availableTemplates] = useState([
+        'jury_fees_template.docx',
+        'demand_letter_template.docx', // Example: Add other template names here
+        'case_summary_template.docx',  // Example: Add other template names here
+        // Add more template filenames as needed
+    ]);
+    const [selectedTemplate, setSelectedTemplate] = useState(''); // State for the chosen template
+
+    // --- Existing state ---
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false); // Use this for both generation and download
+
+    // Fetch available AI document types (remains the same)
     useEffect(() => {
         const fetchDocTypes = async () => {
             try {
-                const types = await api.getDocumentTypes(); // Call the api.js function
-                setAvailableDocTypes(types.data); // Assuming backend returns array in .data
+                const types = await api.getDocumentTypes();
+                setAvailableDocTypes(types.data || []);
             } catch (err) {
                 console.error("Failed to fetch document types:", err);
-                // Optionally set an error state for fetching types
+                setError("Failed to load AI document types."); // Set specific error
             }
         };
-
         fetchDocTypes();
-    }, [caseId]); // Refetch if caseId changes (though unlikely on this page)
-    // -------------------------------------------------------------
+    }, [caseId]); // Dependency array remains
 
+    // Handler for AI Generation (remains the same)
     const handleCreate = async () => {
         if (!docType) {
-            alert("Please select a document type.");
+            alert("Please select an AI document type to generate.");
             return;
         }
         setLoading(true);
         setError(null);
-        setGeneratedContent(null); // Clear previous generated content
+        setGeneratedContent(null);
         try {
-            // --- Step 2 & 3: Call the correct API function with correct data format ---
             const creationData = {
-                document_type: docType, // Match backend's expected key
-                custom_instructions: customInstructions // Match backend's expected key
+                document_type: docType,
+                custom_instructions: customInstructions
             };
-
-            // Call the api.generateDocument function
             const response = await api.generateDocument(caseId, creationData);
-
-            // --- Step 4: Handle the response - store generated content ---
-            // Backend returns { ..., "generated_content": "..." }
             if (response.data && response.data.generated_content !== undefined) {
-                 setGeneratedContent(response.data.generated_content); // Store the content string
+                setGeneratedContent(response.data.generated_content);
             } else {
-                 // Handle cases where backend response format is unexpected
-                 setError("Unexpected response format from backend.");
-                 console.error("Unexpected backend response:", response.data);
+                setError("Unexpected response format from AI generation.");
+                console.error("Unexpected backend response:", response.data);
             }
-
         } catch (err) {
-            // More specific error handling based on backend response if possible
             const errorMessage = err.response?.data?.error || err.message;
-            setError(`Document generation failed: ${errorMessage}`);
+            setError(`AI Document generation failed: ${errorMessage}`);
             console.error("Generation API error:", err.response || err.message);
         } finally {
             setLoading(false);
         }
     };
-    // --- *** NEW Handler for Word Doc Download *** ---
+
+    // --- *** THIS IS THE UPDATED Handler for Word Doc Download *** ---
     const handleDownloadWord = async () => {
-        // We'll hardcode the template for now, as the backend route expects it
+        // --- 1. Check if a template is selected ---
+        if (!selectedTemplate) {
+            alert("Please select a Word template to download.");
+            return;
+        }
+
+        // --- 2. Prepare data payload with selected template name ---
         const templateInfo = {
-            template_name: 'jury_fees_template.docx'
-            // Add any other info needed by the API call, if any
+            template_name: selectedTemplate // Use the state variable
         };
 
-        setLoading(true); // Use the same loading state for simplicity
+        setLoading(true); // Use the same loading state
         setError(null);
         setGeneratedContent(null); // Clear generated text area if downloading doc
 
-        try {
-            // Assume api.js has this function making the POST request
-            // to /api/cases/<caseId>/download_word_document
-            // This function likely won't return usable data directly,
-            // it relies on the browser handling the download via server headers.
-            await api.downloadWordDocument(caseId, templateInfo);
+        console.log(`Requesting download for template: ${selectedTemplate}`);
 
-            // If the call succeeds and doesn't throw an error, the browser
-            // *should* have started the download automatically.
-            // We don't need to set generatedContent here.
-            console.log("Word document download initiated.");
+        try {
+            // --- 3. Call API with the template info ---
+            // Assumes api.js has the downloadWordDocument function making the POST request
+            // with responseType: 'blob' and handling the browser download trigger.
+            await api.downloadWordDocument(caseId, templateInfo); // Pass selected template name
+            console.log("Word document download initiated successfully.");
 
         } catch (err) {
             const errorMessage = err.response?.data?.error || err.message || 'Unknown error';
@@ -97,73 +104,112 @@ function CreateDocumentPage() {
             setLoading(false);
         }
     };
-    // --- *** END NEW Handler *** ---
+    // --- *** END UPDATED Handler *** ---
+
+    // --- Helper function to format template names for display ---
+    const formatTemplateName = (filename) => {
+        if (!filename) return '';
+        // Remove .docx, replace underscores with spaces, capitalize words
+        return filename
+            .replace(/\.docx$/i, '') // Case-insensitive .docx removal
+            .replace(/[_-]/g, ' ') // Replace underscore or hyphen with space
+            .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+    };
+
     return (
         <div>
-            <h1>Create Document for Case {caseId}</h1>
-            <Link to={`/case/${caseId}`} className="button-link" style={{backgroundColor: '#6c757d'}}>Back to Case Page</Link>
+            <h1>Create/Generate Document for Case {caseId}</h1>
+            <Link to={`/case/${caseId}`} className="button-link" style={{ backgroundColor: '#6c757d' }}>Back to Case Page</Link>
 
-            <div style={{ margin: '20px 0' }}>
-                <label htmlFor="doctype-select">Document Type: </label>
-                <select
-                    id="doctype-select"
-                    value={docType}
-                    onChange={(e) => setDocType(e.target.value)}
-                    disabled={loading || availableDocTypes.length === 0} // Disable if loading or no types fetched
-                >
-                    <option value="">-- Select Type --</option>
-                     {/* Map over fetched types to create dropdown options */}
-                    {availableDocTypes.map(type => (
-                        <option key={type} value={type}>{type.replace(/_/g, ' ').toUpperCase()}</option> // Display types nicely
-                    ))}
-                </select>
-                 {/* Optional: Display a loading/error message if fetching types failed */}
-                 {availableDocTypes.length === 0 && !error && !loading && <p>Loading document types...</p>}
+            {/* --- Section for AI Generation (Optional - Kept from previous version) --- */}
+            <div style={{ border: '1px solid #ccc', padding: '15px', margin: '20px 0', borderRadius: '5px' }}>
+                <h2>Generate Content using AI</h2>
+                <div style={{ marginBottom: '10px' }}>
+                    <label htmlFor="doctype-select" style={{ marginRight: '5px'}}>AI Document Type: </label>
+                    <select
+                        id="doctype-select"
+                        value={docType}
+                        onChange={(e) => setDocType(e.target.value)}
+                        disabled={loading || availableDocTypes.length === 0}
+                    >
+                        <option value="">-- Select AI Type --</option>
+                        {availableDocTypes.map(type => (
+                            <option key={type} value={type}>{type.replace(/_/g, ' ').toUpperCase()}</option>
+                        ))}
+                    </select>
+                    {availableDocTypes.length === 0 && !error && !loading && <p>Loading AI document types...</p>}
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                    <label htmlFor="custom-data" style={{ display: 'block', marginBottom: '5px' }}>Additional Instructions for AI: </label>
+                    <textarea
+                        id="custom-data"
+                        rows="3" cols="50"
+                        value={customInstructions}
+                        onChange={(e) => setCustomInstructions(e.target.value)}
+                        placeholder="Enter any specific details needed for AI generation..."
+                        disabled={loading}
+                        style={{ width: '95%', padding: '8px' }}
+                    />
+                </div>
+                <button onClick={handleCreate} disabled={!docType || loading}>
+                    Generate AI Content Preview
+                </button>
             </div>
-            
-            <div style={{ margin: '20px 0' }}>
-                <label htmlFor="custom-data">Additional Details/Instructions: </label><br />
-                <textarea
-                    id="custom-data"
-                    rows="4"
-                    cols="50"
-                    value={customInstructions} // Use the renamed state variable
-                    onChange={(e) => setCustomInstructions(e.target.value)}
-                    placeholder="Enter any specific details needed for generation..."
-                    disabled={loading} // Disable while loading
-                />
-            </div>
+            {/* --- End AI Generation Section --- */}
 
-            <button onClick={handleCreate} disabled={!docType || loading}>
-                Generate Document
-            </button>
 
-            {/* *** NEW Button for Word Download *** */}
-            {/* We might only enable this if a specific type known to have a template is selected? */}
-            {/* For now, enable if any type selected, assuming backend handles template mapping or errors */}
-            <button onClick={handleDownloadWord} disabled={loading}> {/* Maybe disable if docType isn't 'jury_fees'? Or handle template selection better later */}
-                Download Jury Fees Doc (.docx)
-            </button>
-                 {/* *** END NEW Button *** */}
-            {loading && <p className="loading-message">Generating...</p>}
-            {error && <p className="error-message">Error: {error}</p>}
-
-            {/* --- Step 5: Display the generated content --- */}
-            {generatedContent && (
-                 <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ccc', background: '#f8f9fa', whiteSpace: 'pre-wrap' }}>
-                    <h3>Generated Document Content:</h3>
-                    <p>{generatedContent}</p> {/* Display the actual generated text */}
+            {/* --- Section for Word Template Download --- */}
+            <div style={{ border: '1px solid #007bff', padding: '15px', margin: '20px 0', borderRadius: '5px' }}>
+                <h2>Download Formatted Document (.docx)</h2>
+                 {/* --- NEW Template Selection Dropdown --- */}
+                 <div style={{ marginBottom: '15px' }}>
+                    <label htmlFor="template-select" style={{ marginRight: '10px', fontWeight: 'bold' }}>Select Template:</label>
+                    <select
+                        id="template-select"
+                        value={selectedTemplate}
+                        onChange={(e) => setSelectedTemplate(e.target.value)}
+                        disabled={loading || availableTemplates.length === 0}
+                        style={{ padding: '8px', minWidth: '250px' }}
+                    >
+                        <option value="">-- Select a template file --</option>
+                        {/* Populate dropdown from availableTemplates state */}
+                        {availableTemplates.map(templateFile => (
+                            <option key={templateFile} value={templateFile}>
+                                {formatTemplateName(templateFile)} {/* Display formatted name */}
+                            </option>
+                        ))}
+                    </select>
                  </div>
+                 {/* --- END NEW Dropdown --- */}
+
+                {/* --- UPDATED Download Button --- */}
+                <button onClick={handleDownloadWord} disabled={loading || !selectedTemplate}>
+                    Download Selected Template (.docx)
+                </button>
+                 {/* --- END UPDATED Button --- */}
+            </div>
+            {/* --- End Word Template Download Section --- */}
+
+
+            {/* --- Common Loading/Error Display --- */}
+            {loading && <p className="loading-message">Processing...</p>}
+            {error && <p className="error-message" style={{ color: 'red', marginTop: '10px' }}>Error: {error}</p>}
+
+            {/* Display AI Generated Content (remains the same) */}
+            {generatedContent && (
+                <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ccc', background: '#f8f9fa', whiteSpace: 'pre-wrap' }}>
+                    <h3>Generated AI Content Preview:</h3>
+                    {/* Consider adding copy/dismiss buttons for generated content */}
+                    <p>{generatedContent}</p>
+                </div>
             )}
-            {/* ------------------------------------------- */}
 
-             {!generatedContent && !loading && !error && availableDocTypes.length > 0 && (
-                 <p><i>Select a document type, add optional details, and click Generate.</i></p>
-             )}
-
+            {/* Initial instruction message */}
+            {!generatedContent && !loading && !error && availableDocTypes.length > 0 && (
+                <p><i>Select an AI type and generate content, or select a Word template and download.</i></p>
+            )}
         </div>
     );
 }
-
 
 export default CreateDocumentPage;
