@@ -41,31 +41,29 @@ function ManageCasesScreen() {
     );
   }, [searchTerm, cases]); // Re-filter only when search or cases change
 
+ // Add this function back inside the ManageCasesScreen component
   const handleCreateCase = async () => {
     const newCaseName = prompt("Enter new case display name:");
     if (newCaseName && newCaseName.trim()) {
-      const trimmedName = newCaseName.trim();
-      // Basic client-side duplicate check
-      if (cases.some(c => c.display_name.toLowerCase() === trimmedName.toLowerCase())) {
-        alert("A case with this name already exists.");
-        return;
-      }
-      try {
-        setLoading(true); // Indicate loading during creation
-        // Backend expects an object like { display_name: "..." }
-        const response = await api.createCase({ display_name: trimmedName });
-        const newCase = response.data; // Expect backend to return the created case { id, display_name }
-        setCases(prevCases => [...prevCases, newCase]); // Add to state
-        setError(null);
-         if (window.confirm(`Case "${newCase.display_name}" created. Go to the new case page?`)) {
-           navigate(`/case/${newCase.id}`);
-         }
-      } catch (err) {
-        console.error("Error creating case:", err);
-        setError(`Failed to create case: ${err.response?.data?.error || err.message}`);
-      } finally {
-          setLoading(false);
-      }
+        const trimmedName = newCaseName.trim();
+        // Optional: Client-side check (backend check is more reliable)
+        if (cases.some(c => c.display_name.toLowerCase() === trimmedName.toLowerCase())) {
+            alert("A case with this name already exists (client-side check).");
+            return;
+        }
+        try {
+            setLoading(true); // Use existing loading state
+            setError(null);   // Use existing error state
+            // Send ONLY display_name to the backend
+            const response = await api.createCase({ display_name: trimmedName });
+            // Successfully created, refresh the list to show the new case
+            fetchCases(); // Assumes fetchCases updates the 'cases' state
+        } catch (err) {
+            console.error("Error creating case:", err);
+            setError(`Failed to create case: ${err.response?.data?.error || err.message}`);
+        } finally {
+            setLoading(false);
+        }
     }
   };
 
@@ -90,9 +88,9 @@ function ManageCasesScreen() {
       <h1>Manage Cases</h1>
 
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-      <Link to="/cases/new" className="button-link"> {/* You can style this Link like a button using CSS */}
+      <button onClick={handleCreateCase} disabled={loading}>
         Create New Case
-      </Link>
+      </button>
         <input
           type="search"
           placeholder="Filter cases by name..."
