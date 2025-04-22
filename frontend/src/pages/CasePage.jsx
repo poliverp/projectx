@@ -77,68 +77,93 @@ function CasePage() {
     if (Object.keys(acceptedSuggestions).length === 0 || isApplying) {
       return;
     }
-    console.log("Attempting to apply changes with:", acceptedSuggestions);
+    console.log("Attempting to apply accepted suggestions:", acceptedSuggestions);
     setIsApplying(true);
     setApplySuccess(false);
     setError(null);
 
-    // Access caseDetails state directly here
-    if (!caseDetails || !caseDetails.case_details) {
-        console.error("Cannot apply changes, case details not fully loaded.");
-        setError("Cannot apply changes - case details missing.");
-        setIsApplying(false);
-        return;
-    }
-    const currentCaseDetailsData = caseDetails.case_details || {};
+    // --- 1. Prepare Payload with Top-Level Keys for Dedicated Columns ---
+    const updatePayload = {}; // Start with an empty payload
+
+    // --- 2. Prepare Updated case_details JSON (Remove Applied Suggestions) ---
+    // Get a deep copy of the current case_details to modify
+    const currentCaseDetailsData = caseDetails?.case_details || {};
     const updatedDetails = JSON.parse(JSON.stringify(currentCaseDetailsData));
+    const processedDocKeys = new Set(); // Keep track of processed suggestions
 
-    let suggestionsApplied = false;
-    const processedDocKeys = new Set();
-
+    // --- 3. Iterate Through Accepted Suggestions ---
     for (const docKey in acceptedSuggestions) {
+      processedDocKeys.add(docKey); // Mark this suggestion group for removal later
       for (const field in acceptedSuggestions[docKey]) {
-        const suggestedValue = acceptedSuggestions[docKey][field];
-        updatedDetails[field] = suggestedValue; // Apply change
-        suggestionsApplied = true;
-        processedDocKeys.add(docKey);
-        console.log(`Merged: ${field} = ${JSON.stringify(suggestedValue)}`);
+        const acceptedValue = acceptedSuggestions[docKey][field];
+
+        // Check if the accepted field corresponds to a dedicated column
+        // Add other dedicated column fields here if analysis provides them
+        const dedicatedFields = [
+          'official_case_name', 'case_number', 'judge',
+          'plaintiff', 'defendant'
+          // Add 'date_filed', etc. IF they are dedicated columns and in suggestions
+        ];
+
+        if (dedicatedFields.includes(field)) {
+          // If it's a dedicated field, add it to the top level of the payload
+          updatePayload[field] = acceptedValue; // Use snake_case key for backend
+          console.log(`Applying to dedicated column: ${field} = ${JSON.stringify(acceptedValue)}`);
+        } else {
+          // If it's NOT a dedicated field, merge it into the main case_details JSON
+          // (This assumes fields not in dedicatedColumns should live in case_details)
+          updatedDetails[field] = acceptedValue;
+          console.log(`Applying to case_details JSON: ${field} = ${JSON.stringify(acceptedValue)}`);
+        }
       }
     }
 
-    // Cleanup processed suggestions from the copied details
+    // --- 4. Clean up pending_suggestions in the copied details ---
     if (updatedDetails.pending_suggestions) {
-        for (const docKey of processedDocKeys) {
-            if (updatedDetails.pending_suggestions[docKey]) {
-                delete updatedDetails.pending_suggestions[docKey];
-                console.log(`Removed processed suggestions for ${docKey}`);
-            }
+      for (const docKey of processedDocKeys) {
+        if (updatedDetails.pending_suggestions[docKey]) {
+          delete updatedDetails.pending_suggestions[docKey];
+          console.log(`Removed processed suggestions for ${docKey} from case_details`);
         }
-        if (Object.keys(updatedDetails.pending_suggestions).length === 0) {
-            delete updatedDetails.pending_suggestions;
-        }
+      }
+      // Optionally remove the whole pending_suggestions key if empty
+      if (Object.keys(updatedDetails.pending_suggestions).length === 0) {
+        delete updatedDetails.pending_suggestions;
+      }
     }
 
-    if (!suggestionsApplied) {
-        setIsApplying(false);
-        return;
+    // --- 5. Add the updated case_details to the payload ---
+    // Only add if it changed or if top-level fields were also added
+    // (We always update it here to remove pending suggestions)
+    updatePayload.case_details = updatedDetails;
+
+    // Check if any actual changes are being sent
+    if (Object.keys(updatePayload).length === 1 && Object.keys(updatePayload.case_details).length === Object.keys(currentCaseDetailsData).length && JSON.stringify(updatePayload.case_details) === JSON.stringify(currentCaseDetailsData) ) {
+         // Avoid sending update if only case_details structure changed slightly but content is same
+         // Or if only pending suggestions were removed but nothing else changed ( debatable )
+         // For simplicity now, we'll allow sending even if only pending removed
+         console.log("No changes detected besides potentially removing pending suggestions. Proceeding.");
+         // You could potentially return here if you don't want to update just for removing pending items
+         // setIsApplying(false); return;
     }
 
-    const updatePayload = { case_details: updatedDetails };
-    console.log("Sending update payload (with cleared suggestions):", updatePayload);
 
+    console.log("Sending combined update payload:", updatePayload);
+
+    // --- 6. Call API ---
     try {
-      await api.updateCase(caseId, updatePayload);
+      await api.updateCase(caseId, updatePayload); // Send combined payload
       setApplySuccess(true);
       setTimeout(() => setApplySuccess(false), 3000);
       setAcceptedSuggestions({}); // Clear selections
-      // Refetch will handle main loading state correctly now
-      fetchCaseDetails();
+      fetchCaseDetails(); // Refetch case details to show updated data and clear suggestions
     } catch (err) {
       console.error("Failed to apply changes:", err);
       setError(`Failed to apply changes: ${err.response?.data?.error || err.message}`);
-      setIsApplying(false); // Ensure loading state is off on error
+      // No need to setIsApplying(false) here, finally block handles it
+    } finally {
+        setIsApplying(false);
     }
-    // Let fetchCaseDetails handle turning off loading state eventually
   }
 
   // Regular async function - defined at top level
