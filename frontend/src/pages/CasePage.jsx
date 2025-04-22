@@ -248,7 +248,49 @@ function CasePage() {
           setIsGenerating(false);
       }
   }
+  // Add this function inside the CasePage component
+  const handleSaveChanges = async (event) => {
+    event.preventDefault(); // Prevent default form submission (page reload)
+    if (!caseDetails || editLoading) return; // Safety check
 
+    setEditLoading(true);
+    setEditError(null);
+
+    // Prepare the payload: Only include the fields edited in the modal
+    // Keys MUST match the backend model/API expectations (snake_case)
+    const updatePayload = {
+        display_name: editFormData.display_name,
+        official_case_name: editFormData.official_case_name,
+        case_number: editFormData.case_number,
+        judge: editFormData.judge,
+        plaintiff: editFormData.plaintiff,
+        defendant: editFormData.defendant,
+        // We are intentionally NOT sending the 'case_details' JSON here
+        // as we are updating the dedicated columns directly via this modal.
+    };
+
+    console.log("Attempting to save changes with payload:", updatePayload);
+
+    try {
+        // Call the existing updateCase API function
+        await api.updateCase(caseId, updatePayload);
+
+        console.log("Case updated successfully.");
+        setIsEditModalOpen(false); // Close the modal on success
+        fetchCaseDetails(); // Re-fetch case details to show the updated data
+
+        // Optional: Clear form data state if needed, though re-fetching usually handles it
+        // setEditFormData({});
+
+    } catch (err) {
+        console.error("Failed to save case changes:", err);
+        // Display error message within the modal
+        setEditError(`Failed to save changes: ${err.response?.data?.error || err.message}`);
+        // Keep the modal open so the user sees the error and can retry/cancel
+    } finally {
+        setEditLoading(false); // Ensure loading state is turned off
+    }
+  };
   // Handler for Copy Button (No changes needed here for the modal)
   const handleCopyGeneratedText = useCallback(() => {
     if (!generationResult) return;
@@ -439,7 +481,7 @@ function CasePage() {
           <div style={modalContentStyle}> {/* Basic modal content style */}
             <h2>Edit Case Information</h2>
             {/* We will add onSubmit={handleSaveChanges} in the next step */}
-            <form onSubmit={(e) => { e.preventDefault(); alert('Save logic not implemented yet.'); }}>
+            <form onSubmit={handleSaveChanges}>
               {editError && <p style={{ color: 'red', marginBottom: '15px' }}>{editError}</p>}
 
               {/* Display Name */}
