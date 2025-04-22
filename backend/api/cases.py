@@ -369,56 +369,84 @@ def download_word_document(case_id):
         return jsonify({'error': 'Failed to send document for download'}), 500
 # === End of updated function ===
 
+# === REPLACE the existing build_dynamic_context function with this corrected version ===
 def build_dynamic_context(template_name, case_data):
     context = {}
     template_config = TEMPLATE_CONTEXT_MAP.get(template_name)
 
     if not template_config:
         print(f"Warning: No context configuration found for template '{template_name}'. Returning empty context.")
-        # Or raise an error: raise ValueError(f"Configuration missing for template: {template_name}")
-        return {} # Return empty context or handle error as needed
+        return {}
 
+    # Ensure details_dict is a dictionary, even if case_details is None
     details_dict = case_data.case_details if isinstance(case_data.case_details, dict) else {}
 
+    # Iterate through the configuration for the requested template
     for context_key, config in template_config.items():
-        value = None
+        value_found = None # Use a temporary variable to store the found value
         source = config.get('source')
-        default = config.get('default', '') # Default to empty string if not specified
+        default_value_config = config.get('default', '') # Default default is empty string
 
         try:
+            # --- Get value based on source ---
             if source == 'case_details':
                 key = config.get('key')
                 if key:
-                    # Handle nested keys if needed, e.g., key = "court_info.county"
+                    # Handle potentially nested keys like "court_info.county"
                     current_level = details_dict
                     nested_keys = key.split('.')
                     for i, nested_key in enumerate(nested_keys):
                          if isinstance(current_level, dict):
-                              if i == len(nested_keys) - 1: # Last key
-                                   value = current_level.get(nested_key)
+                              # Check if this is the last key in the path
+                              if i == len(nested_keys) - 1:
+                                   value_found = current_level.get(nested_key) # Get the final value
                               else:
-                                   current_level = current_level.get(nested_key)
-                         else: # Cannot traverse further
-                              current_level = None
+                                   current_level = current_level.get(nested_key) # Go deeper
+                                   if current_level is None: # Stop if path breaks
+                                        break
+                         else: # Path broken, cannot traverse further
+                              value_found = None
                               break
-                    value = current_level # Assign the final value or None if path failed
+                    # If loop completed but current_level is not dict (e.g., key was "plaintiff.name" but plaintiff is string)
+                    # value_found should correctly be None or the target value here
                 else:
                      print(f"Warning: Missing 'key' in config for {context_key} (source: case_details)")
 
             elif source == 'direct':
                 attribute = config.get('attribute')
                 if attribute:
-                    value = getattr(case_data, attribute, None)
+                    value_found = getattr(case_data, attribute, None)
                 else:
                      print(f"Warning: Missing 'attribute' in config for {context_key} (source: direct)")
 
-            # Add more sources if needed (e.g., 'env', 'fixed_value')
+            # --- Determine the default value if needed ---
+            default_to_use = None
+            if callable(default_value_config):
+                 # If default is a function, call it potentially with details and case
+                 try:
+                      import inspect
+                      sig = inspect.signature(default_value_config)
+                      params_to_pass = {}
+                      if 'details' in sig.parameters: params_to_pass['details'] = details_dict
+                      if 'case' in sig.parameters: params_to_pass['case'] = case_data
+                      default_to_use = default_value_config(**params_to_pass)
+                 except Exception as lambda_err:
+                      print(f"Error executing lambda default for {context_key}: {lambda_err}")
+                      default_to_use = '' # Fallback default on lambda error
+            else:
+                 default_to_use = default_value_config # Use the static default value
 
-            # Use default if value is None, otherwise use the retrieved value
-            context[context_key] = value if value is not None else default
+            # --- Assign to final context ---
+            # Use the found value if it's not None, otherwise use the calculated default
+            context[context_key] = value_found if value_found is not None else default_to_use
 
         except Exception as e:
+             # Log error and assign default on unexpected error during processing this key
              print(f"Error processing context key '{context_key}' for template '{template_name}': {e}")
-             context[context_key] = default # Use default on error
+             # Determine default value even on error
+             default_to_use_on_error = default_value_config if not callable(default_value_config) else '' # Safer default on error
+             context[context_key] = default_to_use_on_error
+
 
     return context
+# === END REPLACEMENT ===
