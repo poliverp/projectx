@@ -11,7 +11,37 @@ from ..services.case_service import (
     create_case, get_all_cases, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )
-
+# === NEW: Configuration Map for Template Context ===
+# Maps template filename to the context data it requires.
+# 'source': where to get the data ('case_details' JSON or 'direct' Case attribute)
+# 'key'/'attribute': the key name in JSON or the attribute name on the Case object
+# 'default': value to use if data is missing/None
+TEMPLATE_CONTEXT_MAP = {
+    'jury_fees_template.docx': {
+        # Context keys needed by the template -> How to get the data
+        'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
+        'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
+        'judge': {'source': 'case_details', 'key': 'judge', 'default': details.get('judge_doc', '')}, # Example trying judge then judge_doc key
+        'case_number': {'source': 'case_details', 'key': 'case_number', 'default': details.get('case_number_doc', '')}, # Example trying case_number then case_number_doc key
+        'complaint_filed': {'source': 'case_details', 'key': 'complaint_filed', 'default': ''},
+        # Add other fields needed by jury_fees_template.docx here
+    },
+    'demand_letter_template.docx': { # EXAMPLE for another template
+        'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': 'UNKNOWN PLAINTIFF'},
+        'defendant': {'source': 'case_details', 'key': 'defendant', 'default': 'UNKNOWN DEFENDANT'},
+        'amount_demanded': {'source': 'case_details', 'key': 'demand_amount', 'default': '[AMOUNT NOT FOUND]'},
+        'demand_deadline': {'source': 'case_details', 'key': 'demand_deadline_date', 'default': '[DATE NOT FOUND]'},
+        # Add other fields needed by demand_letter_template.docx here
+    },
+     'case_summary_template.docx': { # EXAMPLE for another template
+        'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
+        'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
+        'summary': {'source': 'case_details', 'key': 'summary', 'default': 'No summary available.'}, # Assuming AI analysis adds a 'summary' key
+        # Read case_number directly from the model attribute?
+        'case_number': {'source': 'direct', 'attribute': 'case_number', 'default': 'N/A'},
+     }
+    # --- Add entries for your other templates here ---
+}
 # == Case Management Endpoints ==
 
 # Consolidated route for /cases handling GET and POST (relative to /api prefix)
@@ -215,7 +245,6 @@ def download_word_document(case_id):
     #    print(f"Error: Template '{template_name}' is not allowed.")
     #    return jsonify({'error': f"Template '{template_name}' not allowed"}), 400
 
-
     print(f"--- Requested template: {template_name} ---")
 
     # --- 1. Fetch Case Data ---
@@ -280,23 +309,16 @@ def download_word_document(case_id):
     # different templates needing different data sources (e.g., more from case_details).
     # For now, we keep the existing logic that reads from direct attributes:
     try:
-         context = {
-             'case_number': case_data.case_number or '',
-             'plaintiff': case_data.plaintiff or '',
-             'defendant': case_data.defendant or '',
-             'judge': case_data.judge or '',
-             'complaint_filed': case_data.case_details.get('complaint_filed', '') if isinstance(case_data.case_details, dict) else '', # Safe access to JSON field
-             # Add other fields needed by the initial templates...
-             # Ensure data types are handled correctly (e.g., dates) if needed by docxtpl filters
-         }
-         print(f"Context dictionary created (reading from direct attributes mostly): {context}")
-    except AttributeError as e:
-         print(f"Error creating context, likely missing attribute on case_data: {e}")
-         return jsonify({'error': f"Failed to create document context: {e}"}), 500
+        context = build_dynamic_context(template_name, case_data)
+        if not context and template_name in TEMPLATE_CONTEXT_MAP: # Check if context is empty but config existed
+             print(f"Warning: Built empty context for known template '{template_name}'. Check config and data source.")
+             # Decide if empty context is an error or okay
+             # return jsonify({'error': f"Failed to build context for template '{template_name}'"}), 500
+        print(f"Dynamic context created for '{template_name}': {context}")
     except Exception as e:
-         print(f"Unexpected error creating context: {e}")
-         return jsonify({'error': "Failed to create document context"}), 500
-
+         print(f"Error building dynamic context for {template_name}: {e}")
+         return jsonify({'error': 'Failed to build document context'}), 500
+    # --- END OF REPLACEMENT ---
 
     # --- 4. Load, Render, and Save Template to Memory ---
     try:
@@ -349,3 +371,57 @@ def download_word_document(case_id):
         print(f"Error sending file stream: {e}")
         return jsonify({'error': 'Failed to send document for download'}), 500
 # === End of updated function ===
+
+def build_dynamic_context(template_name, case_data):
+    context = {}
+    template_config = TEMPLATE_CONTEXT_MAP.get(template_name)
+
+    if not template_config:
+        print(f"Warning: No context configuration found for template '{template_name}'. Returning empty context.")
+        # Or raise an error: raise ValueError(f"Configuration missing for template: {template_name}")
+        return {} # Return empty context or handle error as needed
+
+    details_dict = case_data.case_details if isinstance(case_data.case_details, dict) else {}
+
+    for context_key, config in template_config.items():
+        value = None
+        source = config.get('source')
+        default = config.get('default', '') # Default to empty string if not specified
+
+        try:
+            if source == 'case_details':
+                key = config.get('key')
+                if key:
+                    # Handle nested keys if needed, e.g., key = "court_info.county"
+                    current_level = details_dict
+                    nested_keys = key.split('.')
+                    for i, nested_key in enumerate(nested_keys):
+                         if isinstance(current_level, dict):
+                              if i == len(nested_keys) - 1: # Last key
+                                   value = current_level.get(nested_key)
+                              else:
+                                   current_level = current_level.get(nested_key)
+                         else: # Cannot traverse further
+                              current_level = None
+                              break
+                    value = current_level # Assign the final value or None if path failed
+                else:
+                     print(f"Warning: Missing 'key' in config for {context_key} (source: case_details)")
+
+            elif source == 'direct':
+                attribute = config.get('attribute')
+                if attribute:
+                    value = getattr(case_data, attribute, None)
+                else:
+                     print(f"Warning: Missing 'attribute' in config for {context_key} (source: direct)")
+
+            # Add more sources if needed (e.g., 'env', 'fixed_value')
+
+            # Use default if value is None, otherwise use the retrieved value
+            context[context_key] = value if value is not None else default
+
+        except Exception as e:
+             print(f"Error processing context key '{context_key}' for template '{template_name}': {e}")
+             context[context_key] = default # Use default on error
+
+    return context
