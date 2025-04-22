@@ -1,6 +1,9 @@
 # --- backend/api/cases.py ---
 import os # Needed for delete file path
+import io
+from flask import send_file, current_app # Import send_file and current_app (might need current_app for config later)
 from flask import request, jsonify
+from docxtpl import DocxTemplate 
 from ..extensions import db # Import db from extensions
 from ..models import Case, Document # Import necessary models
 from . import bp # Import the blueprint instance from api/__init__.py
@@ -179,3 +182,96 @@ def delete_case_and_documents(case_id):
         db.session.rollback()
         print(f"Error deleting case {case_id}: {e}")
         return jsonify({'error': 'Failed to delete case'}), 500
+    
+# === Add this new route for Word document generation ===
+
+@bp.route('/cases/<int:case_id>/download_word_document', methods=['POST'])
+def download_word_document(case_id):
+    """Generates and sends a Word document based on a specific template."""
+    print(f"--- Handling POST /api/cases/{case_id}/download_word_document ---")
+
+    # --- 1. Fetch Case Data ---
+    try:
+        # Use your existing service function
+        case_data = get_case_by_id(case_id)
+        # NOTE: Fetch any other related data needed for the template here
+        # e.g., client_info = get_client_by_id(case_data.client_id)
+    except CaseNotFoundError:
+        return jsonify({'error': 'Case not found'}), 404
+    except Exception as e:
+        print(f"Error fetching data for case {case_id} (Word Gen): {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to fetch case data for document generation'}), 500
+
+    # --- 2. Define Template ---
+    # For now, we'll hardcode the jury fees template. Later, this could come from the request.
+    template_name = 'jury_fees_template.docx'
+    # Construct path relative to the blueprint's location (api folder)
+    # Assumes 'templates' folder is one level up from the 'api' folder
+    try:
+        # bp.root_path should be the path to the 'api' directory
+        template_path = os.path.join(bp.root_path, '..', 'templates', template_name)
+        # Basic check if template exists
+        if not os.path.exists(template_path):
+             # Try path relative to app root as fallback (if app.py is in backend/)
+             template_path_alt = os.path.join(current_app.root_path, 'templates', template_name)
+             if not os.path.exists(template_path_alt):
+                  print(f"Template file not found at primary path: {template_path} or alt path: {template_path_alt}")
+                  return jsonify({'error': f'Template file "{template_name}" not found'}), 400
+             else:
+                  template_path = template_path_alt # Use the alternative path
+        print(f"Using template: {template_path}")
+    except Exception as e:
+         print(f"Error constructing template path: {e}")
+         return jsonify({'error': 'Could not determine template path'}), 500
+
+    # --- 3. !!! IMPORTANT: Create Context Dictionary !!! ---
+    # Map the placeholders in your Word doc (e.g., {{ case_num }})
+    # to the actual data from your 'case_data' object.
+    # ** YOU MUST REPLACE THE KEYS ('placeholder_1', etc.) WITH YOUR ACTUAL PLACEHOLDER NAMES **
+    context = {
+        'case_number': case_data.case_number,
+        'plaintiff': case_data.plaintiff,
+        'defendant': case_data.defendant,
+        'judge': case_data.judge,
+        # Accessing data from the case_details JSON blob (example)
+        # Add placeholders 9 and 10 based on your template and data
+        'complaint_filed': case_data.complaint_filed, # Example, replace with actual data
+    
+        # Add any other fields needed by jury_fees_template.docx
+    }
+    print(f"Context dictionary created for template rendering.")
+
+
+    # --- 4. Load, Render, and Save Template to Memory ---
+    try:
+        doc = DocxTemplate(template_path)
+        print("Rendering docx template...")
+        doc.render(context)
+        print("Template rendered.")
+
+        # Save the rendered document to an in-memory stream
+        file_stream = io.BytesIO()
+        doc.save(file_stream)
+        file_stream.seek(0) # Go back to the beginning of the stream
+        print("Document saved to memory stream.")
+
+    except Exception as e:
+        print(f"Error rendering/saving template {template_name}: {e}")
+        return jsonify({'error': f'Failed to process document template: {e}'}), 500
+
+    # --- 5. Send the File for Download ---
+    try:
+        output_filename = f"Jury_Fees_{case_data.case_number or case_id}.docx"
+        print(f"Sending file: {output_filename}")
+        return send_file(
+            file_stream,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True, # Important: Tells browser to download
+            download_name=output_filename # Sets the default filename for the user
+        )
+    except Exception as e:
+        print(f"Error sending file stream: {e}")
+        return jsonify({'error': 'Failed to send document for download'}), 500
+
+# === End Add New Route ===
