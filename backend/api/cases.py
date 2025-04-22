@@ -12,33 +12,50 @@ from ..services.case_service import (
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )
 # === REPLACE the entire TEMPLATE_CONTEXT_MAP dictionary near the top of cases.py with this ===
-# === Make sure the previous incorrect one is fully deleted first ===
 TEMPLATE_CONTEXT_MAP = {
+    # --- Configuration for jury_fees_template.docx ---
     'jury_fees_template.docx': {
-        'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
-        'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
-        # CORRECTED DEFAULT: Use lambda for fallback logic
-        'judge_doc': {'source': 'case_details', 'key': 'judge_doc', 'default': lambda details: details.get('judge_doc', '')},
-        # CORRECTED DEFAULT: Use lambda for fallback logic (accessing details and case)
-        'case_number_doc': {'source': 'case_details', 'key': 'case_number_doc', 'default': lambda details, case: details.get('case_number_doc', getattr(case, 'case_number', ''))},
-        'filing_date': {'source': 'case_details', 'key': 'filing_date', 'default': ''},
-        'trial_date': {'source': 'case_details', 'key': 'trial_date', 'default': ''},
-        'county': {'source': 'case_details', 'key': 'county', 'default': ''},
-        'jurisdiction': {'source': 'case_details', 'key': 'jurisdiction', 'default': ''},
+        # CONTEXT KEY (matches {{placeholder}}) : { CONFIGURATION }
 
-        # Add/verify other fields needed by jury_fees_template.docx here
+        # --- Read CORE fields from DIRECT columns ---
+        'plaintiff':          {'source': 'direct', 'attribute': 'plaintiff',          'default': ''},
+        'defendant':          {'source': 'direct', 'attribute': 'defendant',          'default': ''},
+        'judge':              {'source': 'direct', 'attribute': 'judge',              'default': ''},
+        'case_number':        {'source': 'direct', 'attribute': 'case_number',        'default': ''},
+        # 'official_case_name': {'source': 'direct', 'attribute': 'official_case_name', 'default': ''}, # Uncomment if template needs {{official_case_name}}
+
+        # --- Read OTHER fields from case_details JSON ---
+        # *** IMPORTANT: Adjust the 'key' value to match the key name your AI analysis
+        #     actually saves inside the case_details JSON blob ***
+        'complaint_filed':    {'source': 'case_details', 'key': 'filing_date',     'default': ''}, # Example: Map {{complaint_filed}} to JSON key 'filing_date'
+        'incident_date':      {'source': 'case_details', 'key': 'key_dates.incident_date', 'default': ''}, # Example reading nested JSON key
+        'court_county':       {'source': 'case_details', 'key': 'court_info.county', 'default': ''}, # Example reading nested JSON key
+        'court_jurisdiction': {'source': 'case_details', 'key': 'court_info.jurisdiction', 'default': ''}, # Example reading nested JSON key
+
+        # Add configuration for any other placeholders in jury_fees_template.docx
+        # Ensure 'key' points to the correct field within your case_details JSON
+        # 'summary':            {'source': 'case_details', 'key': 'summary',           'default': ''},
+
     },
-    'demand_letter_template.docx': { # EXAMPLE
-        'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': 'UNKNOWN PLAINTIFF'},
-        'defendant': {'source': 'case_details', 'key': 'defendant', 'default': 'UNKNOWN DEFENDANT'},
-        'amount_demanded': {'source': 'case_details', 'key': 'demand_amount', 'default': '[AMOUNT NOT FOUND]'},
-        'demand_deadline': {'source': 'case_details', 'key': 'demand_deadline_date', 'default': '[DATE NOT FOUND]'},
+
+    # --- Configuration for demand_letter_template.docx (EXAMPLE) ---
+    'demand_letter_template.docx': {
+        # Read from direct columns
+        'plaintiff':          {'source': 'direct', 'attribute': 'plaintiff',          'default': 'Valued Client'},
+        'defendant':          {'source': 'direct', 'attribute': 'defendant',          'default': 'Opposing Party'},
+        'case_number':        {'source': 'direct', 'attribute': 'case_number',        'default': 'N/A'},
+         # Read from case_details JSON (ensure keys 'demand_amount', 'demand_deadline_date' exist in your JSON)
+        'amount_demanded':    {'source': 'case_details', 'key': 'demand_amount',        'default': '[AMOUNT]'},
+        'demand_deadline':    {'source': 'case_details', 'key': 'demand_deadline_date', 'default': '[DATE]'},
     },
-     'case_summary_template.docx': { # EXAMPLE
-        'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
-        'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
-        'summary': {'source': 'case_details', 'key': 'summary', 'default': 'No summary available.'},
-        'case_number': {'source': 'direct', 'attribute': 'case_number', 'default': 'N/A'},
+
+     # --- Configuration for case_summary_template.docx (EXAMPLE) ---
+     'case_summary_template.docx': {
+        'plaintiff':          {'source': 'direct', 'attribute': 'plaintiff', 'default': ''},
+        'defendant':          {'source': 'direct', 'attribute': 'defendant', 'default': ''},
+        'case_number':        {'source': 'direct', 'attribute': 'case_number', 'default': 'N/A'},
+         # Read summary from case_details JSON (ensure key 'summary' exists in your JSON)
+        'summary':            {'source': 'case_details', 'key': 'summary', 'default': 'No summary available.'},
      }
     # --- Add entries for your other templates here ---
 }
