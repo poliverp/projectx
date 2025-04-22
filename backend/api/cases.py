@@ -18,10 +18,14 @@ TEMPLATE_CONTEXT_MAP = {
         'plaintiff': {'source': 'case_details', 'key': 'plaintiff', 'default': ''},
         'defendant': {'source': 'case_details', 'key': 'defendant', 'default': ''},
         # CORRECTED DEFAULT: Use lambda for fallback logic
-        'judge': {'source': 'case_details', 'key': 'judge', 'default': lambda details: details.get('judge_doc', '')},
+        'judge_doc': {'source': 'case_details', 'key': 'judge_doc', 'default': lambda details: details.get('judge_doc', '')},
         # CORRECTED DEFAULT: Use lambda for fallback logic (accessing details and case)
-        'case_number': {'source': 'case_details', 'key': 'case_number', 'default': lambda details, case: details.get('case_number_doc', getattr(case, 'case_number', ''))},
-        'complaint_filed': {'source': 'case_details', 'key': 'complaint_filed', 'default': ''},
+        'case_number_doc': {'source': 'case_details', 'key': 'case_number_doc', 'default': lambda details, case: details.get('case_number_doc', getattr(case, 'case_number', ''))},
+        'filing_date': {'source': 'case_details', 'key': 'filing_date', 'default': ''},
+        'trial_date': {'source': 'case_details', 'key': 'trial_date', 'default': ''},
+        'county': {'source': 'case_details', 'key': 'county', 'default': ''},
+        'jurisdiction': {'source': 'case_details', 'key': 'jurisdiction', 'default': ''},
+
         # Add/verify other fields needed by jury_fees_template.docx here
     },
     'demand_letter_template.docx': { # EXAMPLE
