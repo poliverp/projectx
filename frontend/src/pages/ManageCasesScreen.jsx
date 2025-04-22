@@ -90,9 +90,9 @@ function ManageCasesScreen() {
       <h1>Manage Cases</h1>
 
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <button onClick={handleCreateCase} disabled={loading}>
-          Create New Case
-        </button>
+      <Link to="/cases/new" className="button-link"> {/* You can style this Link like a button using CSS */}
+        Create New Case
+      </Link>
         <input
           type="search"
           placeholder="Filter cases by name..."

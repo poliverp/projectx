@@ -6,6 +6,8 @@ import CasePage from './pages/CasePage';
 import FilesPage from './pages/FilesPage';
 import DocumentAnalysisPage from './pages/DocumentAnalysisPage';
 import CreateDocumentPage from './pages/CreateDocumentPage';
+import CreateCasePage from './pages/CreateCasePage';
+
 // Import other pages as needed
 
 function App() {
@@ -28,6 +30,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomeScreen />} />
             <Route path="/manage-cases" element={<ManageCasesScreen />} />
+            <Route path="/cases/new" element={<CreateCasePage />} /> {/* <-- ADD THIS ROUTE */}
             <Route path="/case/:caseId" element={<CasePage />} />
             <Route path="/case/:caseId/files" element={<FilesPage />} />
             <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
