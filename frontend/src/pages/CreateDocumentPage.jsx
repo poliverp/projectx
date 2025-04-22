@@ -5,7 +5,7 @@ import api from '../services/api';
 function CreateDocumentPage() {
     const { caseId } = useParams();
     const [docType, setDocType] = useState('');
-    const [customInstructions, setCustomInstructions] = useState(''); // Use the preferred name    const [loading, setLoading] = useState(false);
+    const [customInstructions, setCustomInstructions] = useState(''); 
     const [generatedContent, setGeneratedContent] = useState(null);
     const [availableDocTypes, setAvailableDocTypes] = useState([]); // New state for types
     const [error, setError] = useState(null);
@@ -65,7 +65,39 @@ function CreateDocumentPage() {
             setLoading(false);
         }
     };
+    // --- *** NEW Handler for Word Doc Download *** ---
+    const handleDownloadWord = async () => {
+        // We'll hardcode the template for now, as the backend route expects it
+        const templateInfo = {
+            template_name: 'jury_fees_template.docx'
+            // Add any other info needed by the API call, if any
+        };
 
+        setLoading(true); // Use the same loading state for simplicity
+        setError(null);
+        setGeneratedContent(null); // Clear generated text area if downloading doc
+
+        try {
+            // Assume api.js has this function making the POST request
+            // to /api/cases/<caseId>/download_word_document
+            // This function likely won't return usable data directly,
+            // it relies on the browser handling the download via server headers.
+            await api.downloadWordDocument(caseId, templateInfo);
+
+            // If the call succeeds and doesn't throw an error, the browser
+            // *should* have started the download automatically.
+            // We don't need to set generatedContent here.
+            console.log("Word document download initiated.");
+
+        } catch (err) {
+            const errorMessage = err.response?.data?.error || err.message || 'Unknown error';
+            setError(`Failed to download Word document: ${errorMessage}`);
+            console.error("Word Download API error:", err.response || err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+    // --- *** END NEW Handler *** ---
     return (
         <div>
             <h1>Create Document for Case {caseId}</h1>
@@ -88,7 +120,7 @@ function CreateDocumentPage() {
                  {/* Optional: Display a loading/error message if fetching types failed */}
                  {availableDocTypes.length === 0 && !error && !loading && <p>Loading document types...</p>}
             </div>
-
+            
             <div style={{ margin: '20px 0' }}>
                 <label htmlFor="custom-data">Additional Details/Instructions: </label><br />
                 <textarea
@@ -106,6 +138,13 @@ function CreateDocumentPage() {
                 Generate Document
             </button>
 
+            {/* *** NEW Button for Word Download *** */}
+            {/* We might only enable this if a specific type known to have a template is selected? */}
+            {/* For now, enable if any type selected, assuming backend handles template mapping or errors */}
+            <button onClick={handleDownloadWord} disabled={loading}> {/* Maybe disable if docType isn't 'jury_fees'? Or handle template selection better later */}
+                Download Jury Fees Doc (.docx)
+            </button>
+                 {/* *** END NEW Button *** */}
             {loading && <p className="loading-message">Generating...</p>}
             {error && <p className="error-message">Error: {error}</p>}
 
