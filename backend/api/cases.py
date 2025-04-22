@@ -236,7 +236,8 @@ def download_word_document(case_id):
         'judge': case_data.judge,
         # Accessing data from the case_details JSON blob (example)
         # Add placeholders 9 and 10 based on your template and data
-        'complaint_filed': case_data.complaint_filed, # Example, replace with actual data
+        # The dictionary key 'complaint_filed' must match the {{ complaint_filed }} placeholder in your Word template
+        'complaint_filed': case_data.case_details.get('complaint_filed', ''), # Use .get() for safety, default to empty string '' or 'N/A'
     
         # Add any other fields needed by jury_fees_template.docx
     }
