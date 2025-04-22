@@ -230,10 +230,10 @@ def download_word_document(case_id):
     # to the actual data from your 'case_data' object.
     # ** YOU MUST REPLACE THE KEYS ('placeholder_1', etc.) WITH YOUR ACTUAL PLACEHOLDER NAMES **
     context = {
-        'case_number': case_data.case_number,
-        'plaintiff': case_data.plaintiff,
-        'defendant': case_data.defendant,
-        'judge': case_data.judge,
+        'case_number': case_data.case_number or '',
+        'plaintiff': case_data.plaintiff or '',
+        'defendant': case_data.defendant or '',
+        'judge': case_data.judge or '',
         # Accessing data from the case_details JSON blob (example)
         # Add placeholders 9 and 10 based on your template and data
         # The dictionary key 'complaint_filed' must match the {{ complaint_filed }} placeholder in your Word template
