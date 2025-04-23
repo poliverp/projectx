@@ -11,6 +11,7 @@ from backend.services.case_service import (
     create_case, get_all_cases, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )
+from flask_login import login_required, current_user
 # === REPLACE the entire TEMPLATE_CONTEXT_MAP dictionary near the top of cases.py with this ===
 TEMPLATE_CONTEXT_MAP = {
     # --- Configuration for jury_fees_template.docx ---
@@ -64,11 +65,12 @@ TEMPLATE_CONTEXT_MAP = {
 
 # Consolidated route for /cases handling GET and POST (relative to /api prefix)
 @bp.route('/cases', methods=['GET', 'POST']) # No OPTIONS needed here unless specific handling req.
+@login_required # <-- ADD THIS DECORATOR
 def handle_cases():
     if request.method == 'GET':
         print("--- Handling GET /api/cases (Blueprint) ---")
         try:
-            cases = Case.query.order_by(Case.display_name).all()
+            cases = Case.query.filter_by(user_id=current_user.id).order_by(Case.display_name).all() # <-- ADD .filter_by()
             cases_data = [{
                 'id': case.id,
                 'display_name': case.display_name,
