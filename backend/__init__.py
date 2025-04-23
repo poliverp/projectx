@@ -48,19 +48,23 @@ def create_app(config_class_name='backend.config.Config'):
     def load_user(user_id):
         # Reloads the user object from the user ID stored in the session
         return User.query.get(int(user_id))
+    try:
+            # Assumes 'bp' is defined in backend/api/__init__.py and covers cases etc.
+            from .api import bp as api_blueprint
+            # Assumes 'discovery_bp' is defined in backend/api/discovery.py
+            from .api.discovery import discovery_bp
 
-    # --- Register Blueprints ---
-    # Use relative imports to find blueprints within the package
-    from .api.cases import cases_bp
-    from .api.discovery import discovery_bp
-    from .api import bp as api_blueprint
-    # Import other blueprints if you have them (e.g., auth_bp later)
+            # Register the blueprints using the correct variables
+            app.register_blueprint(api_blueprint, url_prefix='/api') # Register the main api blueprint
+            app.register_blueprint(discovery_bp, url_prefix='/api/discovery')
 
-    app.register_blueprint(cases_bp, url_prefix='/api')
-    app.register_blueprint(discovery_bp, url_prefix='/api/discovery') # Note the prefix for discovery
-    # app.register_blueprint(auth_bp, url_prefix='/api/auth') # Example for later
+            print("--- Blueprints Registered Successfully ---")
+            # print(app.url_map) # Uncomment to debug routes
 
-    print("--- Blueprints Registered ---")
-    print(app.url_map) # Useful for debugging routes
+    except ImportError as e:
+        print(f"--- Error importing or registering Blueprints: {e} ---")
+        # Handle blueprint import errors appropriately
 
+
+    # --- Return App Instance ---
     return app
