@@ -8,7 +8,7 @@ from backend.extensions import db # Import db from extensions
 from backend.models import Case, Document # Import necessary models
 from . import bp # Import the blueprint instance from api/__init__.py
 from backend.services.case_service import (
-    create_cases, get_case_by_id, update_case, delete_case, # Add update/delete
+    create_case, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )
 from flask_login import login_required, current_user
