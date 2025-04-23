@@ -86,14 +86,14 @@ def handle_cases():
             return jsonify({'error': 'Failed to fetch cases'}), 500
 
     elif request.method == 'POST':
-        print("--- Handling POST /api/cases (Blueprint) ---")
+        print("--- Handling POST /api/cases (Blueprint - AUTH REQUIRED")
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
 
         try:
             # Call the service function to handle creation logic
-            new_case = create_case(data)
+            new_case = create_case(data, user_id=current_user.id) # <-- PASS user_id HERE
 
             # Format the successful response (route still owns response formatting)
             return jsonify({
@@ -107,6 +107,7 @@ def handle_cases():
                 'case_details': new_case.case_details,
                 'created_at': new_case.created_at.isoformat() if new_case.created_at else None,
                 'updated_at': new_case.updated_at.isoformat() if new_case.updated_at else None,
+                'user_id': new_case.user_id # Maybe return user_id too
             }), 201 # Created
 
         # Handle specific errors raised by the service
