@@ -21,7 +21,9 @@ def upgrade():
     with op.batch_alter_table('case', schema=None) as batch_op:
         batch_op.add_column(sa.Column('updated_at', sa.DateTime(), nullable=True))
         batch_op.add_column(sa.Column('case_details', sa.JSON(), nullable=True))
-        batch_op.create_unique_constraint(None, ['case_number'])
+        # --- MODIFIED LINE ---
+        # Added explicit constraint name using op.f()
+        batch_op.create_unique_constraint(batch_op.f('uq_case_case_number'), ['case_number'])
 
     with op.batch_alter_table('document', schema=None) as batch_op:
         batch_op.add_column(sa.Column('updated_at', sa.DateTime(), nullable=True))
@@ -35,7 +37,9 @@ def downgrade():
         batch_op.drop_column('updated_at')
 
     with op.batch_alter_table('case', schema=None) as batch_op:
-        batch_op.drop_constraint(None, type_='unique')
+        # --- MODIFIED LINE ---
+        # Added explicit constraint name using op.f() to match the upgrade
+        batch_op.drop_constraint(batch_op.f('uq_case_case_number'), type_='unique')
         batch_op.drop_column('case_details')
         batch_op.drop_column('updated_at')
 
