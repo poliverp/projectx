@@ -27,11 +27,11 @@ def create_app(config_class_name='backend.config.Config'):
     # Use environment variables or a config file
     # Example using environment variables (adjust as needed)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'you-should-really-change-this'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('postgresql://neondb_owner:npg_ChNxdMJPW90B@ep-long-bird-a4bbp5mp-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require') or \
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'app.db') # Default to SQLite if no URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # Add other config like AI_API_KEY etc.
-    app.config['AI_API_KEY'] = os.environ.get('AIzaSyDeW2v8jkWWTdoooWEwmZJLTm-WTjAq8PQ')
+    app.config['AI_API_KEY'] = os.environ.get('Ai_API_KEY')
 
 
     # Initialize extensions
