@@ -7,7 +7,7 @@ import FilesPage from './pages/FilesPage';
 import DocumentAnalysisPage from './pages/DocumentAnalysisPage';
 import CreateDocumentPage from './pages/CreateDocumentPage';
 import CreateCasePage from './pages/CreateCasePage';
-import CreateDiscoveryPage from './pages/CreateDiscoveryPage'; // Adjust path if needed
+import CreateDiscoveryPage from './pages/CreateDiscoveryPage.jsx'; 
 // Import other pages as needed
 
 function App() {
