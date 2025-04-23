@@ -3,8 +3,8 @@
 from flask import request, jsonify
 from . import bp # Import the blueprint from api/__init__.py
 # Make sure DOCUMENT_PROMPTS is included in this import list!
-from ..services.generation_service import generate_document_for_case, DOCUMENT_PROMPTS, GenerationServiceError, InvalidDocumentTypeError
-from ..services.case_service import CaseNotFoundError # Import for error handling
+from backend.services.generation_service import generate_document_for_case, DOCUMENT_PROMPTS, GenerationServiceError, InvalidDocumentTypeError
+from backend.services.case_service import CaseNotFoundError # Import for error handling
 
 @bp.route('/generation/document-types', methods=['GET'])
 def get_document_types():

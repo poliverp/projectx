@@ -1,12 +1,12 @@
 # --- backend/services/document_service.py ---
-from ..models import Case, Document # Import models
-from ..extensions import db        # Import db instance
+from backend.models import Case, Document # Import models
+from backend.extensions import db        # Import db instance
 import os # May be needed if service handles file deletion later
 import uuid
 from werkzeug.utils import secure_filename
 from flask import current_app # Needed for config access
 # Make sure utils path is correct relative to services/
-from ..utils.document_parser import extract_text_from_pdf, extract_text_from_docx
+from backend.utils.document_parser import extract_text_from_pdf, extract_text_from_docx
 
 
 # --- Define Exceptions ---

@@ -1,6 +1,6 @@
 # backend/app/services/discovery_service.py
-from ..models import Case
-from ..extensions import db
+from backend.models import Case
+from backend.extensions import db
 # May need other imports later (e.g., google.generativeai, pdf reader)
 
 def generate_interrogatory_responses(case_id: int, interrogatories_text: str):

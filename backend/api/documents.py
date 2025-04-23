@@ -3,16 +3,16 @@ import os
 import uuid # For potentially generating unique filenames
 from flask import request, jsonify, current_app # Import current_app
 from werkzeug.utils import secure_filename
-from ..extensions import db
-from ..models import Case, Document
+from backend.extensions import db
+from backend.models import Case, Document
 # Make sure this path is correct relative to the api folder
-from ..utils.document_parser import extract_text_from_pdf, extract_text_from_docx
+from backend.utils.document_parser import extract_text_from_pdf, extract_text_from_docx
 from . import bp # Import the blueprint
-from ..services.document_service import (
+from backend.services.document_service import (
     get_documents_for_case, delete_document_record, create_document_and_extract_text, # Add create
     DocumentNotFoundError, DocumentServiceError
 )
-from ..services.analysis_service import trigger_analysis_and_update, AnalysisServiceError, NoTextToAnalyzeError
+from backend.services.analysis_service import trigger_analysis_and_update, AnalysisServiceError, NoTextToAnalyzeError
 
 # Add ValueError to handle service exceptions
 from builtins import ValueError

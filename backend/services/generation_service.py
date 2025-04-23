@@ -5,7 +5,7 @@ import time
 from flask import current_app
 import google.generativeai as genai
 
-from ..services.case_service import get_case_by_id, CaseNotFoundError, CaseServiceError
+from backend.services.case_service import get_case_by_id, CaseNotFoundError, CaseServiceError
 
 class GenerationServiceError(Exception): pass
 class InvalidDocumentTypeError(GenerationServiceError): pass # New specific error

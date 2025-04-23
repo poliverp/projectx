@@ -4,10 +4,10 @@ import io
 from flask import send_file, current_app # Import send_file and current_app (might need current_app for config later)
 from flask import request, jsonify
 from docxtpl import DocxTemplate 
-from ..extensions import db # Import db from extensions
-from ..models import Case, Document # Import necessary models
+from backend.extensions import db # Import db from extensions
+from backend.models import Case, Document # Import necessary models
 from . import bp # Import the blueprint instance from api/__init__.py
-from ..services.case_service import (
+from backend.services.case_service import (
     create_case, get_all_cases, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
 )

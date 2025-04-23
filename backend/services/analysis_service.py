@@ -8,8 +8,8 @@ from google.generativeai.types import GenerationConfig # For JSON mode
 import traceback
 
 # Import necessary services and exceptions
-from ..services.document_service import get_document_by_id, update_document_analysis, DocumentNotFoundError, DocumentServiceError
-from ..services.case_service import get_case_by_id, update_case, CaseNotFoundError, CaseServiceError
+from backend.services.document_service import get_document_by_id, update_document_analysis, DocumentNotFoundError, DocumentServiceError
+from backend.services.case_service import get_case_by_id, update_case, CaseNotFoundError, CaseServiceError
 
 # --- Define Exceptions ---
 class AnalysisServiceError(Exception):
