@@ -36,6 +36,7 @@ function App() {
             <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
             <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
             <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
+            <Route path="/register" element={<RegistrationPage />} />
             {/* Add other routes as needed */}
             <Route path="*" element={
               <div>

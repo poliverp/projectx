@@ -11,11 +11,13 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  // IMPORTANT: For session-based auth (Flask-Login), we need the browser
+  // to handle cookies correctly. Axios needs 'withCredentials' set.
+  withCredentials: true, // <-- Add this for cookie handling
   headers: {
     'Content-Type': 'application/json',
-    // Example of sending the key as a header (adapt based on your backend needs)
-    // Common headers are 'Authorization': `Bearer ${YOUR_BACKEND_API_KEY}`
-    // or a custom header like 'X-API-Key': YOUR_BACKEND_API_KEY
+    // We will likely remove specific API key headers here later
+    // if using session cookies for auth.
   },
 });
 
@@ -37,12 +39,12 @@ export const uploadDocument = async (caseId, file, options = {}) => {
   formData.append('options', JSON.stringify(options)); // Send options like { analyze: true }
 
   try {
-    // Use axios directly for multipart/form-data if apiClient has default json headers
+    // Use axios directly for multipart/form-data to ensure correct headers
     const response = await axios.post(`${API_BASE_URL}/cases/${caseId}/documents`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-         // Add any auth headers needed if not handled globally by axios instance
       },
+      withCredentials: true, // <-- Also add here if uploads need authentication later
     });
     return response;
   } catch (error) {
@@ -55,25 +57,24 @@ export const deleteDocument = (documentId) => apiClient.delete(`/documents/${doc
 
 // --- Analysis & Creation ---
 export const analyzeDocument = (documentId) => {
-  // Make the actual POST request to the backend endpoint
-  // The apiClient already has the base URL and necessary headers (like X-API-Key) configured
+  // The apiClient already has the base URL configured
   return apiClient.post(`/documents/${documentId}/analyze`);
-  // No request body is needed for this specific endpoint currently
 };
 
-// Keep the createNewDocument placeholder for now
+// Function for AI text generation (if different from docx generation)
 export const generateDocument = (caseId, generationData) => {
   // generationData should be like { document_type: "...", custom_instructions: "..." }
   return apiClient.post(`/cases/${caseId}/generate_document`, generationData);
 };
 
+// Function for downloading generated Word documents
 export const downloadWordDocument = async (caseId, data) => {
   // data might include { template_name: '...' }
   try {
     console.log(`API: Requesting Word download for case ${caseId}`);
     const response = await apiClient.post(
-      `/cases/${caseId}/download_word_document`, // The new backend route
-      data, // Pass any data needed (like template_name)
+      `/cases/${caseId}/download_word_document`,
+      data,
       {
         responseType: 'blob', // Tell axios to expect binary file data
       }
@@ -116,21 +117,19 @@ export const downloadWordDocument = async (caseId, data) => {
   }
 };
 
-// --- NEW: Discovery Response Generation ---
+// --- Discovery Response Generation ---
 export const generateInterrogatoryResponses = async (caseId, file) => {
     const formData = new FormData();
     formData.append('file', file); // Key 'file' must match backend request.files['file']
 
-    // Use axios directly if apiClient default headers interfere with FormData.
-    // Otherwise, apiClient.post might work if configured correctly.
     // Using axios directly for clarity with multipart/form-data:
     try {
         // The path assumes '/api' is in API_BASE_URL and '/discovery' is the blueprint prefix
         const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/interrogatory-responses`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                 // Add any necessary auth headers like apiClient might have
-            }
+            },
+             withCredentials: true, // <-- Also add here if this needs authentication later
         });
         return response; // Return the full response object
     } catch (error) {
@@ -138,10 +137,33 @@ export const generateInterrogatoryResponses = async (caseId, file) => {
         throw error; // Re-throw to be caught by calling function
     }
 };
-// --- END NEW FUNCTION ---
+
+// --- NEW: Authentication Functions ---
+export const register = (userData) => {
+  // userData expects { username: '...', password: '...', email: '...' (optional) }
+  // Path matches blueprint registration: /api/auth/register
+  return apiClient.post('/auth/register', userData);
+};
+
+// Add login, logout, status functions here later...
+export const login = (credentials) => {
+    // credentials expects { username: '...', password: '...', remember: boolean }
+    return apiClient.post('/auth/login', credentials);
+};
+
+export const logout = () => {
+    // Doesn't need payload, relies on session cookie
+    return apiClient.post('/auth/logout');
+};
+
+export const getAuthStatus = () => {
+    // Checks session cookie to see if user is logged in
+    return apiClient.get('/auth/status');
+};
+// --- END Authentication Functions ---
 
 
-// Optional default export combining all functions
+// Default export combining all functions
 const api = {
   getCases,
   getCase,
@@ -155,7 +177,13 @@ const api = {
   getDocumentTypes,
   generateDocument,
   downloadWordDocument,
-  generateInterrogatoryResponses // <-- Added new function here
+  generateInterrogatoryResponses,
+  // --- Add Auth functions to default export ---
+  register,
+  login,
+  logout,
+  getAuthStatus
+  // --- End Auth functions ---
 };
 
 export default api;
