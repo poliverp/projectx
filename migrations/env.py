@@ -1,5 +1,6 @@
 import logging
 import os # Import os to access environment variables
+import sqlalchemy as sa
 from logging.config import fileConfig
 
 # Import current_app carefully, it might not always be available
