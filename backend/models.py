@@ -62,5 +62,17 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
+    
+    # Inside class User(UserMixin, db.Model):
+ # ... (keep existing columns and methods) ...
+
+    def to_dict(self):
+        # Exclude sensitive information like password hash
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email
+            # Add other safe fields if needed
+        }
         
 # Add other models if needed (e.g., Users, AnalysisResults)

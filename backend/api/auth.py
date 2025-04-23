@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from backend.models import User # Import User model
 from backend.extensions import db # Import db instance
 from sqlalchemy.exc import IntegrityError # To catch potential unique constraint errors
-
+from flask_login import login_user, logout_user, login_required, current_user
 # Create blueprint instance
 auth_bp = Blueprint('auth', __name__)
 
@@ -57,5 +57,67 @@ def register():
         db.session.rollback()
         print(f"Error during registration for {username}: {e}")
         return jsonify({"error": "An unexpected error occurred during registration"}), 500
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """Handles user login."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No input data provided"}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+    remember = data.get('remember', False) # Optional "Remember Me" functionality
+
+    if not username or not password:
+        return jsonify({"error": "Missing username or password"}), 400
+
+    # Find user by username
+    user = User.query.filter_by(username=username).first()
+
+    # Validate user exists and password is correct
+    if user is None or not user.check_password(password):
+        # Generic error to avoid revealing if username exists or not
+        return jsonify({"error": "Invalid username or password"}), 401 # 401 Unauthorized
+
+    # Log the user in using Flask-Login's function
+    # This manages the session cookie
+    login_user(user, remember=remember)
+
+    print(f"User logged in successfully: {username}")
+    # Return user info (excluding hash) on successful login
+    return jsonify({
+        "message": "Login successful",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+            # Add any other non-sensitive fields needed by frontend
+        }
+    }), 200
+
+@auth_bp.route('/logout', methods=['POST'])
+@login_required # Ensure user must be logged in to log out
+def logout():
+    """Handles user logout."""
+    username = current_user.username # Get username before logout for logging
+    logout_user() # Clears the user session cookie
+    print(f"User logged out: {username}")
+    return jsonify({"message": "Logout successful"}), 200
+
+@auth_bp.route('/status')
+@login_required # Requires user to be logged in
+def status():
+    """Returns information about the currently logged-in user."""
+    # current_user is populated by Flask-Login's user_loader
+    return jsonify({
+        "user": {
+            "id": current_user.id,
+            "username": current_user.username,
+            "email": current_user.email
+            # Add other non-sensitive fields
+        }
+     }), 200
+
 
 # --- Add Login, Logout routes below later ---
