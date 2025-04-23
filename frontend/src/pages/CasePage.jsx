@@ -467,7 +467,7 @@ function CasePage() {
        <Link to={`/case/${caseId}/files`} className="button-link">View/Upload Files</Link>
        <Link to={`/case/${caseId}/analyze`} className="button-link" style={{backgroundColor: '#17a2b8'}}>Doc Analysis Page [PH]</Link>
        <Link to={`/case/${caseId}/create-doc`} className="button-link" style={{backgroundColor: '#28a745'}}>Create Document</Link>
-       <Link to={`/case/${caseId}/create-discovery-response`} className="button-link" style={{backgroundColor: '#28a745'}}>Create Discovery Response</Link>
+       <Link to={`/case/${caseId}/create-discovery-response`} className="button-link" style={{backgroundColor: '#6f42c1'}}>Create Discovery Response</Link>
       </div>
 
       {/* Navigation back (Unchanged) */}
