@@ -1,7 +1,8 @@
 # backend/__init__.py
 import os
-from flask import Flask
+from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+
 
 # Import extensions from our extensions module
 # Ensure backend/extensions.py exists and defines these instances
@@ -62,6 +63,19 @@ def create_app(config_class_name=None): # config_class_name is optional now
     migrate.init_app(app, db)
     login_manager.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": app.config['FRONTEND_URL']}}, supports_credentials=True)
+
+    # Configure Flask-Login unauthorized handler for APIs
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        # Return 401 Unauthorized for API requests instead of redirecting
+        # Check if the request likely expects JSON
+        if request.blueprint and request.blueprint.startswith('api'):
+            # Or check request.accept_mimetypes.accept_json
+            return jsonify(error="Login required"), 401
+        # For non-API requests, you could still redirect (optional)
+        # return redirect(url_for('auth.login', next=request.path)) # Requires url_for
+        # Or just return the 401 for everything
+        return jsonify(error="Login required"), 401
 
     # --- Configure Flask-Login ---
     # Tell Flask-Login where the login route is located.

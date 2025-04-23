@@ -9,6 +9,7 @@ import CreateDocumentPage from './pages/CreateDocumentPage';
 import CreateCasePage from './pages/CreateCasePage';
 import CreateDiscoveryPage2 from './pages/CreateDiscoveryPage2.jsx'; 
 import RegistrationPage from './pages/RegistrationPage';
+import LoginPage from './pages/LoginPage';
 // Import other pages as needed
 
 function App() {
