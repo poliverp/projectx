@@ -24,6 +24,14 @@ function App() {
             <NavLink to="/manage-cases" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}>
                 Manage Cases
             </NavLink>
+               {/* --- TEMP: Add Auth Links --- */}
+            <NavLink to="/login" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginLeft: '20px' })}>
+              Login
+            </NavLink>
+            <NavLink to="/register" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginLeft: '10px' })}>
+              Register
+            </NavLink>
+            {/* --- END TEMP --- */}
           </nav>
         </header>
 
@@ -38,6 +46,7 @@ function App() {
             <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
             <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
             <Route path="/register" element={<RegistrationPage />} />
+            <Route path="/login" element={<LoginPage />} />
             {/* Add other routes as needed */}
             <Route path="*" element={
               <div>
