@@ -7,7 +7,7 @@ import FilesPage from './pages/FilesPage';
 import DocumentAnalysisPage from './pages/DocumentAnalysisPage';
 import CreateDocumentPage from './pages/CreateDocumentPage';
 import CreateCasePage from './pages/CreateCasePage';
-import CreateDiscoveryPage from './pages/CreateDiscoveryPage.jsx'; 
+import CreateDiscoveryPage2 from './pages/CreateDiscoveryPage2.jsx'; 
 // Import other pages as needed
 
 function App() {
@@ -35,7 +35,7 @@ function App() {
             <Route path="/case/:caseId/files" element={<FilesPage />} />
             <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
             <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
-            <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage />} />
+            <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
             {/* Add other routes as needed */}
             <Route path="*" element={
               <div>
