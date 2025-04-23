@@ -79,12 +79,13 @@ function RegistrationPage() {
           />
         </div>
         <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="email" style={{ marginRight: '5px' }}>Email (Optional):</label>
+          <label htmlFor="email" style={{ marginRight: '5px' }}>Email:</label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
         <button type="submit" disabled={isLoading}>
