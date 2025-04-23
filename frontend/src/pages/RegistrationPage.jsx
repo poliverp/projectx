@@ -1,15 +1,27 @@
 // frontend/src/pages/RegistrationPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api'; // Or use named export: import { register } from '../services/api';
+import { useAuth } from '../context/AuthContext'; // Import useAuth hook
+import api from '../services/api';
 
 function RegistrationPage() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth(); // Get currentUser from context
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState(''); // Optional
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // --- ADDED: Redirect if already logged in ---
+  useEffect(() => {
+    // If the user is already logged in (currentUser exists), redirect them
+    if (currentUser) {
+      console.log('User already logged in, redirecting from Register page...');
+      navigate('/manage-cases'); // Or redirect to '/' or another default page
+    }
+  }, [currentUser, navigate]); // Re-run if currentUser or navigate changes
+  // --- END ADDED ---
 
   const handleRegister = async (event) => {
     event.preventDefault();
@@ -23,19 +35,23 @@ function RegistrationPage() {
     }
 
     try {
-      // Use the actual API function call
       const response = await api.register({ username, password, email });
       console.log('Registration successful:', response.data);
-      // Redirect to login page on successful registration
-      navigate('/login'); // We'll create this route next
+      // Maybe show a success message before redirecting?
+      alert('Registration successful! Please log in.'); // Simple alert for now
+      navigate('/login'); // Redirect to login page on successful registration
     } catch (err) {
       console.error('Registration failed:', err);
-      // Display error from backend response if available
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Render nothing or a loading indicator while redirecting
+  if (currentUser) {
+      return <div>Redirecting...</div>;
+  }
 
   return (
     <div>

@@ -1,17 +1,27 @@
 // frontend/src/pages/LoginPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Import useAuth hook
-import api from '../services/api'; // Or: import { login as apiLogin } from ...
+import api from '../services/api';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // Get the login function from context
+  const { login, currentUser } = useAuth(); // Get login function AND currentUser from context
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // --- ADDED: Redirect if already logged in ---
+  useEffect(() => {
+    // If the user is already logged in (currentUser exists), redirect them
+    if (currentUser) {
+      console.log('User already logged in, redirecting from Login page...');
+      navigate('/manage-cases'); // Or redirect to '/' or another default page
+    }
+  }, [currentUser, navigate]); // Re-run if currentUser or navigate changes
+  // --- END ADDED ---
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -25,16 +35,14 @@ function LoginPage() {
     }
 
     try {
-      // Call the actual API function
       const response = await api.login({ username, password, remember });
       console.log('Login successful:', response.data);
-
-      // If API call succeeds, update the global auth state via context
       if (response.data && response.data.user) {
         login(response.data.user); // Update context state
-        navigate('/manage-cases'); // Redirect to case list or dashboard
+        // Navigate AFTER state update might be slightly safer,
+        // but usually navigate here is fine. Protected routes handle the rest.
+        navigate('/manage-cases');
       } else {
-         // Should not happen if backend sends correct response
          setError('Login succeeded but no user data received.');
       }
     } catch (err) {
@@ -44,6 +52,11 @@ function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  // Render nothing or a loading indicator while redirecting
+  if (currentUser) {
+      return <div>Redirecting...</div>;
+  }
 
   return (
     <div>

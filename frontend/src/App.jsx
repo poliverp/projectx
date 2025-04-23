@@ -10,45 +10,69 @@ import CreateCasePage from './pages/CreateCasePage';
 import CreateDiscoveryPage2 from './pages/CreateDiscoveryPage2.jsx'; 
 import RegistrationPage from './pages/RegistrationPage';
 import LoginPage from './pages/LoginPage';
+import { useAuth } from './context/AuthContext'; // Import useAuth
+import ProtectedRoute from './components/ProtectedRoute';
 // Import other pages as needed
 
 function App() {
+  const { currentUser, logout } = useAuth(); // Get user state and logout function
   return (
     <Router>
       <div className="app-container">
         <header>
           <nav>
-            {/* Use NavLink for active styling */}
             <NavLink to="/" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}>
-                Home
+              Home
             </NavLink>
-            <NavLink to="/manage-cases" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}>
+            {/* Only show Manage Cases if logged in */}
+            {currentUser && (
+              <NavLink to="/manage-cases" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginLeft: '10px' })}>
                 Manage Cases
-            </NavLink>
-               {/* --- TEMP: Add Auth Links --- */}
-            <NavLink to="/login" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginLeft: '20px' })}>
-              Login
-            </NavLink>
-            <NavLink to="/register" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginLeft: '10px' })}>
-              Register
-            </NavLink>
-            {/* --- END TEMP --- */}
+              </NavLink>
+            )}
+
+            <div style={{ marginLeft: 'auto' }}> {/* Pushes auth links to the right */}
+              {currentUser ? (
+                <>
+                  <span style={{ marginRight: '10px' }}>Welcome, {currentUser.username}!</span>
+                  <button onClick={logout} style={{ /* Add button styling */ }}>
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/login" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginRight: '10px' })}>
+                    Login
+                  </NavLink>
+                  <NavLink to="/register" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}>
+                    Register
+                  </NavLink>
+                </>
+              )}
+            </div>
           </nav>
         </header>
 
         <main>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<HomeScreen />} />
-            <Route path="/manage-cases" element={<ManageCasesScreen />} />
-            <Route path="/cases/new" element={<CreateCasePage />} /> {/* <-- ADD THIS ROUTE */}
-            <Route path="/case/:caseId" element={<CasePage />} />
-            <Route path="/case/:caseId/files" element={<FilesPage />} />
-            <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
-            <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
-            <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
-            <Route path="/register" element={<RegistrationPage />} />
             <Route path="/login" element={<LoginPage />} />
-            {/* Add other routes as needed */}
+            <Route path="/register" element={<RegistrationPage />} />
+             
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              {/* Routes nested inside here require authentication */}
+              <Route path="/manage-cases" element={<ManageCasesScreen />} />
+              <Route path="/cases/new" element={<CreateCasePage />} /> {/* <-- ADD THIS ROUTE */}
+              <Route path="/case/:caseId" element={<CasePage />} />
+              <Route path="/case/:caseId/files" element={<FilesPage />} />
+              <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
+              <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
+              <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
+              {/* Add any other routes that need protection */}
+            </Route>
+
             <Route path="*" element={
               <div>
                 <h2>404 - Page Not Found</h2>
