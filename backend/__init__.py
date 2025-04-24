@@ -52,6 +52,11 @@ def create_app(config_class_name=None): # config_class_name is optional now
     app.config['FRONTEND_URL'] = os.environ.get('FRONTEND_URL', '*') # Default to * ONLY if not set
     print(f"--- [INIT] Allowed CORS Origin: {app.config['FRONTEND_URL']}")
 
+    # --- ADDED: Configure Session Cookie for Production/Cross-Site ---
+    app.config['SESSION_COOKIE_SECURE'] = True  # Send cookie only over HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent client-side JS access
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' # Allow sending with cross-site requests (Required for cross-origin credentialed requests)
+    # --- END ADDED ---
 
     # --- Initialize Flask Extensions ---
     db.init_app(app)
