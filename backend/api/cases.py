@@ -3,6 +3,8 @@ import os # Needed for delete file path
 import io
 from flask import send_file, current_app # Import send_file and current_app (might need current_app for config later)
 from flask import request, jsonify
+from flask_login import login_required, current_user # <-- ADDED/ENSURE THIS
+from werkzeug.exceptions import Forbidden # <-- ADDED/ENSURE THIS
 from docxtpl import DocxTemplate 
 from backend.extensions import db # Import db from extensions
 from backend.models import Case, Document # Import necessary models
@@ -124,12 +126,13 @@ def handle_cases():
 
 # Route for getting ONE specific case
 @bp.route('/cases/<int:case_id>', methods=['GET'])
+@login_required # <-- ADDED: Require user to be logged in
 def get_case_details(case_id):
     """Fetches details for a specific case."""
-    print(f"--- Handling GET /api/cases/{case_id} (Blueprint) ---")
+    print(f"--- Handling GET /api/cases/{case_id} (AUTH REQUIRED) ---") # <-- MODIFIED: Added print/note
     try:
         # Use .first_or_404() for slightly cleaner handling
-        target_case = db.session.get(Case, case_id) # Use newer session.get syntax
+        target_case = get_case_by_id(case_id, user_id=current_user.id) # <-- MODIFIED: Pass current_user.id
         if target_case is None:
             return jsonify({'error': 'Case not found'}), 404
 
@@ -143,7 +146,8 @@ def get_case_details(case_id):
             'defendant': target_case.defendant,
             'created_at': target_case.created_at.isoformat() if target_case.created_at else None,
             'updated_at': target_case.updated_at.isoformat() if target_case.updated_at else None,
-            'case_details': target_case.case_details # Include the details field
+            'case_details': target_case.case_details, # Include the details field
+            'user_id': target_case.user_id # <-- ADDED: Good practice to include owner ID
         }
         return jsonify(case_data)
     except Exception as e:
