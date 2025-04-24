@@ -1,10 +1,11 @@
 // frontend/src/App.jsx
 import React from 'react';
+// Import useLocation if needed for more complex active link styling
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
 import { useAuth } from './context/AuthContext'; // Import useAuth
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Import default CSS
 // --- Import Pages ---
-// import HomeScreen from './pages/HomeScreen'; // Keep if used elsewhere, otherwise remove
 import ManageCasesScreen from './pages/ManageCasesScreen';
 import CasePage from './pages/CasePage';
 import FilesPage from './pages/FilesPage';
@@ -12,46 +13,74 @@ import DocumentAnalysisPage from './pages/DocumentAnalysisPage';
 import CreateDocumentPage from './pages/CreateDocumentPage';
 import CreateCasePage from './pages/CreateCasePage';
 import RegistrationPage from './pages/RegistrationPage';
-import CreateDiscoveryPage2 from'./pages/CreateDiscoveryPage2';
-import LoginPage from './pages/LoginPage'; // <-- Ensure Login Page is imported
-import ProtectedRoute from './components/ProtectedRoute'; // <-- Ensure ProtectedRoute is imported
+import CreateDiscoveryPage2 from'./pages/CreateDiscoveryPage2'; // Ensure correct name
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const { currentUser, logout } = useAuth(); // Get user state and logout function
+  // const location = useLocation(); // Import if using location in NavLink style
 
   return (
     <Router>
       <div className="app-container">
+        <ToastContainer
+            position="top-right" // Or "bottom-right", "top-center", etc.
+            autoClose={5000} // Auto close after 5 seconds
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light" // Or "dark" or "colored"
+        />
         <header>
           <nav>
-            {/* Conditionally render Home link? Or always show? */}
-            <NavLink to="/" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}>
-               {/* Changed from Home - maybe just show brand/title? Or conditionally '/' or '/manage-cases'? */}
-               App Home
+            {/* --- MODIFIED: Context-Aware Main Link --- */}
+            <NavLink
+              // Link to manage-cases if logged in, otherwise to login page ('/')
+              to={currentUser ? "/manage-cases" : "/"}
+              // Basic style, adjust active style as needed
+              style={({ isActive }) => ({
+                  fontWeight: isActive ? 'bold' : 'normal',
+                  marginRight: '10px' // Added margin
+              })}
+              // 'end' prop helps ensure '/' only matches exactly when logged out
+              end={!currentUser}
+            >
+              {/* Change link text based on login status */}
+              {currentUser ? "My Cases" : "Login"}
             </NavLink>
+            {/* --- END MODIFIED Link --- */}
 
-            {/* Only show Manage Cases if logged in */}
-            {currentUser && (
+
+            {/* NOTE: Separate "Manage Cases" link is likely redundant now */}
+            {/* {currentUser && (
               <NavLink to="/manage-cases" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginLeft: '10px' })}>
                 Manage Cases
               </NavLink>
-            )}
+            )} */}
 
-            <div style={{ marginLeft: 'auto' }}> {/* Pushes auth links/info to the right */}
+            {/* --- Auth links/info pushed to the right --- */}
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
               {currentUser ? (
                 <>
-                  <span style={{ marginRight: '10px' }}>Welcome, {currentUser.username}!</span>
-                  <button onClick={logout} style={{ /* Add button styling */ }}>
+                  <span style={{ marginRight: '15px' }}>
+                    Welcome, {currentUser.username}! {/* Display username */}
+                  </span>
+                  <button onClick={logout} className="button-link-style"> {/* Added example class */}
                     Logout
                   </button>
                 </>
               ) : (
                 <>
-                  {/* Login link might be redundant if '/' is login, but keep for clarity? */}
-                  <NavLink to="/login" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginRight: '10px' })}>
+                  {/* NOTE: Separate Login link is redundant now as "/" is Login */}
+                  {/* <NavLink to="/login" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal', marginRight: '10px' })}>
                     Login
-                  </NavLink>
-                  <NavLink to="/register" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}>
+                  </NavLink> */}
+                  <NavLink to="/register" className="button-link-style" style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}> {/* Added example class */}
                     Register
                   </NavLink>
                 </>
@@ -62,18 +91,12 @@ function App() {
 
         <main>
           <Routes>
-            {/* --- MODIFIED Public Routes --- */}
-            {/* Point the root path directly to the Login Page */}
+            {/* Public Routes */}
             <Route path="/" element={<LoginPage />} />
-            {/* Point /login to the same component */}
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} /> {/* Keep for explicit /login URLs */}
             <Route path="/register" element={<RegistrationPage />} />
-            {/* The original HomeScreen route for "/" is removed/replaced */}
-            {/* <Route path="/home-original" element={<HomeScreen />} />  <-- If you want to keep it accessible */}
 
-
-            {/* --- Keep Protected Routes --- */}
-            {/* Routes nested inside ProtectedRoute require authentication */}
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/manage-cases" element={<ManageCasesScreen />} />
               <Route path="/cases/new" element={<CreateCasePage />} />
@@ -82,21 +105,20 @@ function App() {
               <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
               <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
               <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
-              {/* Add any other routes that need protection here */}
             </Route>
 
-            {/* --- Keep Not Found Route --- */}
+            {/* Not Found Route */}
             <Route path="*" element={
               <div>
                 <h2>404 - Page Not Found</h2>
-                <Link to="/">Go Home</Link> {/* Sends to Login Page now */}
+                <Link to="/">Go Home</Link> {/* Sends to Login Page */}
               </div>
             } />
           </Routes>
         </main>
 
         {/* Optional Footer */}
-        {/* <footer> <p>&copy; 2025 Case Manager</p> </footer> */}
+        {/* <footer> <p>&copy; {new Date().getFullYear()} AI Litigation App</p> </footer> */}
       </div>
     </Router>
   );

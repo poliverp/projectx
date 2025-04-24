@@ -38,11 +38,13 @@ function RegistrationPage() {
       const response = await api.register({ username, password, email });
       console.log('Registration successful:', response.data);
       // Maybe show a success message before redirecting?
-      alert('Registration successful! Please log in.'); // Simple alert for now
+      toast.success('Registration successful! Please log in.');
       navigate('/login'); // Redirect to login page on successful registration
     } catch (err) {
       console.error('Registration failed:', err);
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const errorMsg = err.response?.data?.error || 'Registration failed. Please try again.';
+      setError(errorMsg); // Keep setting state for inline error display
+      toast.error(errorMsg); // Also show a toast notification for the error
     } finally {
       setIsLoading(false);
     }

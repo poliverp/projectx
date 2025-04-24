@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'; // Added useEffect
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Import useAuth hook
 import api from '../services/api';
+import { toast } from 'react-toastify'; // <-- Import toast
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -39,15 +40,18 @@ function LoginPage() {
       console.log('Login successful:', response.data);
       if (response.data && response.data.user) {
         login(response.data.user); // Update context state
-        // Navigate AFTER state update might be slightly safer,
-        // but usually navigate here is fine. Protected routes handle the rest.
+        toast.success(`Welcome back, ${response.data.user.username}!`); // Success toast
         navigate('/manage-cases');
       } else {
-         setError('Login succeeded but no user data received.');
+        const errorMsg = 'Login succeeded but no user data received.';
+        setError(errorMsg);
+        toast.warn(errorMsg); // Use warning toast
       }
     } catch (err) {
       console.error('Login failed:', err);
-      setError(err.response?.data?.error || 'Login failed. Please check credentials.');
+      const errorMsg = err.response?.data?.error || 'Login failed. Please check credentials.';
+      setError(errorMsg); // Keep for inline error
+      toast.error(errorMsg); // Show toast error
     } finally {
       setIsLoading(false);
     }
