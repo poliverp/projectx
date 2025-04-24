@@ -1,6 +1,15 @@
+// frontend/src/pages/ManageCasesScreen.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { toast } from 'react-toastify';
+// --- ADDED: Ant Design Imports ---
+import { Table, Button, Input, Space, Typography, Popconfirm, Alert, Spin } from 'antd';
+import { PlusOutlined, DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+// --- END ADDED ---
+
+const { Title } = Typography;
+const { Search } = Input;
 
 function ManageCasesScreen() {
   const [cases, setCases] = useState([]);
@@ -9,7 +18,7 @@ function ManageCasesScreen() {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  // Fetch cases function using useCallback to memoize
+  // Fetch cases function (Keep existing useCallback)
   const fetchCases = useCallback(() => {
     setLoading(true);
     api.getCases()
@@ -19,114 +28,155 @@ function ManageCasesScreen() {
       })
       .catch(err => {
         console.error("Error fetching cases:", err);
-        setError("Failed to load cases. Is the backend running?");
+        const errorMsg = err.response?.data?.error || "Failed to load cases. Please try again.";
+        setError(errorMsg);
+        // toast.error(errorMsg); // Optionally show toast on fetch error
         setCases([]);
       })
       .finally(() => setLoading(false));
-  }, []); // No dependencies, fetchCases is stable
+  }, []);
 
-  // Fetch cases on component mount
+  // Fetch cases on component mount (Keep existing useEffect)
   useEffect(() => {
     fetchCases();
   }, [fetchCases]);
 
-  // Filter cases based on search term, memoized for performance
+  // Filter cases based on search term (Keep existing useMemo)
   const filteredCases = useMemo(() => {
     const lowerSearchTerm = searchTerm.toLowerCase();
     if (!lowerSearchTerm) {
-      return cases; // Return all cases if search is empty
+      return cases;
     }
+    // Filter primarily on display_name, add others if desired
     return cases.filter(c =>
-      c.display_name.toLowerCase().includes(lowerSearchTerm)
+      (c.display_name?.toLowerCase() || '').includes(lowerSearchTerm) ||
+      (c.official_case_name?.toLowerCase() || '').includes(lowerSearchTerm) ||
+      (c.case_number?.toLowerCase() || '').includes(lowerSearchTerm)
     );
-  }, [searchTerm, cases]); // Re-filter only when search or cases change
+  }, [searchTerm, cases]);
 
- // Add this function back inside the ManageCasesScreen component
-  const handleCreateCase = async () => {
-    const newCaseName = prompt("Enter new case display name:");
-    if (newCaseName && newCaseName.trim()) {
-        const trimmedName = newCaseName.trim();
-        // Optional: Client-side check (backend check is more reliable)
-        if (cases.some(c => c.display_name.toLowerCase() === trimmedName.toLowerCase())) {
-            alert("A case with this name already exists (client-side check).");
-            return;
-        }
-        try {
-            setLoading(true); // Use existing loading state
-            setError(null);   // Use existing error state
-            // Send ONLY display_name to the backend
-            const response = await api.createCase({ display_name: trimmedName });
-            // Successfully created, refresh the list to show the new case
-            fetchCases(); // Assumes fetchCases updates the 'cases' state
-        } catch (err) {
-            console.error("Error creating case:", err);
-            setError(`Failed to create case: ${err.response?.data?.error || err.message}`);
-        } finally {
-            setLoading(false);
-        }
+  // --- REMOVED: handleCreateCase using prompt ---
+
+  // Handle Delete (Adapts slightly for Popconfirm)
+  const handleDeleteCase = async (caseId) => {
+    setLoading(true); // Indicate loading during delete
+    setError(null);
+    try {
+      await api.deleteCase(caseId);
+      setCases(prevCases => prevCases.filter(c => c.id !== caseId)); // Update state
+      toast.success('Case deleted successfully!'); // Use toast for feedback
+    } catch (err) {
+      console.error("Error deleting case:", err);
+      const errorMsg = `Failed to delete case: ${err.response?.data?.error || err.message}`;
+      setError(errorMsg);
+      toast.error(errorMsg); // Show error toast
+    } finally {
+        setLoading(false);
     }
   };
 
-  const handleDeleteCase = async (caseId, caseName) => {
-    if (window.confirm(`Are you sure you want to delete case "${caseName}"? This action cannot be undone.`)) {
-      try {
-        setLoading(true);
-        await api.deleteCase(caseId);
-        setCases(prevCases => prevCases.filter(c => c.id !== caseId)); // Remove from state
-        setError(null);
-      } catch (err) {
-        console.error("Error deleting case:", err);
-        setError(`Failed to delete case: ${err.response?.data?.error || err.message}`);
-      } finally {
-          setLoading(false);
-      }
-    }
-  };
+  // --- ADDED: Define columns for AntD Table ---
+  const columns = [
+    {
+      title: 'Display Name',
+      dataIndex: 'display_name',
+      key: 'display_name',
+      sorter: (a, b) => a.display_name.localeCompare(b.display_name),
+      render: (text, record) => <Link to={`/case/${record.id}`}>{text}</Link>, // Make name a link
+    },
+    {
+      title: 'Official Name',
+      dataIndex: 'official_case_name',
+      key: 'official_case_name',
+      sorter: (a, b) => (a.official_case_name || '').localeCompare(b.official_case_name || ''),
+    },
+    {
+      title: 'Case Number',
+      dataIndex: 'case_number',
+      key: 'case_number',
+    },
+    {
+      title: 'Last Updated',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
+      render: (date) => date ? new Date(date).toLocaleDateString() : '-', // Format date
+      sorter: (a, b) => new Date(a.updated_at || 0) - new Date(b.updated_at || 0),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => ( // Use '_' if first argument (text) isn't needed
+        <Space size="middle">
+          <Button
+             type="link" // Use link style button for less emphasis
+             icon={<EyeOutlined />}
+             onClick={() => navigate(`/case/${record.id}`)}
+          >
+            View
+          </Button>
+          {/* Add Edit button later */}
+          {/* <Button type="link" icon={<EditOutlined />} onClick={() => navigate(`/case/${record.id}/edit`)}>Edit</Button> */}
+          <Popconfirm
+            title="Delete the case"
+            description={`Are you sure you want to delete "${record.display_name}"?`}
+            onConfirm={() => handleDeleteCase(record.id)}
+            okText="Yes"
+            cancelText="No"
+            okButtonProps={{ danger: true }} // Make OK button red
+          >
+            <Button danger icon={<DeleteOutlined />}> {/* Use danger style button */}
+                Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+  // --- END ADDED ---
+
 
   return (
     <div>
-      <h1>Manage Cases</h1>
+      {/* Use AntD Typography Title */}
+      <Title level={2}>Manage Cases</Title>
 
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-      <button onClick={handleCreateCase} disabled={loading}>
-        Create New Case
-      </button>
-        <input
-          type="search"
-          placeholder="Filter cases by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          aria-label="Filter cases"
+      {/* Use AntD Space, Button, Input.Search */}
+      <Space style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap' }}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => navigate('/cases/new')} // Navigate to create page
+          disabled={loading}
+        >
+          Create New Case
+        </Button>
+        <Search
+          placeholder="Filter cases..."
+          allowClear // Adds a clear button
+          onSearch={(value) => setSearchTerm(value)} // Can trigger search on Enter
+          onChange={(e) => setSearchTerm(e.target.value)} // Update search term as user types
+          style={{ width: 300 }}
+          loading={loading && cases.length > 0} // Show loading indicator on search if desired
         />
-         <Link to="/" className="button-link" style={{backgroundColor: '#6c757d'}}>Back to Home</Link>
-      </div>
+        {/* Keep Back link if needed, maybe style as button */}
+        {/* <Button><Link to="/">Back to Home</Link></Button> */}
+      </Space>
 
-      {loading && <p className="loading-message">Loading...</p>}
-      {error && <p className="error-message">Error: {error}</p>}
+      {/* Use AntD Alert for general errors */}
+      {error && <Alert message={error} type="error" closable onClose={() => setError(null)} style={{ marginBottom: '20px' }} />}
 
-      {!loading && (
-        <ul>
-          {filteredCases.length > 0 ? filteredCases.map(c => (
-            <li key={c.id}>
-              <Link to={`/case/${c.id}`} title={`View case ${c.display_name}`}>
-                {c.display_name}
-              </Link>
-              {/* Consider adding an Edit button here later */}
-              {/* <button onClick={() => navigate(`/case/${c.id}/edit`)} style={{backgroundColor: '#ffc107'}}>Edit</button> */}
-              <button
-                onClick={() => handleDeleteCase(c.id, c.display_name)}
-                className="button-danger"
-                disabled={loading}
-                aria-label={`Delete case ${c.display_name}`}
-              >
-                Delete
-              </button>
-            </li>
-          )) : (
-            <li>No cases found{searchTerm ? ' matching your filter' : ''}.</li>
-          )}
-        </ul>
-      )}
+      {/* Use AntD Table to display cases */}
+      <Table
+        columns={columns}
+        dataSource={filteredCases} // Use the memoized filtered data
+        loading={loading} // Use AntD Table's loading state
+        rowKey="id" // Specify the unique key for each row
+        pagination={{ pageSize: 10 }} // Optional: configure pagination
+      />
+
+      {/* Remove old loading/list logic */}
+      {/* {loading && <p className="loading-message">Loading...</p>} */}
+      {/* {!loading && !error && ( ... <ul> ... </ul> )} */}
     </div>
   );
 }

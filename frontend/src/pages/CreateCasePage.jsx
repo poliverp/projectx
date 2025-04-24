@@ -2,192 +2,220 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api'; // Adjust path if needed
+import {
+    Form,
+    Input,
+    Button,
+    Typography,
+    Alert,
+    Space,
+    Spin, // Import Spin for visual feedback if needed elsewhere, Button handles its own loading
+    Card // Import Card for layout consistency
+} from 'antd';
+import { SaveOutlined, CloseCircleOutlined } from '@ant-design/icons'; // Import relevant icons
+
+const { Title } = Typography;
 
 function CreateCasePage() {
     const navigate = useNavigate();
+    // Ant Design Form instance
+    const [form] = Form.useForm();
 
-    // State for form fields - matches backend Case model attributes
-    const [displayName, setDisplayName] = useState('');
-    const [officialCaseName, setOfficialCaseName] = useState('');
-    const [caseNumber, setCaseNumber] = useState('');
-    const [judge, setJudge] = useState('');
-    const [plaintiff, setPlaintiff] = useState('');
-    const [defendant, setDefendant] = useState('');
-    // We might add a state for case_details later if needed, or handle it differently
-
-    // State for loading and errors during submission
+    // State for loading and errors during submission - Keep these
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Replace the existing handleSubmit placeholder with this:
-    const handleSubmit = async (event) => {
-        event.preventDefault(); // Prevent default page reload on form submission
+    // --- Refactored Submission Handler for Ant Design Form ---
+    // 'onFinish' is called by Ant Design Form when validation passes
+    const onFinish = async (values) => {
         setLoading(true);
         setError(null);
 
-        // --- 1. Basic Client-Side Validation ---
-        // Check if required fields (like display_name) are filled
-        if (!displayName.trim()) {
-            setError("Display Name is required.");
-            setLoading(false);
-            return; // Stop submission if validation fails
-        }
+        // 'values' object contains form field data, keys match 'name' prop in Form.Item
+        // e.g., values.display_name, values.official_case_name
 
-        // --- 2. Construct Data Payload ---
-        // Create the object to send to the API.
-        // Keys MUST match what the backend API/service expects (e.g., display_name, not displayName).
+        console.log("Form values received:", values);
+
+        // Construct Data Payload (keys should match backend expectations)
         const caseData = {
-            display_name: displayName.trim(),
-            // Use .trim() and send null if the string is empty after trimming,
-            // as the backend columns are nullable. Avoid sending empty strings ""
-            // if the backend expects null for empty optional fields.
-            official_case_name: officialCaseName.trim() || null,
-            case_number: caseNumber.trim() || null,
-            judge: judge.trim() || null,
-            plaintiff: plaintiff.trim() || null,
-            defendant: defendant.trim() || null,
-            // Initialize case_details as an empty object if your backend expects it,
-            // otherwise omit it or set to null if appropriate.
-            // case_details: {}
+            display_name: values.display_name?.trim() || '', // Use ?. and provide default
+            official_case_name: values.official_case_name?.trim() || null,
+            case_number: values.case_number?.trim() || null,
+            judge: values.judge?.trim() || null,
+            plaintiff: values.plaintiff?.trim() || null,
+            defendant: values.defendant?.trim() || null,
+            // case_details: {} // Initialize if needed
         };
 
-        console.log("Submitting New Case Data:", caseData); // For debugging
+        console.log("Submitting New Case Data:", caseData);
 
-        // --- 3. Call API ---
         try {
-            const response = await api.createCase(caseData); // Call the API function
+            // Call API
+            const response = await api.createCase(caseData); // Assumes api.createCase exists
             console.log("Case created successfully:", response.data);
 
-            // --- 4. Handle Success ---
-            // Assuming the backend returns the newly created case object with its 'id'
+            // Handle Success
             const newCaseId = response.data?.id;
-
             if (newCaseId) {
-                // Navigate to the newly created case's detail page
+                // Optionally show success message before navigating
+                 // Consider using Ant Design message for consistency if desired
+                // message.success('Case created successfully!');
+                alert("Case created successfully!"); // Keep alert for now
                 navigate(`/case/${newCaseId}`);
             } else {
-                // Fallback if ID is missing in response - navigate back to the list
                 console.warn("New case ID not found in backend response, navigating to list.");
-                alert("Case created successfully!"); // Provide feedback
+                alert("Case created successfully! (ID missing)"); // Provide feedback
                 navigate('/manage-cases');
             }
-
         } catch (err) {
-            // --- 5. Handle Errors ---
+            // Handle Errors
             console.error("Error creating case:", err);
-            // Try to get a specific error message from the backend response
             const backendError = err.response?.data?.error || 'An unknown error occurred.';
             let displayError = `Failed to create case: ${backendError}`;
-
-            // Provide more specific feedback for known errors (like duplicate name)
-            if (err.response?.status === 409) { // 409 Conflict status code
-                 displayError = `Failed to create case: ${backendError}. Please use a unique Display Name.`;
+            if (err.response?.status === 409) { // Handle specific errors like duplicates
+                displayError = `Failed to create case: ${backendError}. Please use a unique Display Name.`;
             }
             setError(displayError);
-
         } finally {
-            // --- 6. Reset Loading State ---
-            setLoading(false); // Ensure loading indicator is turned off
+            // Reset Loading State
+            setLoading(false);
         }
     };
 
-    return (
-        <div>
-            <h1>Create New Case</h1>
-            {error && <p className="error-message" style={{ color: 'red' }}>Error: {error}</p>}
+    // Optional: Handle validation errors (e.g., log them)
+    const onFinishFailed = (errorInfo) => {
+        console.log('Form validation failed:', errorInfo);
+        setError("Please fill in all required fields correctly."); // Set a general validation error message
+    };
 
-            {/* We will add the <form> and input fields here in the next step */}
-            <form onSubmit={handleSubmit}>
-                {/* Display Name (Required) */}
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label htmlFor="displayName" style={{ display: 'block', marginBottom: '5px' }}>Display Name:*</label>
-                    <input
-                        type="text"
-                        id="displayName"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        required // Mark as required in the form
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+
+    return (
+        // Wrap content in a Card for consistent look and feel
+        <Card title={<Title level={2} style={{ margin: 0 }}>Create New Case</Title>}>
+            {/* Use Ant Design Form */}
+            <Form
+                form={form} // Connect form instance
+                layout="vertical" // Stack labels above inputs
+                onFinish={onFinish} // Handle successful submission & validation
+                onFinishFailed={onFinishFailed} // Handle validation errors
+                // initialValues={{ /* Set initial values here if needed */ }}
+            >
+                {/* Display general submission errors */}
+                {error && (
+                    <Alert
+                        message="Error Creating Case"
+                        description={error}
+                        type="error"
+                        showIcon
+                        closable
+                        onClose={() => setError(null)} // Allow dismissing the error
+                        style={{ marginBottom: 24 }} // Add spacing below error
                     />
-                </div>
+                )}
+
+                {/* Display Name (Required) */}
+                <Form.Item
+                    label="Display Name"
+                    name="display_name" // <<< This key is used in 'onFinish' values object
+                    rules={[ // <<< Ant Design validation rules
+                        {
+                            required: true,
+                            message: 'Please enter a display name for the case!',
+                            whitespace: true // Treat whitespace input as error
+                        }
+                    ]}
+                >
+                    <Input
+                       placeholder="Enter a short name for easy identification"
+                       disabled={loading}
+                    />
+                    {/* No value or onChange needed - Form handles state */}
+                </Form.Item>
 
                 {/* Official Case Name */}
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label htmlFor="officialCaseName" style={{ display: 'block', marginBottom: '5px' }}>Official Case Name:</label>
-                    <input
-                        type="text"
-                        id="officialCaseName"
-                        value={officialCaseName}
-                        onChange={(e) => setOfficialCaseName(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                <Form.Item
+                    label="Official Case Name"
+                    name="official_case_name"
+                    rules={[{ required: false }]} // Not required
+                >
+                    <Input
+                       placeholder="e.g., Smith v. Jones"
+                       disabled={loading}
                     />
-                </div>
+                </Form.Item>
 
                 {/* Case Number */}
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label htmlFor="caseNumber" style={{ display: 'block', marginBottom: '5px' }}>Case Number:</label>
-                    <input
-                        type="text"
-                        id="caseNumber"
-                        value={caseNumber}
-                        onChange={(e) => setCaseNumber(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                <Form.Item
+                    label="Case Number"
+                    name="case_number"
+                    rules={[{ required: false }]}
+                >
+                    <Input
+                       placeholder="e.g., 2:24-cv-01234"
+                       disabled={loading}
                     />
-                </div>
+                </Form.Item>
 
                 {/* Judge */}
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label htmlFor="judge" style={{ display: 'block', marginBottom: '5px' }}>Judge:</label>
-                    <input
-                        type="text"
-                        id="judge"
-                        value={judge}
-                        onChange={(e) => setJudge(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                <Form.Item
+                    label="Judge"
+                    name="judge"
+                    rules={[{ required: false }]}
+                >
+                    <Input
+                       placeholder="e.g., Hon. Jane Doe"
+                       disabled={loading}
                     />
-                </div>
+                </Form.Item>
 
                 {/* Plaintiff */}
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label htmlFor="plaintiff" style={{ display: 'block', marginBottom: '5px' }}>Plaintiff:</label>
-                    <input
-                        type="text"
-                        id="plaintiff"
-                        value={plaintiff}
-                        onChange={(e) => setPlaintiff(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                <Form.Item
+                    label="Plaintiff"
+                    name="plaintiff"
+                    rules={[{ required: false }]}
+                >
+                    <Input
+                       placeholder="Primary plaintiff name"
+                       disabled={loading}
                     />
-                </div>
+                </Form.Item>
 
                 {/* Defendant */}
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label htmlFor="defendant" style={{ display: 'block', marginBottom: '5px' }}>Defendant:</label>
-                    <input
-                        type="text"
-                        id="defendant"
-                        value={defendant}
-                        onChange={(e) => setDefendant(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                <Form.Item
+                    label="Defendant"
+                    name="defendant"
+                    rules={[{ required: false }]}
+                >
+                    <Input
+                       placeholder="Primary defendant name"
+                       disabled={loading}
                     />
-                </div>
+                </Form.Item>
 
-                {/* --- Add other fields if necessary --- */}
+                {/* --- Add other fields similarly --- */}
 
-                {/* Submit Button (already exists) */}
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Creating...' : 'Create Case'}
-                </button>
-                <Link to="/manage-cases" style={{ marginLeft: '10px' }}>Cancel</Link>
-
-                {/* --- End of form fields --- */}
-
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Creating...' : 'Create Case'}
-                </button>
-                <Link to="/manage-cases" style={{ marginLeft: '10px' }}>Cancel</Link>
-            </form>
-
-        </div>
+                {/* Submission Buttons */}
+                <Form.Item> {/* Wrap buttons in Form.Item for layout spacing */}
+                    <Space>
+                        <Button
+                            type="primary"
+                            htmlType="submit" // Triggers form 'onFinish'
+                            loading={loading} // Shows loading spinner on button
+                            icon={<SaveOutlined />}
+                        >
+                            Create Case
+                        </Button>
+                        <Button
+                            icon={<CloseCircleOutlined />}
+                            onClick={() => navigate('/manage-cases')} // Navigate back on cancel
+                            disabled={loading} // Disable cancel while submitting
+                        >
+                            Cancel
+                        </Button>
+                    </Space>
+                </Form.Item>
+            </Form>
+        </Card>
     );
 }
 

@@ -2,9 +2,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api'; // Adjust path if needed
+import { Layout, Card, Descriptions, Button,  Checkbox, Space,
+Typography, Alert, Spin,  Select,  Input, Modal, Form, List,  Popconfirm, Collapse 
+} from 'antd';
+import {EditOutlined, CopyOutlined, CloseOutlined,
+CheckCircleTwoTone, LoadingOutlined
+} from '@ant-design/icons';
+import { toast } from 'react-toastify';
 
-// --- Basic Styles (Move to CSS file ideally) ---
-// Placed outside the component for clarity
+const { Title, Text, Paragraph } = Typography; // Destructure Typography components
+const { TextArea } = Input; // Destructure TextArea
+
 const modalOverlayStyle = {
   position: 'fixed', // Stick to viewport
   top: 0, left: 0, right: 0, bottom: 0,
@@ -72,9 +80,7 @@ function CasePage() {
   const [generationResult, setGenerationResult] = useState('');
   const [generationError, setGenerationError] = useState(null);
   const [copied, setCopied] = useState(false); // State for copy feedback
-
-  // --- Callback Functions & Handlers (Defined at Top Level) ---
-
+  
   const fetchCaseDetails = useCallback(() => {
     if (!isApplying) setLoading(true);
     setError(null);
@@ -338,9 +344,56 @@ function CasePage() {
 
 
   // --- Conditional Returns for Loading/Error States ---
-  if (loading && !isApplying) return <p className="loading-message">Loading case details...</p>;
-  if (error) return <div className="error-message">Error: {error} <button onClick={fetchCaseDetails} disabled={loading}>Retry Load</button> <Link to="/">Go Home</Link></div>;
-  if (!caseDetails && !loading) return <div><p>Case not found or failed to load.</p><Link to="/">Go Home</Link></div>;
+  // --- Conditional Returns for Loading/Error States ---
+  // Use AntD Spin for loading indicator covering the content area
+  if (loading && !isApplying && !editLoading) { // Check main loading state
+      return (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+              <Spin size="large" tip="Loading case details..." />
+          </div>
+      );
+  }
+
+  // Use AntD Alert for top-level errors
+  if (error) {
+      return (
+          <Alert
+              message="Error Loading Case"
+              description={error}
+              type="error"
+              showIcon
+              action={ // Optionally add retry/home buttons
+                  <Space>
+                      <Button size="small" type="primary" onClick={fetchCaseDetails} disabled={loading}>
+                          Retry Load
+                      </Button>
+                      <Button size="small">
+                         <Link to="/">Go Home</Link>
+                      </Button>
+                  </Space>
+              }
+              style={{ margin: '20px 0' }}
+           />
+       );
+   }
+
+  // Handle case not found after loading finished
+  if (!caseDetails && !loading) {
+       return (
+           <Alert
+               message="Case Not Found"
+               description="The requested case could not be found or loaded."
+               type="warning"
+               showIcon
+               action={
+                   <Button size="small">
+                      <Link to="/">Go Home</Link>
+                   </Button>
+               }
+               style={{ margin: '20px 0' }}
+           />
+       );
+   }
 
   // --- Prepare Data for Rendering ---
   const { display_name, official_case_name, case_number, judge, plaintiff, defendant } = caseDetails;
@@ -348,249 +401,286 @@ function CasePage() {
   const pendingSuggestions = caseDetailsData.pending_suggestions;
   const lastAnalyzedDocId = caseDetailsData.last_analyzed_doc_id;
 
-  // --- JSX Rendering ---
-  return (
-    <div> {/* Main container div */}
-      <h1>Case: {display_name}</h1>
+  // --- Callback Functions & Handlers (Defined at Top Level) ---
+  const detailsItems = [
+    { key: '1', label: 'Official Name', children: official_case_name || caseDetailsData.official_case_name || 'N/A', span: 2 },
+    { key: '2', label: 'Case Number', children: case_number || caseDetailsData.case_number_doc || 'N/A' },
+    { key: '3', label: 'Judge', children: judge || caseDetailsData.judge_doc || 'N/A' },
+    { key: '4', label: 'Plaintiff', children: plaintiff || caseDetailsData.plaintiff || 'N/A' },
+    { key: '5', label: 'Defendant', children: defendant || caseDetailsData.defendant || 'N/A' },
+    // Add other relevant fields as needed, following the pattern:
+    // { key: 'X', label: 'Field Name', children: caseDetails.dedicated_field || caseDetailsData.json_field || 'N/A' }
+  ];
+  // --- END ADD ---
+   // --- JSX Rendering (Main structure using Space) ---
+   return (
+    // Use Space for vertical stacking of sections
+    <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+      {/* MODIFIED: Use AntD Typography Title */}
+      <Title level={2}>Case: {display_name}</Title>
 
-      {/* Official Details Section */}
-      <div style={{ background: '#f8f9fa', border: '1px solid #dee2e6', padding: '15px', borderRadius: '5px', marginBottom: '20px' }}>
-        <h4>Official Details</h4>
-          <p style={{ margin: '5px 0' }}><strong>Official Name:</strong> {official_case_name || caseDetailsData.official_case_name || 'N/A'}</p>
-          <p style={{ margin: '5px 0' }}><strong>Case Number:</strong> {case_number || caseDetailsData.case_number_doc || 'N/A'}</p>
-          <p style={{ margin: '5px 0' }}><strong>Judge:</strong> {judge || caseDetailsData.judge_doc || 'N/A'}</p>
-          <p style={{ margin: '5px 0' }}><strong>Plaintiff:</strong> {plaintiff || caseDetailsData.plaintiff || 'N/A'}</p>
-          <p style={{ margin: '5px 0' }}><strong>Defendant:</strong> {defendant || caseDetailsData.defendant || 'N/A'}</p>
-          {/* --- MODIFIED: Button now calls handleOpenEditModal --- */}
-          <button
-            onClick={handleOpenEditModal} // *** Changed from handleUpdateInfo ***
-            style={{ marginTop: '10px', backgroundColor: '#ffc107', color: '#333', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}
-          >
-            Update Case Info
-          </button>
-      </div>
-
-      {/* Pending Suggestions Display Section (Unchanged) */}
-      <div style={{ border: `1px solid ${error ? '#dc3545' : '#17a2b8'}`, padding: '15px', borderRadius: '5px', marginBottom: '20px' }}>
-          <h2>Pending Analysis Suggestions</h2>
-            {pendingSuggestions && Object.keys(pendingSuggestions).length > 0 ? (
-              <div>
-                {Object.entries(pendingSuggestions).map(([docKey, suggestions]) => (
-                  <div key={docKey} style={{ border: '1px dashed #ccc', padding: '15px', marginBottom: '15px', marginTop: '10px', borderRadius: '4px' }}>
-                    <h4 style={{ marginTop: 0, marginBottom: '15px' }}>Suggestions from Document: {docKey}{docKey === `doc_${lastAnalyzedDocId}` ? ' (Latest Analysis)' : ''}</h4>
-                    {typeof suggestions === 'object' && suggestions !== null ? (
-                      <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
-                        {Object.entries(suggestions).map(([field, suggestedValue]) => {
-                          const currentValue = caseDetailsData?.[field] ?? caseDetails?.[field] ?? 'Not Set';
-                          const isChecked = !!(acceptedSuggestions[docKey]?.[field] !== undefined);
-                          return (suggestedValue !== null && (
-                            <li key={field} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #eee' }}>
-                              <strong style={{ textTransform: 'capitalize', display: 'block', marginBottom: '5px' }}>{field.replace(/_/g, ' ')}</strong>
-                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', paddingTop: '5px' }}>
-                                  <input type="checkbox" checked={isChecked} onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)} style={{ transform: 'scale(1.3)'}} aria-label={`Accept suggestion for ${field.replace(/_/g, ' ')}`} />
-                                  <button title={`Reject suggestion for ${field}`} onClick={() => handleCheckboxChange(docKey, field, suggestedValue, false)} disabled={!isChecked} style={{ padding: '1px 4px', borderRadius: '50%', backgroundColor: '#f8f9fa', border: '1px solid #ccc', cursor: isChecked ? 'pointer' : 'not-allowed', opacity: isChecked ? 1 : 0.5, fontSize: '10px', lineHeight: '1' }}>❌</button>
-                                </div>
-                                <div style={{ flexGrow: 1 }}>
-                                  <div style={{ marginBottom: '5px' }}>
-                                    <span style={{ fontSize: '0.8em', color: '#6c757d', fontWeight: 'bold' }}>Suggested:</span>
-                                    <pre style={{ margin: '2px 0 0 5px', padding: '5px 8px', background: isChecked ? '#d4edda' : '#e9ecef', borderRadius: '3px', display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9em' }}>{JSON.stringify(suggestedValue, null, 2)}</pre>
-                                  </div>
-                                  <div>
-                                    <span style={{ fontSize: '0.8em', color: '#6c757d' }}>Current:</span>
-                                    <pre style={{ margin: '2px 0 0 5px', padding: '5px 8px', background: '#f8f9fa', borderRadius: '3px', display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9em', border: '1px solid #dee2e6' }}>{JSON.stringify(currentValue, null, 2)}</pre>
-                                  </div>
-                                </div>
-                              </div>
-                            </li>
-                          ));
-                        })}
-                      </ul>
-                    ) : ( <p>Suggestions data for {docKey} is not in the expected format.</p> )}
-                  </div>
-                ))}
-                {/* Apply Changes Button (Unchanged) */}
-                <button onClick={handleApplyChanges} disabled={isApplying || Object.keys(acceptedSuggestions).length === 0} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: applySuccess ? '#218838' : (isApplying ? '#ffc107' : '#28a745'), color: isApplying ? '#333' : 'white', border: 'none', borderRadius: '4px', cursor: (isApplying || Object.keys(acceptedSuggestions).length === 0) ? 'not-allowed' : 'pointer', opacity: (isApplying || Object.keys(acceptedSuggestions).length === 0) ? 0.6 : 1, transition: 'background-color 0.3s ease' }} >
-                  {isApplying ? 'Applying Changes...' : (applySuccess ? 'Changes Applied!' : 'Apply Accepted Changes')}
-                </button>
-              </div>
-            ) : ( <p>No pending analysis suggestions found for this case.</p> )}
-      </div>
-
-      {/* --- START: DOCUMENT GENERATION SECTION --- (Unchanged) */}
-      <div style={{ border: '1px solid #007bff', padding: '15px', borderRadius: '5px', marginBottom: '20px', marginTop: '20px' }}>
-        <h2>Generate Document</h2>
-        {docTypes.length > 0 ? (
-          <div>
-            {/* Dropdown */}
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="docTypeSelect" style={{ marginRight: '10px', fontWeight: 'bold' }}>Document Type:</label>
-              <select id="docTypeSelect" value={selectedDocType} onChange={(e) => setSelectedDocType(e.target.value)} style={{ padding: '8px', minWidth: '200px' }} >
-                {docTypes.map(type => ( <option key={type} value={type}>{type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</option> ))}
-              </select>
-            </div>
-            {/* Textarea */}
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="customInstructions" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Optional Custom Instructions:</label>
-              <textarea id="customInstructions" value={customInstructions} onChange={(e) => setCustomInstructions(e.target.value)} rows="3" placeholder="e.g., Emphasize the tight deadline." style={{ width: '95%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
-            </div>
-            {/* Generate Button */}
-            <button onClick={handleGenerateDocument} disabled={!selectedDocType || isGenerating} style={{ padding: '10px 15px', backgroundColor: isGenerating ? '#6c757d' : '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: (!selectedDocType || isGenerating) ? 'not-allowed' : 'pointer', opacity: (!selectedDocType || isGenerating) ? 0.6 : 1 }} >
-              {isGenerating ? 'Generating...' : `Generate ${selectedDocType ? selectedDocType.replace(/_/g, ' ') : 'Document'}`}
-            </button>
-
-            {/* Display Area */}
-            <>
-              {generationError && <div style={{color: 'red', marginTop: '10px', whiteSpace: 'pre-wrap'}}>Error: {generationError}</div>}
-              {generationResult && (
-                  <div style={{marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px', position: 'relative' }}>
-                      <button onClick={handleDismissGeneratedText} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', fontSize: '1.2em', cursor: 'pointer', color: '#6c757d' }} title="Dismiss Generated Text">
-                          &times;
-                      </button>
-                      <h4>Generated Content Preview:</h4>
-                      <pre style={{whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f8f9fa', padding: '10px', border: '1px solid #ddd', maxHeight: '400px', overflowY: 'auto'}}>
-                          {generationResult}
-                      </pre>
-                      <button onClick={handleCopyGeneratedText} style={{ marginTop: '10px', marginRight: '10px', padding: '5px 10px', cursor: 'pointer' }}>
-                          {copied ? 'Copied!' : 'Copy Text'}
-                      </button>
-                  </div>
-              )}
-            </>
-          </div>
-        ) : ( <p>Loading document types...</p> )}
-      </div>
-      {/* --- END: DOCUMENT GENERATION SECTION --- */}
-
-      {/* Action Buttons (Unchanged) */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-       <Link to={`/case/${caseId}/files`} className="button-link">View/Upload Files</Link>
-       <Link to={`/case/${caseId}/analyze`} className="button-link" style={{backgroundColor: '#17a2b8'}}>Doc Analysis Page [PH]</Link>
-       <Link to={`/case/${caseId}/create-doc`} className="button-link" style={{backgroundColor: '#28a745'}}>Create Document</Link>
-       <Link to={`/case/${caseId}/create-discovery-response`} className="button-link" style={{backgroundColor: '#6f42c1'}}>Create Discovery Response</Link>
-      </div>
-
-      {/* Navigation back (Unchanged) */}
-      <div style={{ marginTop: '30px' }}>
-        <Link to="/manage-cases" className="button-link" style={{backgroundColor: '#6c757d'}}>Back to Manage Cases</Link>
-        <Link to="/" className="button-link" style={{backgroundColor: '#6c757d'}}>Back to Home</Link>
-      </div>
-
-      {/* --- ADDED: Edit Case Modal --- */}
-      {isEditModalOpen && (
-        <div style={modalOverlayStyle}> {/* Basic overlay style */}
-          <div style={modalContentStyle}> {/* Basic modal content style */}
-            <h2>Edit Case Information</h2>
-            {/* We will add onSubmit={handleSaveChanges} in the next step */}
-            <form onSubmit={handleSaveChanges}>
-              {editError && <p style={{ color: 'red', marginBottom: '15px' }}>{editError}</p>}
-
-              {/* Display Name */}
-              <div style={formGroupStyle}>
-                <label htmlFor="edit_display_name">Display Name:*</label>
-                <input
-                  type="text"
-                  id="edit_display_name"
-                  name="display_name" // name MUST match backend/state key
-                  value={editFormData.display_name || ''}
-                  onChange={handleEditFormChange}
-                  required
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Official Case Name */}
-              <div style={formGroupStyle}>
-                <label htmlFor="edit_official_case_name">Official Case Name:</label>
-                <input
-                  type="text"
-                  id="edit_official_case_name"
-                  name="official_case_name" // name MUST match backend/state key
-                  value={editFormData.official_case_name || ''}
-                  onChange={handleEditFormChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Case Number */}
-              <div style={formGroupStyle}>
-                <label htmlFor="edit_case_number">Case Number:</label>
-                <input
-                  type="text"
-                  id="edit_case_number"
-                  name="case_number" // name MUST match backend/state key
-                  value={editFormData.case_number || ''}
-                  onChange={handleEditFormChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Judge */}
-              <div style={formGroupStyle}>
-                <label htmlFor="edit_judge">Judge:</label>
-                <input
-                  type="text"
-                  id="edit_judge"
-                  name="judge" // name MUST match backend/state key
-                  value={editFormData.judge || ''}
-                  onChange={handleEditFormChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Plaintiff */}
-              <div style={formGroupStyle}>
-                <label htmlFor="edit_plaintiff">Plaintiff:</label>
-                <input
-                  type="text"
-                  id="edit_plaintiff"
-                  name="plaintiff" // name MUST match backend/state key
-                  value={editFormData.plaintiff || ''}
-                  onChange={handleEditFormChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Defendant */}
-              <div style={formGroupStyle}>
-                <label htmlFor="edit_defendant">Defendant:</label>
-                <input
-                  type="text"
-                  id="edit_defendant"
-                  name="defendant" // name MUST match backend/state key
-                  value={editFormData.defendant || ''}
-                  onChange={handleEditFormChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* --- Buttons --- */}
-              <div style={{ marginTop: '20px', textAlign: 'right' }}>
-                {/* Cancel Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  disabled={editLoading}
-                  style={{ marginRight: '10px', padding: '8px 15px' }}
-                >
-                  Cancel
-                </button>
-                {/* Save Button */}
-                <button
-                   type="submit" // Will trigger onSubmit handler (added next)
-                   disabled={editLoading}
-                   style={{ padding: '8px 15px' }}
-                 >
-                  {editLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* --- Global Error Display (for apply/save errors) --- */}
+      {error && caseDetails && ( // Show non-critical errors here if caseDetails did load
+        <Alert
+            message="Operation Error"
+            description={error}
+            type="error"
+            showIcon
+            closable
+            onClose={() => setError(null)} // Allow dismissing non-critical errors
+            style={{ marginBottom: '16px' }}
+           />
       )}
-      {/* --- End Edit Case Modal --- */}
 
-    </div> // End of main container div
+      {/* Official Details Section will go here (Next Snippet) */}
+      <Card
+        title="Official Details"
+        extra={ // Place button in the card header
+          <Button
+            icon={<EditOutlined />}
+            onClick={handleOpenEditModal}
+            disabled={!caseDetails || editLoading} // Disable if no details or modal is saving
+          >
+            Edit Case Info
+          </Button>
+        }
+      >
+        <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} items={detailsItems} size="small"/>
+      </Card>
+
+
+      {/* --- Pending Suggestions Section --- */}
+      <Card title="Pending Analysis Suggestions">
+        {pendingSuggestions && Object.keys(pendingSuggestions).length > 0 ? (
+          <> {/* Use Fragment to group Collapse and Button */}
+            <Collapse accordion>
+              {Object.entries(pendingSuggestions).map(([docKey, suggestions]) => (
+                <Panel header={`Suggestions from Document: ${docKey}`} key={docKey}>
+                  <List
+                    itemLayout="vertical" // Better layout for more info
+                    dataSource={Object.entries(suggestions)}
+                    renderItem={([field, suggestedValue]) => {
+                        // Determine the current value for comparison
+                        const currentValue = caseDetails[field] !== undefined ? caseDetails[field]
+                                         : caseDetailsData[field] !== undefined ? caseDetailsData[field]
+                                         : undefined; // Explicitly undefined if not found
+
+                        return (
+                          <List.Item>
+                            <Space align="start" style={{ width: '100%' }}>
+                              <Checkbox
+                                style={{ paddingTop: '5px' }} // Align checkbox better
+                                onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)}
+                                checked={!!acceptedSuggestions[docKey]?.[field]} // Check if this specific suggestion is accepted
+                              >
+                                {/* Intentionally blank label, info is on the right */}
+                              </Checkbox>
+                              <div style={{ flexGrow: 1 }}> {/* Allow text div to take remaining space */}
+                                <Text strong>{field}: </Text>
+                                <Text code style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(suggestedValue)}</Text>
+                                <br />
+                                {currentValue !== undefined ? (
+                                    <Text type="secondary">Current: <Text code style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(currentValue)}</Text></Text>
+                                ) : (
+                                    <Text type="secondary">Current: Not Set</Text>
+                                )}
+                              </div>
+                            </Space>
+                          </List.Item>
+                        );
+                    }}
+                  />
+                </Panel>
+              ))}
+            </Collapse>
+            <Button
+              type="primary"
+              onClick={handleApplyChanges}
+              loading={isApplying}
+              disabled={Object.keys(acceptedSuggestions).length === 0 || isApplying}
+              icon={applySuccess ? <CheckCircleTwoTone twoToneColor="#52c41a" /> : (isApplying ? <LoadingOutlined /> : null)}
+              style={{ marginTop: '16px' }}
+            >
+              {isApplying ? 'Applying...' : (applySuccess ? 'Applied!' : 'Apply Accepted Suggestions')}
+            </Button>
+          </>
+        ) : (
+          <> {/* Use Fragment */}
+            <Text>No pending suggestions found.</Text>
+            {lastAnalyzedDocId && <Text type="secondary"> (Last analyzed document ID: {lastAnalyzedDocId})</Text>}
+         </>
+        )}
+      </Card>
+
+      {/* --- Document Generation Section --- */}
+      <Card title="Generate Document">
+         {/* Error specific to generation */}
+        {generationError && (
+            <Alert
+                message="Generation Error"
+                description={generationError}
+                type="error"
+                showIcon
+                closable
+                onClose={() => setGenerationError(null)}
+                style={{ marginBottom: 16 }}
+            />
+        )}
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Select
+            value={selectedDocType}
+            onChange={setSelectedDocType}
+            loading={docTypes.length === 0 && !generationError && !error} // Show loading only if no types AND no general/gen error
+            disabled={isGenerating || docTypes.length === 0} // Disable if generating or no types loaded
+            placeholder="Select document type"
+            style={{ width: '100%' }}
+            // Show not found only if loading is done and array is still empty
+            notFoundContent={loading ? <Spin size="small" /> : <Text type="secondary">No document types found.</Text>}
+          >
+            {docTypes.map(type => <Select.Option key={type} value={type}>{type}</Select.Option>)}
+          </Select>
+          <TextArea
+            rows={4}
+            placeholder="Add custom instructions (optional)"
+            value={customInstructions}
+            onChange={(e) => setCustomInstructions(e.target.value)}
+            disabled={isGenerating}
+          />
+          <Button
+            type="primary"
+            onClick={handleGenerateDocument}
+            loading={isGenerating}
+            disabled={!selectedDocType || isGenerating || docTypes.length === 0} // Also disable if no type selectable
+          >
+            {isGenerating ? 'Generating...' : 'Generate'}
+          </Button>
+        </Space>
+
+        {/* Display Generation Result */}
+        {isGenerating && !generationResult && ( // Show spinner *while* generating
+             <div style={{ marginTop: 16, textAlign: 'center' }}><Spin tip="Generating content..."/></div>
+        )}
+        {generationResult && (
+          <Card type="inner" title="Generated Document" style={{ marginTop: 16 }}
+            extra={ // Add copy/dismiss to the inner card header
+                <Space>
+                    <Button icon={<CopyOutlined />} onClick={handleCopyGeneratedText} size="small" disabled={copied}>
+                        {copied ? 'Copied!' : 'Copy'}
+                    </Button>
+                    <Popconfirm title="Dismiss generated text?" onConfirm={handleDismissGeneratedText} okText="Yes" cancelText="No">
+                       <Button danger icon={<CloseOutlined />} size="small">Dismiss</Button>
+                    </Popconfirm>
+                </Space>
+            }
+          >
+            {/* Using Paragraph with copyable might be redundant if using header button */}
+            {/* <Paragraph copyable={{ text: generationResult, tooltips: ['Copy', 'Copied!'] }} style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}> */}
+            <Paragraph style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
+                {generationResult}
+            </Paragraph>
+          </Card>
+        )}
+      </Card>
+
+      {/* --- Navigation --- */}
+      <Space style={{ marginTop: '20px', justifyContent: 'start' }}> {/* Align button left */}
+        <Button><Link to="/cases">Back to Cases List</Link></Button>
+      </Space>
+
+      {/* --- Edit Case Modal (defined but not visible until isEditModalOpen is true) --- */}
+      <Modal
+        title="Edit Case Info"
+        open={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        confirmLoading={editLoading} // Use confirmLoading for the OK button
+        // Use default OK/Cancel buttons tied to onOk/onCancel
+        // Or keep custom footer if preferred:
+        footer={[
+          <Button key="back" onClick={() => setIsEditModalOpen(false)} disabled={editLoading}>
+            Cancel
+          </Button>,
+          <Button key="submit" type="primary" loading={editLoading} onClick={handleSaveChanges}>
+            Save Changes
+          </Button>,
+        ]}
+        destroyOnClose // Good practice: resets form state when closed
+        maskClosable={!editLoading} // Prevent closing by clicking outside while loading
+      >
+        {/* Error specific to the modal */}
+        {editError && (
+            <Alert
+                message="Save Error"
+                description={editError}
+                type="error"
+                showIcon
+                closable
+                onClose={() => setEditError(null)} // Clear modal error
+                style={{ marginBottom: 16 }}
+             />
+        )}
+        {/* Wrap inputs in Form for structure, labels, and potential validation later */}
+        <Form layout="vertical" onFinish={handleSaveChanges}> {/* onFinish can trigger save */}
+          <Form.Item label="Display Name (Internal)" required> {/* Example required */}
+            <Input
+              name="display_name"
+              value={editFormData.display_name || ''}
+              onChange={handleEditFormChange}
+              disabled={editLoading}
+              placeholder="Enter a short name for easy identification"
+            />
+          </Form.Item>
+          <Form.Item label="Official Case Name">
+            <Input
+              name="official_case_name"
+              value={editFormData.official_case_name || ''}
+              onChange={handleEditFormChange}
+              disabled={editLoading}
+              placeholder="e.g., Smith v. Jones"
+            />
+          </Form.Item>
+           <Form.Item label="Case Number">
+            <Input
+              name="case_number"
+              value={editFormData.case_number || ''}
+              onChange={handleEditFormChange}
+              disabled={editLoading}
+               placeholder="e.g., 2:24-cv-01234"
+            />
+          </Form.Item>
+           <Form.Item label="Judge">
+            <Input
+              name="judge"
+              value={editFormData.judge || ''}
+              onChange={handleEditFormChange}
+              disabled={editLoading}
+               placeholder="e.g., Hon. Jane Doe"
+            />
+          </Form.Item>
+           <Form.Item label="Plaintiff">
+            <Input
+              name="plaintiff"
+              value={editFormData.plaintiff || ''}
+              onChange={handleEditFormChange}
+              disabled={editLoading}
+              placeholder="Primary plaintiff name"
+            />
+          </Form.Item>
+           <Form.Item label="Defendant">
+            <Input
+              name="defendant"
+              value={editFormData.defendant || ''}
+              onChange={handleEditFormChange}
+              disabled={editLoading}
+              placeholder="Primary defendant name"
+            />
+          </Form.Item>
+          {/* If using Form's onFinish, the submit button within the footer might implicitly work,
+              or you might need type="submit" on the save button if it's outside the <Form> tags
+              but logically associated. Keeping onClick={handleSaveChanges} on the button is explicit. */}
+        </Form>
+      </Modal>
+
+    </Space> // End main Space component
   );
 } // End of CasePage component function
 
