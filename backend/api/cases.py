@@ -192,34 +192,6 @@ def update_case_details(case_id):
          return jsonify({'error': 'An unexpected error occurred'}), 500
 
 
-Okay, you want the updated version of the DELETE /api/cases/<case_id> route handler, incorporating the necessary authentication (@login_required) and ensuring it uses the service layer correctly to check ownership before deleting.
-
-Based on the previous version you provided and the changes we've made to the service layer (case_service.py now performs ownership checks), here is the updated function for backend/api/cases.py:
-
-Python
-
-# --- backend/api/cases.py ---
-import os # Needed for delete file path
-import io
-from flask import send_file, current_app, request, jsonify
-from docxtpl import DocxTemplate
-from backend.extensions import db
-from backend.models import Case, Document # Import necessary models
-from . import bp # Import the blueprint instance from api/__init__.py
-# --- Ensure all needed service functions and exceptions are imported ---
-from backend.services.case_service import (
-    create_case, get_case_by_id, update_case, delete_case,
-    DuplicateCaseError, CaseServiceError, CaseNotFoundError
-)
-# --- Ensure Flask-Login and Exception imports are present ---
-from flask_login import login_required, current_user
-from werkzeug.exceptions import Forbidden
-
-
-# ... (keep other imports and routes like GET /cases, POST /cases, GET /cases/id, PUT /cases/id) ...
-
-
-# === REVISED DELETE Route ===
 @bp.route('/cases/<int:case_id>', methods=['DELETE'])
 @login_required # 1. Require user to be logged in
 def delete_case_and_documents(case_id):
