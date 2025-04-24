@@ -166,7 +166,7 @@ def update_case_details(case_id):
 
     try:
         # Call service function
-        updated_case = update_case(case_id, data)
+        updated_case = update_case(case_id, data, user_id=current_user.id)
 
         # Format response in the route
         updated_data = {
@@ -179,7 +179,8 @@ def update_case_details(case_id):
             'defendant': updated_case.defendant,
             'created_at': updated_case.created_at.isoformat() if updated_case.created_at else None,
             'updated_at': updated_case.updated_at.isoformat() if updated_case.updated_at else None,
-            'case_details': updated_case.case_details
+            'case_details': updated_case.case_details,
+            'user_id': updated_case.user_id # Include user_id
         }
         return jsonify(updated_data)
     except CaseNotFoundError as e:
@@ -191,55 +192,95 @@ def update_case_details(case_id):
          return jsonify({'error': 'An unexpected error occurred'}), 500
 
 
+Okay, you want the updated version of the DELETE /api/cases/<case_id> route handler, incorporating the necessary authentication (@login_required) and ensuring it uses the service layer correctly to check ownership before deleting.
+
+Based on the previous version you provided and the changes we've made to the service layer (case_service.py now performs ownership checks), here is the updated function for backend/api/cases.py:
+
+Python
+
+# --- backend/api/cases.py ---
+import os # Needed for delete file path
+import io
+from flask import send_file, current_app, request, jsonify
+from docxtpl import DocxTemplate
+from backend.extensions import db
+from backend.models import Case, Document # Import necessary models
+from . import bp # Import the blueprint instance from api/__init__.py
+# --- Ensure all needed service functions and exceptions are imported ---
+from backend.services.case_service import (
+    create_case, get_case_by_id, update_case, delete_case,
+    DuplicateCaseError, CaseServiceError, CaseNotFoundError
+)
+# --- Ensure Flask-Login and Exception imports are present ---
+from flask_login import login_required, current_user
+from werkzeug.exceptions import Forbidden
+
+
+# ... (keep other imports and routes like GET /cases, POST /cases, GET /cases/id, PUT /cases/id) ...
+
+
+# === REVISED DELETE Route ===
 @bp.route('/cases/<int:case_id>', methods=['DELETE'])
+@login_required # 1. Require user to be logged in
 def delete_case_and_documents(case_id):
-    """Deletes a case (DB via service) and associated documents/files."""
-    print(f"--- Handling DELETE /api/cases/{case_id} (Blueprint) ---")
+    """
+    Deletes a case (DB via service, checking ownership) and associated documents/files.
+    """
+    print(f"--- Handling DELETE /api/cases/{case_id} (AUTH REQUIRED by user {current_user.id}) ---")
 
-    # We need file paths *before* deleting the case record
+    # Store file paths before deleting the database record
+    file_paths_to_delete = []
     try:
-        # Fetch case first to get document paths (could also be done in service)
-         case_to_delete = get_case_by_id(case_id)
-         file_paths = [doc.file_path for doc in case_to_delete.documents if doc.file_path]
-    except CaseNotFoundError as e:
-         return jsonify({'error': str(e)}), 404
-    except Exception as e: # Catch errors fetching paths
-         print(f"Error fetching case/doc paths for deletion {case_id}: {e}")
-         return jsonify({'error': 'Failed to retrieve case/document info for deletion'}), 500
+        # 2. Fetch case AND verify ownership using the updated service function
+        # This will raise CaseNotFound or Forbidden if checks fail
+        case_to_delete = get_case_by_id(case_id, user_id=current_user.id)
 
-    try:
-        # Call service to delete case from DB
-        delete_case(case_id)
+        # 3. Get file paths IF ownership is confirmed
+        file_paths_to_delete = [doc.file_path for doc in case_to_delete.documents if doc.file_path]
+        print(f"Identified files for potential deletion: {file_paths_to_delete}")
 
-        # --- File deletion logic remains in the route for now ---
-        print(f"Attempting to delete files for case {case_id}: {file_paths}")
-        for file_path in file_paths:
+        # 4. Call the delete service function (which re-verifies ownership before DB delete)
+        # Pass user_id again, although get_case_by_id already checked, it's good practice for the service layer.
+        delete_successful = delete_case(case_id, user_id=current_user.id)
+
+        if not delete_successful:
+             # This pathway is less likely if service raises exceptions, but handle defensively
+             raise CaseServiceError("Case service reported delete failure without exception.")
+
+        # 5. If DB deletion was successful, attempt to delete files from filesystem
+        print(f"Attempting to delete files from filesystem for case {case_id}")
+        files_deleted_count = 0
+        files_error_count = 0
+        for file_path in file_paths_to_delete:
             if os.path.exists(file_path):
                 try:
                     os.remove(file_path)
                     print(f"Deleted file: {file_path}")
+                    files_deleted_count += 1
                 except OSError as e:
+                    files_error_count += 1
                     # Log error but don't necessarily fail the whole request
                     print(f"Error deleting file {file_path}: {e}")
+            else:
+                print(f"File path not found, skipping delete: {file_path}")
 
-        return jsonify({'message': f'Case {case_id} and associated documents deleted successfully'}), 200
+        message = f'Case {case_id} deleted successfully from database.'
+        if file_paths_to_delete:
+            message += f' Attempted to delete {len(file_paths_to_delete)} associated file(s) ({files_deleted_count} success, {files_error_count} errors).'
 
-    except CaseNotFoundError as e: # Should have been caught above, but for safety
+        return jsonify({'message': message}), 200
+
+    except CaseNotFoundError as e:
         return jsonify({'error': str(e)}), 404
-    except CaseServiceError as e: # Error during DB deletion
+    except Forbidden as e: # Catch Forbidden error if user doesn't own the case
+         return jsonify({'error': str(e) or 'Permission denied'}), 403
+    except CaseServiceError as e: # Error during DB deletion attempt in service
         return jsonify({'error': str(e)}), 500
-    except Exception as e:
+    except Exception as e: # Catch any other unexpected errors
         print(f"Unexpected error handling DELETE /api/cases/{case_id}: {e}")
+        # Avoid rollback here as service layer should handle it on its exceptions
         return jsonify({'error': 'An unexpected error occurred during deletion'}), 500
-
-        return jsonify({'message': f'Case {case_id} and associated documents deleted successfully'}), 200
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error deleting case {case_id}: {e}")
-        return jsonify({'error': 'Failed to delete case'}), 500
     
-# === Add this new route for Word document generation ===
-
 @bp.route('/cases/<int:case_id>/download_word_document', methods=['POST'])
 def download_word_document(case_id):
     """
