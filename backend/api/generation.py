@@ -5,8 +5,10 @@ from . import bp # Import the blueprint from api/__init__.py
 # Make sure DOCUMENT_PROMPTS is included in this import list!
 from backend.services.generation_service import generate_document_for_case, DOCUMENT_PROMPTS, GenerationServiceError, InvalidDocumentTypeError
 from backend.services.case_service import CaseNotFoundError # Import for error handling
+from flask_login import login_required # Or flask_jwt_extended import jwt_required
 
 @bp.route('/generation/document-types', methods=['GET'])
+@login_required # Or @jwt_required() - THIS IS STILL NEEDED FOR AUTH
 def get_document_types():
     """Returns a list of available document types for generation."""
     print("--- Handling GET /api/generation/document-types ---")
@@ -19,6 +21,7 @@ def get_document_types():
         return jsonify({"error": "Failed to retrieve document types"}), 500
 
 @bp.route('/cases/<int:case_id>/generate_document', methods=['POST'])
+@login_required # Or @jwt_required() - THIS IS STILL NEEDED FOR AUTH
 def handle_generate_document(case_id):
     """
     API endpoint to trigger document generation for a case.

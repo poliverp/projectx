@@ -171,12 +171,30 @@ function ManageCasesScreen() {
         dataSource={filteredCases} // Use the memoized filtered data
         loading={loading} // Use AntD Table's loading state
         rowKey="id" // Specify the unique key for each row
-        pagination={{ pageSize: 10 }} // Optional: configure pagination
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: false,
+          position: ['bottomCenter'],
+          itemRender: (page, type, originalElement) => {
+            if (type === 'page') {
+              return (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  margin: '0',
+                  padding: '0'
+                }}>
+                  {page}
+                </div>
+              );
+            }
+            return originalElement;
+          }
+        }}
       />
-
-      {/* Remove old loading/list logic */}
-      {/* {loading && <p className="loading-message">Loading...</p>} */}
-      {/* {!loading && !error && ( ... <ul> ... </ul> )} */}
     </div>
   );
 }

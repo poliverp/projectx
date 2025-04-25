@@ -91,24 +91,6 @@ body {
     padding: 0;
   }
   
-  li {
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  li a {
-    text-decoration: none;
-    color: #333;
-    font-weight: 500;
-    flex-grow: 1;
-    margin-right: 10px;
-  }
   li a:hover {
     color: #0056b3;
   }

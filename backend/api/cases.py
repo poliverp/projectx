@@ -297,7 +297,7 @@ def download_word_document(case_id):
     # --- 1. Fetch Case Data ---
     try:
         # Make sure get_case_by_id returns the ORM object
-        case_data = get_case_by_id(case_id)
+        case_data = get_case_by_id(case_id=case_id, user_id=current_user.id)
     except CaseNotFoundError:
         print(f"Error: Case ID {case_id} not found.")
         return jsonify({'error': 'Case not found'}), 404

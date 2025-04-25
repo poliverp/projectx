@@ -609,9 +609,16 @@ function CasePage() {
       </Card>
 
       {/* --- Navigation --- */}
-      <Space style={{ marginTop: '20px', justifyContent: 'start' }}> {/* Align button left */}
-        <Button><Link to="/cases">Back to Cases List</Link></Button>
-      </Space>
+      <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end', // Pushes content to the right
+          width: '100%',             // Ensure the div takes full width
+          marginTop: '20px'          // Keep the margin if needed
+      }}>
+          <Button>
+              <Link to="/manage-cases">Back to Cases List</Link>
+          </Button>
+      </div>
 
       {/* --- Edit Case Modal (defined but not visible until isEditModalOpen is true) --- */}
       <Modal
