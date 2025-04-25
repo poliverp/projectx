@@ -4,6 +4,7 @@ import json
 import time
 from flask import current_app
 import google.generativeai as genai
+from flask_login import current_user # <--- ADD THIS IMPORT
 
 from backend.services.case_service import get_case_by_id, CaseNotFoundError, CaseServiceError
 
@@ -137,6 +138,7 @@ DOCUMENT_PROMPTS = {
 # --- Modify the service function ---
 def generate_document_for_case(case_id, generation_data):
     print(f"--- Real Generation Request Received ---")
+    print(f"Case ID: {case_id}, User ID: {current_user.id}") # Log user_id too
     print(f"Case ID: {case_id}")
     print(f"Generation Data: {generation_data}")
 
@@ -154,7 +156,7 @@ def generate_document_for_case(case_id, generation_data):
 
     try:
         # 1. Fetch Case Data
-        case = get_case_by_id(case_id)
+        case = get_case_by_id(case_id=case_id, user_id=current_user.id)
         case_details_dict = dict(case.case_details or {})
         # Add top-level fields if needed (same as before)
         if 'display_name' not in case_details_dict: case_details_dict['display_name'] = case.display_name

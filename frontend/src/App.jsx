@@ -111,48 +111,59 @@ function App() {
         <Header style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#fff', // Default white background
-            paddingInline: '20px', // Adjust padding as needed
-            position: 'sticky', top: 0, zIndex: 1, width: '100%' // Make header sticky
-         }}>
+            // --- Option 2 Styles Applied ---
+            backgroundColor: '#A0522D', // Primary theme brown (Sienna)
+            color: '#FAF0E6',          // Linen/Light Cream text color for contrast
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Slightly subtler shadow
+            borderBottom: '1px solid #5D4037',        // Darker brown subtle border for definition
+            paddingInline: '30px',                     // Increased padding slightly
+            // --- End Option 2 Styles ---
+            position: 'sticky', top: 0, zIndex: 1, width: '100%' // Keep sticky positioning
+        }}>
           {/* Logo/Brand */}
-          <div className="logo" style={{ color: '#333', marginRight: 'auto', fontWeight: 'bold', fontSize: '1.2em' }}>
-            {/* Make logo link home appropriately */}
+          {/* Removed inline color style, inherits from Header now */}
+          <div className="logo" style={{ marginRight: 'auto', fontWeight: 'bold', fontSize: '1.2em' }}>
             <Link to={currentUser ? "/manage-cases" : "/"} style={{ color: 'inherit', textDecoration: 'none' }}>
-                AI Litigator
+                The Litigator
             </Link>
           </div>
 
-          {/* MODIFIED: Use AntD Menu for Nav links (pushed towards center/right) */}
-          {/* Note: For complex nav, AntD recommends Menu inside Header content, not flex nav */}
-          {/* This places Menu between Logo and Auth actions */}
-           <Menu
-              theme="light"
+          {/* AntD Menu for Nav links */}
+          {/* Using theme="light" - check if text/highlight contrast is good against the brown header.
+              If not, you might need theme="dark" or specific CSS/Theme overrides for Menu items.
+              Making background transparent so header color shows through. */}
+          <Menu
+              theme="light" // Keep light theme (usually light text on dark bg), adjust if contrast poor
               mode="horizontal"
               selectedKeys={selectedKeys}
               items={navMenuItems}
-              style={{ flexGrow: 1, borderBottom: 'none', lineHeight: '62px', justifyContent: 'flex-end' }} // Adjust alignment
-              disabledOverflow={true} // Prevent collapsing into "..." menu for now
-           />
+              style={{
+                  backgroundColor: 'transparent', // Make menu background transparent
+                  flexGrow: 1,
+                  borderBottom: 'none', // Remove default menu border
+                  lineHeight: '62px',   // Ensure vertical alignment (adjust value if header height changes)
+                  justifyContent: 'flex-end'
+              }}
+              disabledOverflow={true}
+          />
 
-
-          {/* MODIFIED: User/Auth Section using AntD components */}
+          {/* User/Auth Section */}
           <div style={{ marginLeft: '24px', display: 'flex', alignItems: 'center' }}>
             {currentUser ? (
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-                {/* Avatar triggers dropdown */}
-                <Avatar style={{ backgroundColor: '#7265e6', cursor: 'pointer' }} icon={<UserOutlined />} />
+                {/* Avatar triggers dropdown - Changed background color to fit theme */}
+                <Avatar style={{ backgroundColor: '#5D4037', cursor: 'pointer' }} icon={<UserOutlined style={{ color: '#FAF0E6' }} />} />
+                                                        {/* ^^^ Explicitly color icon if needed */}
               </Dropdown>
             ) : (
-               // Use AntD Button for Register link
-               <Button type="primary"> {/* Primary style button */}
-                 <Link to="/register">Register</Link>
-               </Button>
-               // Login button removed as Menu handles it
+              // Use AntD Button for Register link
+              // Button color comes from your ConfigProvider theme (colorPrimary: '#A0522D')
+              <Button type="primary">
+                <Link to="/register" style={{ color: '#FFFFFF' }}>Register</Link> {/* Ensure link text is white */}
+              </Button>
             )}
           </div>
         </Header>
-
         {/* MODIFIED: Use AntD Content */}
         <Content style={{ padding: '20px 40px', marginTop: '64px' /* Offset for sticky header */ }}>
           {/* Routes remain the same */}
