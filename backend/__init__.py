@@ -2,6 +2,7 @@
 import os
 from flask import Flask, request, jsonify # Ensure all needed flask components are imported
 from dotenv import load_dotenv
+from .config import Config # <<< ADD THIS IMPORT
 
 # Import extensions from our extensions module
 # Ensure backend/extensions.py exists and defines these instances
@@ -23,42 +24,19 @@ else:
      print(f"--- .env file not found at: {dotenv_path} (This is expected on Render) ---")
 
 
-def create_app(config_class_name=None): # config_class_name is optional now
+def create_app(config_class=Config):
     """Application Factory Function"""
     app = Flask(__name__, instance_relative_config=False)
 
-    # --- Configuration Loading ---
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'a-very-insecure-default-key-please-change'
-
-    # --- MODIFIED: Load DATABASE_URL Correctly (NO SQLITE FALLBACK + DIAGNOSTICS) ---
-    db_url = os.environ.get('DATABASE_URL')
-    # Print what is read from the environment immediately
-    print(f"--- [INIT] Read DATABASE_URL from environment: {'SET (partially hidden)' if db_url else 'NOT SET'}")
-    if not db_url:
-        # App will crash hard on startup if DATABASE_URL isn't found in Render Env Vars
-        raise ValueError("FATAL ERROR: DATABASE_URL environment variable is not set or not readable by the application!")
-    # Assign the read URL to Flask config
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # Print the final value set in Flask config
-    print(f"--- [INIT] Flask app.config['SQLALCHEMY_DATABASE_URI'] set to: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not Set')[:app.config.get('SQLALCHEMY_DATABASE_URI', '').find('@') if '@' in app.config.get('SQLALCHEMY_DATABASE_URI', '') else 30]}@********")
-    # --- END MODIFICATION ---
-
-    # AI API Key: Use AI_API_KEY env var name
-    app.config['AI_API_KEY'] = os.environ.get('AI_API_KEY')
-    app.config['GOOGLE_API_KEY'] = app.config['AI_API_KEY'] # Example if needed by lib
-
-    # Frontend URL for CORS: Use FRONTEND_URL env var name
-    app.config['FRONTEND_URL'] = os.environ.get('FRONTEND_URL', '*') # Default to * ONLY if not set
-    print(f"--- [INIT] Allowed CORS Origin: {app.config['FRONTEND_URL']}")
-
+    app.config.from_object(config_class) # <<< USE THIS TO LOAD ALL CONFIG
+    print(f"--- [INIT] Loaded config from object: {config_class.__name__} ---")
+    # --- Initialize Flask Extensions ---
     # --- ADDED: Configure Session Cookie for Production/Cross-Site ---
     app.config['SESSION_COOKIE_SECURE'] = True  # Send cookie only over HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent client-side JS access
     app.config['SESSION_COOKIE_SAMESITE'] = 'None' # Allow sending with cross-site requests (Required for cross-origin credentialed requests)
     # --- END ADDED ---
-
-    # --- Initialize Flask Extensions ---
+    
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)

@@ -2,6 +2,7 @@
 import time # For simulating delay
 import json # For handling JSON
 from flask import current_app
+from flask_login import current_user
 
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig # For JSON mode
@@ -10,6 +11,7 @@ import traceback
 # Import necessary services and exceptions
 from backend.services.document_service import get_document_by_id, update_document_analysis, DocumentNotFoundError, DocumentServiceError
 from backend.services.case_service import get_case_by_id, update_case, CaseNotFoundError, CaseServiceError
+from .case_service import get_case_by_id # Or wherever get_case_by_id is defined
 
 # --- Define Exceptions ---
 class AnalysisServiceError(Exception):
@@ -168,7 +170,7 @@ def trigger_analysis_and_update(document_id):
         # 4. Store Extracted Fields as Pending Suggestions in Case Record
         try:
             case_id = doc.case_id
-            current_case = get_case_by_id(case_id)
+            current_case = get_case_by_id(case_id, current_user.id)
             current_details = dict(current_case.case_details or {}) # Get existing details
 
             updated_case_details = False # Flag
@@ -204,7 +206,7 @@ def trigger_analysis_and_update(document_id):
                 # (Keep the debug prints around update_case if you want)
                 print("--- DEBUG: Preparing to update case_details with:")
                 print(json.dumps(current_details, indent=2))
-                update_case(case_id, case_update_data)
+                update_case(case_id, case_update_data, current_user.id)
                 print(f"--- DEBUG: update_case call completed for case {case_id} ---")
                 print(f"Case {case_id} details updated with pending suggestions/metadata for doc {document_id}")
             else:

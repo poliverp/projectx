@@ -418,6 +418,30 @@ function CasePage() {
     <Space direction="vertical" size="large" style={{ display: 'flex' }}>
       {/* MODIFIED: Use AntD Typography Title */}
       <Title level={2}>Case: {display_name}</Title>
+      {/* ===>>> ADD THIS ENTIRE <Card> SECTION HERE <<<=== */}
+      <Card title="Case Actions" size="small"> {/* Use size="small" for less vertical space */}
+                  <Space wrap size="middle"> {/* 'wrap' allows buttons to wrap; 'size' controls spacing */}
+                      <Button>
+                          {/* Link uses the route defined in App.jsx */}
+                          <Link to={`/case/${caseId}/files`}>Manage Files</Link>
+                      </Button>
+                      <Button>
+                          {/* Link uses the route defined in App.jsx */}
+                          <Link to={`/case/${caseId}/analyze`}>Analyze Documents</Link>
+                      </Button>
+                      <Button>
+                          {/* Link uses the route defined in App.jsx */}
+                          {/* Label reflects the dual purpose of the target page */}
+                          <Link to={`/case/${caseId}/create-doc`}>Create/Download Document</Link>
+                      </Button>
+                      <Button>
+                          {/* Link uses the route defined in App.jsx */}
+                          <Link to={`/case/${caseId}/create-discovery-response`}>Generate Discovery Response</Link>
+                      </Button>
+                      {/* Add other top-level action buttons here if needed in the future */}
+                  </Space>
+              </Card>
+              {/* ===>>> END OF SECTION TO ADD <<<=== */}
 
       {/* --- Global Error Display (for apply/save errors) --- */}
       {error && caseDetails && ( // Show non-critical errors here if caseDetails did load
@@ -448,6 +472,8 @@ function CasePage() {
         <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} items={detailsItems} size="small"/>
       </Card>
 
+      {/* Modal to Show All Details (Needs to be added later, driven by caseFieldConfig) */}
+      {/* <Modal title="All Case Details" ... > ... </Modal> */}
 
       {/* --- Pending Suggestions Section --- */}
       <Card title="Pending Analysis Suggestions">
@@ -455,7 +481,7 @@ function CasePage() {
           <> {/* Use Fragment to group Collapse and Button */}
             <Collapse accordion>
               {Object.entries(pendingSuggestions).map(([docKey, suggestions]) => (
-                <Panel header={`Suggestions from Document: ${docKey}`} key={docKey}>
+              <Collapse.Panel header={`Suggestions from Document: ${docKey}`} key={docKey}>
                   <List
                     itemLayout="vertical" // Better layout for more info
                     dataSource={Object.entries(suggestions)}
@@ -490,7 +516,7 @@ function CasePage() {
                         );
                     }}
                   />
-                </Panel>
+                </Collapse.Panel>
               ))}
             </Collapse>
             <Button

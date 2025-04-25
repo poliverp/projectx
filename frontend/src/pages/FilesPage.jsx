@@ -1,168 +1,232 @@
+// frontend/src/pages/FilesPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import FileDropzone from '../components/FileDropzone'; // Import the dropzone
+import {
+    Typography,
+    Card,
+    Button,
+    Upload, // Import Upload component
+    List,   // Import List component
+    Popconfirm,
+    Alert,
+    Spin,
+    Space,
+    message, // Use Ant Design message for feedback
+    Tag      // Optional: For file types or status
+} from 'antd';
+import { InboxOutlined, FilePdfOutlined, FileWordOutlined, FileTextOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons'; // Import relevant icons
+
+const { Title, Text } = Typography;
+const { Dragger } = Upload; // Destructure Dragger for drag-and-drop
 
 function FilesPage() {
-  const { caseId } = useParams();
-  const navigate = useNavigate();
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [caseDisplayName, setCaseDisplayName] = useState(''); // Store case name for display
+    const { caseId } = useParams();
+    const navigate = useNavigate();
 
-  // Function to fetch documents and case name
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Fetch case details first to get the name
-      const caseResponse = await api.getCase(caseId);
-      setCaseDisplayName(caseResponse.data?.display_name || `Case ${caseId}`);
+    // State
+    const [documents, setDocuments] = useState([]);
+    const [loading, setLoading] = useState(true); // Loading for initial fetch and delete
+    const [error, setError] = useState(null);
+    // Note: 'uploading' state is handled internally by AntD Upload per file now
+    const [caseDisplayName, setCaseDisplayName] = useState('');
 
-      // Then fetch documents
-      const docResponse = await api.getDocumentsForCase(caseId);
-      setDocuments(docResponse.data || []);
-      setError(null); // Clear previous errors on successful fetch
-    } catch (err) {
-      console.error(`Error fetching data for case ${caseId}:`, err);
-      setError(`Failed to load data. ${err.response?.status === 404 ? 'Case or documents not found.' : 'Is the backend running?'}`);
-      // Don't clear documents if only case fetch failed but docs might exist
-      if (err.response?.status === 404 && !documents.length) setDocuments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [caseId, documents.length]); // Rerun if caseId changes
+    // Function to fetch documents and case name
+    const fetchData = useCallback(async () => {
+        // Avoid setting loading if it's just a refresh after upload/delete
+        // setLoading(true); // Only set loading on initial mount maybe?
+        try {
+            // Fetch case details first (can run in parallel)
+            const casePromise = api.getCase(caseId);
+            // Then fetch documents
+            const docPromise = api.getDocumentsForCase(caseId);
 
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]); // Use the memoized fetchData function
+            const [caseResponse, docResponse] = await Promise.all([casePromise, docPromise]);
 
-  // Handle files accepted from Dropzone or Manual Upload
-  const handleFilesAccepted = async (acceptedFiles) => {
-    if (!acceptedFiles || acceptedFiles.length === 0) return;
+            setCaseDisplayName(caseResponse.data?.display_name || `Case ${caseId}`);
+            setDocuments(docResponse.data || []);
+            setError(null); // Clear previous errors on successful fetch
+        } catch (err) {
+            console.error(`Error fetching data for case ${caseId}:`, err);
+            setError(`Failed to load data. ${err.response?.status === 404 ? 'Case or documents not found.' : 'Is the backend running?'}`);
+            // Decide if you want to clear documents if case fetch fails, etc.
+            // setDocuments([]);
+        } finally {
+            setLoading(false); // Ensure loading is false after fetch attempt
+        }
+    }, [caseId]);
 
-    setUploading(true);
-    setError(null); // Clear previous upload errors
+    // Fetch data on component mount
+    useEffect(() => {
+        setLoading(true); // Set loading true only on mount
+        fetchData();
+    }, [fetchData]); // Depend on the memoized fetchData
 
-    // Process files sequentially for clearer feedback (can be parallelized)
-    let uploadSuccess = true;
-    for (const file of acceptedFiles) {
-      try {
-        // For this example, we'll just upload directly.
-        // In a real app, you'd use modals for options (storeOnly, analyze).
-        console.log(`Uploading ${file.name}...`);
-        // Assume default options: upload copy, don't analyze immediately
-        const options = { storeOnly: false, analyze: false };
+    // Custom request function for Ant Design Upload
+    const handleUpload = async (options) => {
+        const { file, onSuccess, onError /*, onProgress */ } = options;
+        console.log(`Attempting upload for ${file.name}`);
+        setError(null); // Clear general errors on new upload attempt
 
-        // Backend API needs to handle the file and options
-        await api.uploadDocument(caseId, file, options);
-        console.log(`Successfully uploaded ${file.name}`);
+        // Assume default options for now, get from UI later if needed
+        const uploadOptions = { storeOnly: false, analyze: false };
 
-      } catch (err) {
-        console.error(`Error uploading file ${file.name}:`, err);
-        setError(prevError => `${prevError ? prevError + '; ' : ''}Failed to upload ${file.name}`);
-        uploadSuccess = false;
-        // break; // Uncomment to stop on first error
-      }
-    }
+        try {
+            const response = await api.uploadDocument(caseId, file, uploadOptions);
+            onSuccess(response.data, file); // Pass backend response to onSuccess
+            console.log(`Successfully uploaded ${file.name}`);
+            message.success(`${file.name} uploaded successfully!`);
+            // Trigger list refresh after successful upload
+            fetchData(); // Consider debouncing or refreshing only once after a batch
+        } catch (err) {
+            console.error(`Error uploading file ${file.name}:`, err);
+            const errorMsg = `Failed to upload ${file.name}: ${err.response?.data?.error || err.message}`;
+            // Update the general error state to show in the Alert
+            setError(prevError => `${prevError ? prevError + '; ' : ''}${errorMsg}`);
+            // Call AntD onError to mark the file as failed in the UI
+            onError(err); // Pass the error object
+             message.error(`Upload failed for ${file.name}.`);
+        }
+    };
 
-    setUploading(false);
-    if (uploadSuccess && acceptedFiles.length > 0) {
-      // Refresh the document list only if uploads seemed successful
-       await fetchData(); // Re-fetch documents after upload
-    } else if (!uploadSuccess) {
-        alert("Some files failed to upload. Please check the console for details.");
-    }
-  };
+    // Props for the Upload Dragger component
+    const draggerProps = {
+        name: 'file', // Field name expected by the backend (often 'file')
+        multiple: true, // Allow multiple file uploads
+        accept: ".pdf,.docx,.txt,.doc", // Specify accepted file types
+        customRequest: handleUpload, // Use our custom handler
+        // Optional: Add onChange for more fine-grained feedback or actions
+        onChange(info) {
+            const { status } = info.file;
+            if (status === 'done') {
+                // message.success(`${info.file.name} file uploaded successfully.`); // Can be redundant if handleUpload shows message
+            } else if (status === 'error') {
+                // message.error(`${info.file.name} file upload failed.`); // Can be redundant if handleUpload shows message
+            }
+            // You could potentially trigger fetchData here less often, e.g.,
+            // when info.fileList.every(f => f.status === 'done' || f.status === 'error')
+        },
+         // Optional: Show download links for already uploaded files in the list?
+         showUploadList: {
+             showDownloadIcon: false, // Assume no direct download from upload list for now
+             showRemoveIcon: true, // Allow removing from queue before upload finishes
+         }
+    };
 
-  // Handler for manual file input change
-  const handleManualUpload = (event) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      handleFilesAccepted(Array.from(files)); // Process the selected files
-    }
-    event.target.value = null; // Clear input value to allow re-selecting same file
-  };
-
-  const handleDeleteDocument = async (docId, docName) => {
-    if (window.confirm(`Are you sure you want to delete document "${docName}"?`)) {
-      try {
-        setLoading(true); // Indicate loading during delete
-        await api.deleteDocument(docId);
-        setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId)); // Remove locally
+    // Handle Delete Document
+    const handleDeleteDocument = async (docId, docName) => {
+        const key = `deleting-${docId}`;
+        message.loading({ content: `Deleting ${docName}...`, key });
+        setLoading(true); // Show general loading indicator during delete
         setError(null);
-      } catch (err) {
-        console.error("Error deleting document:", err);
-        setError(`Failed to delete document: ${err.response?.data?.error || err.message}`);
-      } finally {
-          setLoading(false);
-      }
-    }
-  };
+        try {
+            await api.deleteDocument(docId); // Ensure api.deleteDocument(id) exists
+            message.success({ content: `${docName} deleted successfully!`, key, duration: 2 });
+            // Refresh data after delete
+            fetchData();
+            // Or optimistic update:
+            // setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
+        } catch (err) {
+            console.error("Error deleting document:", err);
+            const errorMsg = `Failed to delete ${docName}: ${err.response?.data?.error || err.message}`;
+            setError(errorMsg);
+            message.error({ content: errorMsg, key, duration: 4 });
+        } finally {
+             setLoading(false);
+        }
+    };
 
-  return (
-    <div>
-      <h2>Documents for: {caseDisplayName || `Case ${caseId}`}</h2>
-      <Link to={`/case/${caseId}`} className="button-link" style={{backgroundColor: '#6c757d'}}>Back to Case Page</Link>
+    // Helper function to get file type icon (optional)
+    const getFileIcon = (fileName) => {
+        if (!fileName) return <FileTextOutlined />;
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        if (extension === 'pdf') return <FilePdfOutlined />;
+        if (extension === 'docx' || extension === 'doc') return <FileWordOutlined />;
+        return <FileTextOutlined />;
+    };
 
-      {/* --- File Upload Section --- */}
-      <div style={{ marginTop: '20px', border: '1px solid #eee', padding: '20px', borderRadius: '5px', background: '#f8f9fa' }}>
-        <h3>Upload New Documents</h3>
-        <FileDropzone onFilesAccepted={handleFilesAccepted} multiple={true} />
-        <label htmlFor="manual-upload" className="button-link" style={{ display: 'inline-block', cursor: 'pointer' }}>
-          Or Select Files Manually...
-        </label>
-        <input
-          id="manual-upload"
-          type="file"
-          multiple
-          onChange={handleManualUpload}
-          style={{ display: 'none' }} // Hide default input
-          accept=".pdf,.docx,.txt" // Enforce accepted types
-        />
-        {uploading && <p className="loading-message" style={{marginTop: '10px'}}>Uploading...</p>}
-      </div>
+    return (
+        <Space direction="vertical" style={{ width: '100%', padding: '20px' }} size="large">
+             {/* Page Title and Back Button */}
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <Title level={2} style={{ margin: 0 }}>Manage Documents for: <Text strong>{caseDisplayName || `Case ${caseId}`}</Text></Title>
+                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/case/${caseId}`)}>
+                    Back to Case
+                 </Button>
+            </div>
 
-      {/* --- Document List --- */}
-      <h3 style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>Existing Documents</h3>
-      {loading && documents.length === 0 && <p className="loading-message">Loading documents...</p>}
-      {error && <p className="error-message">Error: {error}</p>}
+             {/* Display General Errors */}
+             {error && (
+                <Alert
+                    message="Operation Error"
+                    description={error}
+                    type="error"
+                    showIcon
+                    closable
+                    onClose={() => setError(null)} // Allow dismissing error
+                />
+            )}
 
-      {!loading && !error && documents.length === 0 && (
-        <p>No documents have been uploaded for this case yet.</p>
-      )}
+            {/* --- File Upload Section --- */}
+            <Card title="Upload New Documents">
+                {/* Use Upload.Dragger for drag & drop and click */}
+                <Dragger {...draggerProps}>
+                    <p className="ant-upload-drag-icon">
+                        <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">Click or drag file(s) to this area to upload</p>
+                    <p className="ant-upload-hint">
+                        Supports single or bulk upload. Accepted types: PDF, DOCX, DOC, TXT.
+                    </p>
+                </Dragger>
+                {/* Manual upload button is removed as Dragger handles both */}
+            </Card>
 
-      {!error && documents.length > 0 && (
-        <ul>
-          {documents.map(doc => (
-            <li key={doc.id}>
-              <div>
-                <strong>{doc.file_name}</strong>
-                <br />
-                <small style={{ color: 'grey' }}>
-                  Uploaded: {new Date(doc.upload_date).toLocaleString()}
-                  {/* Optionally show file size if available from backend */}
-                  {/* {doc.size && ` | Size: ${(doc.size / 1024).toFixed(1)} KB`} */}
-                </small>
-              </div>
-              {/* Add view/download link if backend provides one */}
-              {/* <a href={doc.download_url} target="_blank" rel="noopener noreferrer"><button>Download</button></a> */}
-              <button
-                onClick={() => handleDeleteDocument(doc.id, doc.file_name)}
-                className="button-danger"
-                disabled={loading || uploading} // Disable while loading or uploading
-                aria-label={`Delete document ${doc.file_name}`}
-              >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+            {/* --- Document List Section --- */}
+            <Card title="Existing Documents">
+                 {/* Show Spin covering the List while loading initially */}
+                 <Spin spinning={loading && documents.length === 0} tip="Loading documents...">
+                    <List
+                        itemLayout="horizontal"
+                        dataSource={documents}
+                        locale={{ emptyText: loading ? ' ' : 'No documents found for this case.' }} // Handle empty state message
+                        renderItem={(doc) => (
+                            <List.Item
+                                actions={[ // Actions appear on the right
+                                     // Add Download button if API provides URL
+                                     // <Button size="small" href={doc.download_url} target="_blank">Download</Button>,
+                                    <Popconfirm
+                                        title="Delete Document?"
+                                        description={`Permanently delete ${doc.file_name}?`}
+                                        onConfirm={() => handleDeleteDocument(doc.id, doc.file_name)}
+                                        okText="Delete"
+                                        cancelText="Cancel"
+                                        okButtonProps={{ danger: true }}
+                                    >
+                                        <Button danger size="small" icon={<DeleteOutlined />} disabled={loading}> {/* Disable delete while another action loads */}
+                                            {/* Delete */}
+                                        </Button>
+                                    </Popconfirm>
+                                ]}
+                            >
+                                <List.Item.Meta
+                                    avatar={getFileIcon(doc.file_name)} // Show file type icon
+                                    title={<Text>{doc.file_name || 'Unnamed Document'}</Text>}
+                                    description={
+                                        <Text type="secondary">
+                                            Uploaded: {doc.upload_date ? new Date(doc.upload_date).toLocaleString() : 'N/A'}
+                                            {/* Add size if available: | Size: ... KB */}
+                                        </Text>
+                                    }
+                                />
+                                {/* You could add other info here like doc status if available */}
+                            </List.Item>
+                        )}
+                    />
+                </Spin>
+            </Card>
+        </Space>
+    );
 }
 
 export default FilesPage;

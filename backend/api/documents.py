@@ -49,7 +49,7 @@ def get_case_documents(case_id):
             'id': doc.id,
             'file_name': doc.file_name, # Changed from filename for consistency maybe? Check model.
             'upload_date': doc.upload_date.isoformat() if doc.upload_date else None,
-            'file_type': doc.file_type # Added file_type if it exists on model
+            # 'file_type': doc.file_type # Added file_type if it exists on model
         } for doc in documents]
         return jsonify(docs_data)
 

@@ -1,115 +1,213 @@
 // frontend/src/pages/CreateDiscoveryPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom'; // Import useParams and Link
+import { useParams, Link, useNavigate } from 'react-router-dom'; // Added useNavigate
 import api from '../services/api'; // Adjust path if needed
+import {
+    Typography, // For Titles, Text, Paragraphs
+    Card,       // To structure content sections
+    Button,     // For actions
+    Upload,     // For file input
+    Alert,      // For errors
+    Spin,       // For loading indicators
+    Space,      // For layout spacing
+    message     // For feedback messages (like copy success)
+    // Breadcrumb (Optional, if you want path navigation)
+} from 'antd';
+import { UploadOutlined, CopyOutlined, ArrowLeftOutlined, FilePdfOutlined } from '@ant-design/icons'; // Import icons
+
+const { Title, Paragraph, Text } = Typography;
 
 function CreateDiscoveryPage() {
-  // --- Get caseId from URL ---
-  const { caseId } = useParams();
+    // --- Hooks ---
+    const { caseId } = useParams();
+    const navigate = useNavigate(); // For navigation actions
 
-  // --- State Variables ---
-  const [interrogatoriesFile, setInterrogatoriesFile] = useState(null);
-  const [isGeneratingResponses, setIsGeneratingResponses] = useState(false);
-  const [generatedResponses, setGeneratedResponses] = useState('');
-  const [responseError, setResponseError] = useState(null);
-  const [caseDisplayName, setCaseDisplayName] = useState(''); // Optional: For display
-  const [loadingCase, setLoadingCase] = useState(true); // Optional: Loading state for case name
+    // --- State Variables ---
+    // State for file handling with Ant Design Upload
+    const [fileList, setFileList] = useState([]); // Use fileList for Upload component
 
-   // Optional: Fetch case display name for context
-   useEffect(() => {
-    setLoadingCase(true);
-    api.getCase(caseId)
-      .then(response => {
-        setCaseDisplayName(response.data.display_name || `Case ${caseId}`);
-      })
-      .catch(err => {
-        console.error("Error fetching case display name:", err);
-        setCaseDisplayName(`Case ${caseId}`); // Fallback
-      })
-      .finally(() => {
-        setLoadingCase(false);
-      });
-  }, [caseId]);
+    const [isGeneratingResponses, setIsGeneratingResponses] = useState(false);
+    const [generatedResponses, setGeneratedResponses] = useState('');
+    const [responseError, setResponseError] = useState(null);
+    const [caseDisplayName, setCaseDisplayName] = useState('');
+    const [loadingCase, setLoadingCase] = useState(true);
+
+    // --- Effects ---
+    // Fetch case display name
+    useEffect(() => {
+        setLoadingCase(true);
+        api.getCase(caseId)
+            .then(response => {
+                setCaseDisplayName(response.data?.display_name || `Case ${caseId}`);
+            })
+            .catch(err => {
+                console.error("Error fetching case display name:", err);
+                setCaseDisplayName(`Case ${caseId}`); // Fallback
+            })
+            .finally(() => {
+                setLoadingCase(false);
+            });
+    }, [caseId]);
+
+    // --- Handlers ---
+    // Handle file changes via Upload component's onChange prop
+    const handleFileChange = (info) => {
+        // Keep only the most recent file in the list (due to maxCount: 1)
+        let newFileList = [...info.fileList];
+        newFileList = newFileList.slice(-1);
+
+        // Optional: You could read file content here if needed, but for upload
+        // we usually just need the file object itself.
+
+        setFileList(newFileList); // Update the file list state
+
+        // Clear previous results/errors when file changes
+        if (info.file.status === 'removed' || (info.file.status !== 'uploading' && newFileList.length > 0)) {
+            setGeneratedResponses('');
+            setResponseError(null);
+        }
+    };
+
+    const handleGenerateResponses = async () => {
+        // Get the file object from the fileList state
+        const fileToUpload = fileList.length > 0 ? fileList[0]?.originFileObj : null;
+
+        if (!fileToUpload || isGeneratingResponses || !caseId) {
+             if (!fileToUpload) {
+                 message.error('Please select a PDF file first.');
+             }
+            return;
+        }
+
+        setIsGeneratingResponses(true);
+        setGeneratedResponses('');
+        setResponseError(null);
+
+        try {
+            // Pass the actual file object to the API service function
+            const result = await api.generateInterrogatoryResponses(caseId, fileToUpload);
+            setGeneratedResponses(result.data.generated_content);
+             message.success('Draft responses generated!');
+        } catch (err) {
+            console.error("Failed to generate interrogatory responses:", err);
+            const errorMsg = `Failed to generate: ${err.response?.data?.error || err.message}`;
+            setResponseError(errorMsg);
+             message.error('Generation failed.'); // Show feedback
+        } finally {
+            setIsGeneratingResponses(false);
+        }
+    };
+
+     // --- Props for Ant Design Upload component ---
+     const uploadProps = {
+        fileList: fileList, // Control the displayed file list
+        accept: ".pdf", // Accept only PDF files
+        maxCount: 1, // Allow only one file to be selected
+        beforeUpload: (file) => {
+            // Prevent default upload behavior, we handle upload manually on button click
+            // You can add validation here (e.g., file size)
+            const isPdf = file.type === 'application/pdf';
+            if (!isPdf) {
+                message.error(`${file.name} is not a PDF file`);
+            }
+            const isLt50M = file.size / 1024 / 1024 < 50; // Example: Limit size to 50MB
+             if (!isLt50M) {
+               message.error('File must be smaller than 50MB!');
+             }
+            // Return false prevents Ant Design's default upload action ONLY if validation fails
+            // If we always return false, onChange might not capture file correctly in some versions.
+            // Best practice for manual handling is usually just capturing in onChange.
+            // Let's rely on onChange and remove the file manually if needed.
+            // We will stop the default upload action by not providing an 'action' prop.
+            return false; // Explicitly prevent upload here
+        },
+        onChange: handleFileChange, // Use our handler to update state
+        onRemove: () => { // Ensure state is cleared if file is removed via UI
+            setFileList([]);
+            setGeneratedResponses('');
+            setResponseError(null);
+            return true;
+        }
+        // Removed 'action' prop - this prevents the component from trying to POST the file anywhere automatically
+    };
 
 
-  // --- Handlers ---
-  const handleFileChange = (event) => {
-    setInterrogatoriesFile(event.target.files[0]);
-    setGeneratedResponses(''); // Clear previous results
-    setResponseError(null);
-  };
+    // --- JSX ---
+    return (
+        <Space direction="vertical" style={{ width: '100%', padding: '20px' }} size="large">
+            {/* Page Title */}
+            <Title level={2}>
+                Generate Discovery Responses for {loadingCase ? <Spin size="small" /> : <Text strong>{caseDisplayName}</Text>}
+            </Title>
 
-  const handleGenerateResponses = async () => {
-    if (!interrogatoriesFile || isGeneratingResponses || !caseId) return;
+            {/* Main Card for the feature */}
+            <Card title={<span><FilePdfOutlined /> Generate Interrogatory Responses (Draft)</span>}>
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    <Paragraph>
+                        Upload the interrogatories document (PDF) you received for this case. The AI will generate draft responses based on the case information.
+                    </Paragraph>
 
-    setIsGeneratingResponses(true);
-    setGeneratedResponses('');
-    setResponseError(null);
+                    {/* Ant Design Upload Component */}
+                    <Upload {...uploadProps}>
+                        <Button icon={<UploadOutlined />} disabled={isGeneratingResponses}>
+                            Select Interrogatories PDF
+                        </Button>
+                    </Upload>
 
-    try {
-      // Call the API function we added earlier
-      const result = await api.generateInterrogatoryResponses(caseId, interrogatoriesFile);
-      setGeneratedResponses(result.data.generated_content);
-    } catch (err) {
-      console.error("Failed to generate interrogatory responses:", err);
-      setResponseError(`Failed to generate: ${err.response?.data?.error || err.message}`);
-    } finally {
-      setIsGeneratingResponses(false);
-    }
-  };
+                    {/* Generate Button */}
+                    <Button
+                        type="primary"
+                        onClick={handleGenerateResponses}
+                        loading={isGeneratingResponses} // Show loading state on button
+                        disabled={fileList.length === 0 || isGeneratingResponses} // Disable if no file or already generating
+                        style={{ marginTop: '10px' }}
+                    >
+                        Generate Draft Responses
+                    </Button>
 
-  // --- JSX ---
-  return (
-    <div>
-      <h1>
-        Generate Discovery Responses {loadingCase ? '...' : `for ${caseDisplayName}`}
-      </h1>
+                    {/* Error Display */}
+                    {responseError && (
+                        <Alert
+                            message="Generation Failed"
+                            description={responseError}
+                            type="error"
+                            showIcon
+                            closable
+                            onClose={() => setResponseError(null)} // Allow dismissing
+                        />
+                    )}
+                </Space>
+            </Card>
 
-      <div style={{ border: '1px solid #6f42c1', padding: '15px 25px', borderRadius: '5px', marginTop: '20px', backgroundColor: '#f8f9fa' }}>
-        <h3>Generate Interrogatory Responses (Draft)</h3>
-        <p>Upload the interrogatories document (PDF) you received for this case.</p>
-        <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="interrogatoriesFile" style={{ marginRight: '10px', fontWeight: 'bold' }}>Upload Interrogatories PDF:</label>
-          <input
-            type="file"
-            id="interrogatoriesFile"
-            accept=".pdf"
-            onChange={handleFileChange}
-            style={{padding: '5px'}}
-          />
-        </div>
-        <button
-          onClick={handleGenerateResponses}
-          disabled={!interrogatoriesFile || isGeneratingResponses}
-          style={{ padding: '10px 15px', cursor: (!interrogatoriesFile || isGeneratingResponses) ? 'not-allowed' : 'pointer', opacity: (!interrogatoriesFile || isGeneratingResponses) ? 0.6 : 1, backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '4px' }}
-        >
-          {isGeneratingResponses ? 'Generating...' : 'Generate Draft Responses'}
-        </button>
+            {/* Results Display Card */}
+            {generatedResponses && (
+                <Card type="inner" title="Generated Draft">
+                    {/* Use Paragraph with copyable for built-in copy functionality */}
+                    <Typography.Paragraph
+                        copyable={{ tooltips: ['Copy draft', 'Copied!'] }}
+                        style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflowY: 'auto', background: '#f9f9f9', padding: '15px', border: '1px solid #eee', borderRadius: '4px' }}
+                    >
+                        {generatedResponses}
+                    </Typography.Paragraph>
+                    {/* Manual copy button removed, using built-in copyable */}
+                </Card>
+            )}
 
-        {responseError && <div style={{ color: 'red', marginTop: '15px', padding: '10px', border: '1px solid red', borderRadius: '4px', backgroundColor: '#f8d7da', whiteSpace: 'pre-wrap' }}><strong>Error:</strong> {responseError}</div>}
+            {/* Loading indicator for generation (optional - Button has its own) */}
+            {/* {isGeneratingResponses && <Spin tip="Generating..." style={{ display: 'block', marginTop: '20px' }} />} */}
 
-        {generatedResponses && (
-          <div style={{ marginTop: '20px', borderTop: '1px solid #dee2e6', paddingTop: '20px' }}>
-            <h4>Generated Draft:</h4>
-            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: 'white', padding: '15px', border: '1px solid #ced4da', borderRadius: '4px', maxHeight: '60vh', overflowY: 'auto', fontFamily: 'monospace' }}>
-              {generatedResponses}
-            </pre>
-            {/* Add Copy/Edit buttons later? */}
-             <button onClick={() => navigator.clipboard.writeText(generatedResponses)} style={{marginTop: '10px'}}>
-                Copy Draft
-             </button>
-          </div>
-        )}
-      </div>
-
-       {/* Navigation Back */}
-       <div style={{ marginTop: '30px' }}>
-         <Link to={`/case/${caseId}`} className="button-link" style={{backgroundColor: '#6c757d'}}>Back to Case Details</Link>
-         <Link to="/manage-cases" className="button-link" style={{backgroundColor: '#6c757d', marginLeft: '10px'}}>Back to Manage Cases</Link>
-       </div>
-
-    </div>
-  );
+            {/* Navigation Back */}
+            <Space style={{ marginTop: '20px' }}>
+                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/case/${caseId}`)}>
+                    Back to Case Details
+                 </Button>
+                 {/* Optional: Link back to main cases list */}
+                 {/* <Button onClick={() => navigate('/manage-cases')}>
+                    Back to Manage Cases
+                 </Button> */}
+            </Space>
+        </Space>
+    );
 }
 
 export default CreateDiscoveryPage;
