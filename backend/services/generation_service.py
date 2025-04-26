@@ -7,6 +7,7 @@ import google.generativeai as genai
 from flask_login import current_user # <--- ADD THIS IMPORT
 
 from backend.services.case_service import get_case_by_id, CaseNotFoundError, CaseServiceError
+from backend.schemas import CaseSchema # <<< Import CaseSchema
 
 class GenerationServiceError(Exception): pass
 class InvalidDocumentTypeError(GenerationServiceError): pass # New specific error
@@ -24,6 +25,7 @@ STANDARD_OBJECTIONS = {
     # --- ADD MORE of your standard objections here ---
     # Use a unique key (like "VAGUE_AMBIGUOUS") for each phrase.
 }
+case_schema_for_prompt = CaseSchema(exclude=("documents", "owner", "id", "user_id"))
 
 def answer_interrogatory(case_id, interrogatory_text):
     """
@@ -45,15 +47,8 @@ def answer_interrogatory(case_id, interrogatory_text):
         case = get_case_by_id(case_id)
         # Combine top-level fields and the case_details JSON blob for context
         # Adjust this based on how get_case_by_id returns data and what's in your Case model
-        case_data_for_prompt = {
-            "display_name": case.display_name,
-            "official_case_name": case.official_case_name,
-            "case_number": case.case_number,
-            "judge": case.judge,
-            "plaintiff": case.plaintiff,
-            "defendant": case.defendant,
-            **(case.case_details or {}) # Merge the JSON blob, handle if it's None
-        }
+        case_data_for_prompt = case_schema_for_prompt.dump(case)
+
         # Remove pending suggestions if they exist, we don't want the AI answering based on those
         case_data_for_prompt.pop('pending_suggestions', None)
 
@@ -64,7 +59,7 @@ def answer_interrogatory(case_id, interrogatory_text):
     except CaseNotFoundError:
         print(f"ERROR: Case not found for Case ID: {case_id}")
         # Re-raise the specific error so the calling route can handle it (e.g., return 404)
-        raise
+        raise AnsweringServiceError(f"Cannot access case {case_id} to answer interrogatory.") from e
     except Exception as e:
         # Catch other potential errors during data fetching/processing
         print(f"ERROR: Failed to fetch or process case data for Case ID: {case_id} - {e}")
@@ -157,13 +152,10 @@ def generate_document_for_case(case_id, generation_data):
     try:
         # 1. Fetch Case Data
         case = get_case_by_id(case_id=case_id, user_id=current_user.id)
-        case_details_dict = dict(case.case_details or {})
-        # Add top-level fields if needed (same as before)
-        if 'display_name' not in case_details_dict: case_details_dict['display_name'] = case.display_name
-        if 'case_number' not in case_details_dict: case_details_dict['case_number'] = case.case_number
-        if 'plaintiff' not in case_details_dict: case_details_dict['plaintiff'] = case.plaintiff
-        if 'defendant' not in case_details_dict: case_details_dict['defendant'] = case.defendant
 
+        # --- Use Marshmallow Schema to Dump Data ---
+        # Use the pre-instantiated schema with exclusions
+        case_details_dict = case_schema_for_prompt.dump(case)
         case_details_str = json.dumps(case_details_dict, indent=2)
 
         # 2. Format the *selected* prompt

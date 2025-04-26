@@ -167,11 +167,12 @@ function CasePage() {
         for (const field in acceptedSuggestions[docKey]) {
           const acceptedValue = acceptedSuggestions[docKey][field];
           const dedicatedFields = [
-            'official_case_name', 'case_number', 'judge',
-            'plaintiff', 'defendant', 'filing_date', 'judge_doc', 'case_number_doc', 'department',
-            'jurisdiction', 'county', 'trial_date'
+            'official_case_name',
+            'case_number',
+            'judge',
+            'plaintiff',
+            'defendant'
           ];
-
           if (dedicatedFields.includes(field)) {
             updatePayload[field] = acceptedValue;
             console.log(`Applying to dedicated column: ${field} = ${JSON.stringify(acceptedValue)}`);
@@ -281,6 +282,7 @@ function CasePage() {
         // Call the existing updateCase API function
         await api.updateCase(caseId, updatePayload);
 
+        
         console.log("Case updated successfully.");
         setIsEditModalOpen(false); // Close the modal on success
         fetchCaseDetails(); // Re-fetch case details to show the updated data
@@ -290,7 +292,7 @@ function CasePage() {
 
     } catch (err) {
         console.error("Failed to save case changes:", err);
-        // Display error message within the modal
+        console.error("Error details:", err.response?.data);
         setEditError(`Failed to save changes: ${err.response?.data?.error || err.message}`);
         // Keep the modal open so the user sees the error and can retry/cancel
     } finally {

@@ -6,9 +6,11 @@ from flask import request, jsonify
 from flask_login import login_required, current_user # <-- ADDED/ENSURE THIS
 from werkzeug.exceptions import Forbidden # <-- ADDED/ENSURE THIS
 from docxtpl import DocxTemplate 
+from marshmallow import ValidationError # <<< Import ValidationError
 from backend.extensions import db # Import db from extensions
 from backend.models import Case, Document # Import necessary models
 from . import bp # Import the blueprint instance from api/__init__.py
+from backend.schemas import CaseSchema, case_schema, cases_schema # <<< CORRECT IMPORT
 from backend.services.case_service import (
     create_case, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
@@ -66,22 +68,20 @@ TEMPLATE_CONTEXT_MAP = {
 # == Case Management Endpoints ==
 
 # Consolidated route for /cases handling GET and POST (relative to /api prefix)
-@bp.route('/cases', methods=['GET', 'POST']) # No OPTIONS needed here unless specific handling req.
-@login_required # <-- ADD THIS DECORATOR
+@bp.route('/cases', methods=['GET', 'POST'])
+@login_required
 def handle_cases():
+    """Handles fetching all cases for a user (GET) and creating a new case (POST)."""
     if request.method == 'GET':
         print("--- Handling GET /api/cases (Blueprint) ---")
         try:
-            cases = Case.query.filter_by(user_id=current_user.id).order_by(Case.display_name).all() # <-- ADD .filter_by()
-            cases_data = [{
-                'id': case.id,
-                'display_name': case.display_name,
-                'official_case_name': case.official_case_name,
-                'case_number': case.case_number,
-                # Include updated_at and maybe parts of case_details if useful for list view
-                'updated_at': case.updated_at.isoformat() if case.updated_at else None,
-            } for case in cases]
-            return jsonify(cases_data)
+            # Fetch cases using the service function (if it exists) or query directly
+            # cases = get_all_cases_for_user(current_user.id) # Assumes service function exists
+            cases = Case.query.filter_by(user_id=current_user.id).order_by(Case.display_name).all()
+            
+            result = cases_schema.dump(cases)
+            return jsonify(result)
+            # ---### END CHANGE ###---
         except Exception as e:
             print(f"Error fetching cases: {e}")
             db.session.rollback()
@@ -93,24 +93,24 @@ def handle_cases():
         if not data:
             return jsonify({'error': 'No data provided'}), 400
 
-        try:
-            # Call the service function to handle creation logic
-            new_case = create_case(data, user_id=current_user.id) # <-- PASS user_id HERE
+        data['user_id'] = current_user.id
 
-            # Format the successful response (route still owns response formatting)
-            return jsonify({
-                'id': new_case.id,
-                'display_name': new_case.display_name,
-                'official_case_name': new_case.official_case_name,
-                'case_number': new_case.case_number,
-                'judge': new_case.judge,
-                'plaintiff': new_case.plaintiff,
-                'defendant': new_case.defendant,
-                'case_details': new_case.case_details,
-                'created_at': new_case.created_at.isoformat() if new_case.created_at else None,
-                'updated_at': new_case.updated_at.isoformat() if new_case.updated_at else None,
-                'user_id': new_case.user_id # Maybe return user_id too
-            }), 201 # Created
+        try:
+            
+            try:
+                validated_data = case_schema.load(data)
+                                # After validation, ensure user_id is set correctly (belt and suspenders)
+                if validated_data.user_id != current_user.id:
+                    validated_data.user_id = current_user.id
+            except ValidationError as err:
+                print(f"Validation Error on Case Create: {err.messages}")
+                return jsonify({'error': 'Validation failed', 'messages': err.messages}), 400
+
+            db.session.add(validated_data)
+            db.session.commit()
+            
+            result = case_schema.dump(validated_data)
+            return jsonify(result), 201
 
         # Handle specific errors raised by the service
         except ValueError as e:
@@ -123,6 +123,8 @@ def handle_cases():
             # Catch any other unexpected errors
             print(f"Unexpected error handling POST /api/cases: {e}")
             return jsonify({'error': 'An unexpected error occurred'}), 500
+        
+    return jsonify({'error': 'Method not allowed'}), 405
 
 # Route for getting ONE specific case
 @bp.route('/cases/<int:case_id>', methods=['GET'])
@@ -135,64 +137,60 @@ def get_case_details(case_id):
         target_case = get_case_by_id(case_id, user_id=current_user.id) # <-- MODIFIED: Pass current_user.id
         if target_case is None:
             return jsonify({'error': 'Case not found'}), 404
-
-        case_data = {
-            'id': target_case.id,
-            'display_name': target_case.display_name,
-            'official_case_name': target_case.official_case_name,
-            'case_number': target_case.case_number,
-            'judge': target_case.judge,
-            'plaintiff': target_case.plaintiff,
-            'defendant': target_case.defendant,
-            'created_at': target_case.created_at.isoformat() if target_case.created_at else None,
-            'updated_at': target_case.updated_at.isoformat() if target_case.updated_at else None,
-            'case_details': target_case.case_details, # Include the details field
-            'user_id': target_case.user_id # <-- ADDED: Good practice to include owner ID
-        }
+        # ---### START CHANGE ###---
+        # Serialize the case object using the schema
+        result = case_schema.dump(target_case)
+        return jsonify(result)
+        # ---### END CHANGE ###---
         return jsonify(case_data)
+    except Forbidden as e: return jsonify({'error': str(e) or 'Permission denied'}), 403
     except Exception as e:
         print(f"Error fetching case {case_id}: {e}")
         return jsonify({'error': 'Failed to fetch case details'}), 500
 
 
-# Route for updating ONE specific case
+# For your PUT request handler:
 @bp.route('/cases/<int:case_id>', methods=['PUT'])
-@login_required # <-- ADDED decorator
+@login_required
 def update_case_details(case_id):
     """Updates details for a specific case using service."""
     print(f"--- Handling PUT /api/cases/{case_id} (AUTH REQUIRED by user {current_user.id}) ---")
-    data = request.get_json()
+    data = request.get_json()  # Use a consistent variable name
     if not data:
         return jsonify({'error': 'No update data provided'}), 400
 
     try:
-        # Call service function
-        updated_case = update_case(case_id, data, user_id=current_user.id)
-
-        # Format response in the route
-        updated_data = {
-            'id': updated_case.id,
-            'display_name': updated_case.display_name,
-            'official_case_name': updated_case.official_case_name,
-            'case_number': updated_case.case_number,
-            'judge': updated_case.judge,
-            'plaintiff': updated_case.plaintiff,
-            'defendant': updated_case.defendant,
-            'created_at': updated_case.created_at.isoformat() if updated_case.created_at else None,
-            'updated_at': updated_case.updated_at.isoformat() if updated_case.updated_at else None,
-            'case_details': updated_case.case_details,
-            'user_id': updated_case.user_id # Include user_id
-        }
-        return jsonify(updated_data)
+        # First verify the case exists and belongs to the user
+        case = get_case_by_id(case_id, user_id=current_user.id)
+        if not case:
+            return jsonify({'error': 'Case not found'}), 404
+            
+        # Validate the data structure
+        errors = case_schema.validate(data, partial=True)  # Use the same variable name
+        if errors:
+            return jsonify({'error': 'Validation failed', 'messages': errors}), 400
+            
+        # Call the update service with the validated data
+        updated_case = update_case(case_id, data, user_id=current_user.id)  # Use the same variable name
+        
+        # Serialize the result
+        result = case_schema.dump(updated_case)
+        return jsonify(result)
+        
+    except ValidationError as err:
+        return jsonify({'error': 'Validation failed', 'messages': err.messages}), 400
     except CaseNotFoundError as e:
         return jsonify({'error': str(e)}), 404
-    except Forbidden as e: return jsonify({'error': str(e) or 'Permission denied'}), 403 # <-- ADDED handling
-    except DuplicateCaseError as e: return jsonify({'error': str(e)}), 409
-    except CaseServiceError as e:
-        return jsonify({'error': str(e)}), 500
+    except Forbidden as e:
+        return jsonify({'error': str(e) or 'Permission denied'}), 403
     except Exception as e:
-         print(f"Unexpected error handling PUT /api/cases/{case_id}: {e}")
-         return jsonify({'error': 'An unexpected error occurred'}), 500
+        print(f"Error updating case: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+    errors = case_schema.validate(data, partial=True)
+    if errors:
+        print(f"Detailed validation errors: {errors}")
+    return jsonify({'error': 'Validation failed', 'messages': errors}), 400
 
 
 @bp.route('/cases/<int:case_id>', methods=['DELETE'])
@@ -228,36 +226,6 @@ def delete_case_and_documents(case_id):
          print(f"Error fetching case/doc paths for deletion {case_id}: {e}")
          return jsonify({'error': 'Failed to retrieve case/document info for deletion'}), 500
 
-    try:
-        # Call service to delete case from DB
-        delete_case(case_id)
-
-        # --- File deletion logic remains in the route for now ---
-        print(f"Attempting to delete files for case {case_id}: {file_paths}")
-        for file_path in file_paths:
-            if os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    print(f"Deleted file: {file_path}")
-                except OSError as e:
-                    # Log error but don't necessarily fail the whole request
-                    print(f"Error deleting file {file_path}: {e}")
-
-        return jsonify({'message': f'Case {case_id} and associated documents deleted successfully'}), 200
-
-    except CaseNotFoundError as e: # Should have been caught above, but for safety
-        return jsonify({'error': str(e)}), 404
-    except CaseServiceError as e: # Error during DB deletion
-        return jsonify({'error': str(e)}), 500
-    except Exception as e:
-        print(f"Unexpected error handling DELETE /api/cases/{case_id}: {e}")
-        return jsonify({'error': 'An unexpected error occurred during deletion'}), 500
-
-        return jsonify({'message': f'Case {case_id} and associated documents deleted successfully'}), 200
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error deleting case {case_id}: {e}")
-        return jsonify({'error': 'Failed to delete case'}), 500
     
 # === Add this new route for Word document generation ===
 

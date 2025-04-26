@@ -6,7 +6,7 @@ from .config import Config # <<< ADD THIS IMPORT
 
 # Import extensions from our extensions module
 # Ensure backend/extensions.py exists and defines these instances
-from .extensions import db, migrate, login_manager, cors
+from .extensions import db, migrate, login_manager, cors, ma
 # Import models (needed for user_loader)
 # Ensure models are defined in backend/models.py
 from .models import User
@@ -41,6 +41,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login_manager.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": app.config['FRONTEND_URL']}}, supports_credentials=True)
+    ma.init_app(app) # <<< Initialize Marshmallow with the app
 
     # Configure Flask-Login unauthorized handler for APIs
     @login_manager.unauthorized_handler
