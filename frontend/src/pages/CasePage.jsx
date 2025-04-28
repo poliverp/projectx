@@ -457,6 +457,15 @@ function CasePage() {
       span: 1,
   })) : [];
 // --- END ADD ---
+// --- ADD THIS HELPER FUNCTION ---
+  const formatFieldName = (fieldName) => {
+    if (!fieldName) return '';
+    // Replace underscores/hyphens with spaces, then capitalize words
+    return fieldName
+      .replace(/[_-]/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
+  };
+// --- END ADD ---
    // --- JSX Rendering (Main structure using Space) ---
    return (
     // Use Space for vertical stacking of sections
@@ -559,35 +568,78 @@ function CasePage() {
                     itemLayout="vertical" // Better layout for more info
                     dataSource={Object.entries(suggestions)}
                     renderItem={([field, suggestedValue]) => {
-                        // Determine the current value for comparison
-                        const currentValue = caseDetails[field] !== undefined ? caseDetails[field]
-                                         : caseDetailsData[field] !== undefined ? caseDetailsData[field]
-                                         : undefined; // Explicitly undefined if not found
-
-                        return (
-                          <List.Item>
-                            <Space align="start" style={{ width: '100%' }}>
-                              <Checkbox
-                                style={{ paddingTop: '5px' }} // Align checkbox better
-                                onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)}
-                                checked={!!acceptedSuggestions[docKey]?.[field]} // Check if this specific suggestion is accepted
-                              >
-                                {/* Intentionally blank label, info is on the right */}
-                              </Checkbox>
-                              <div style={{ flexGrow: 1 }}> {/* Allow text div to take remaining space */}
-                                <Text strong>{field}: </Text>
-                                <Text code style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(suggestedValue)}</Text>
-                                <br />
-                                {currentValue !== undefined ? (
-                                    <Text type="secondary">Current: <Text code style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(currentValue)}</Text></Text>
-                                ) : (
-                                    <Text type="secondary">Current: Not Set</Text>
-                                )}
-                              </div>
-                            </Space>
-                          </List.Item>
-                        );
+                      // 1. Check if suggestion is null or 0
+                      if (suggestedValue === null || suggestedValue === 0) {
+                        return null; // Don't render this item
+                      }
+      
+                      // 2. Get the current value for comparison
+                      // Ensure caseDetailsData is defined in the outer scope where detailsItems is generated
+                      // const caseDetailsData = caseDetails?.case_details || {}; // Already defined outside return
+                      let currentValue = caseDetails?.[field] !== undefined
+                                        ? caseDetails[field]
+                                        : caseDetailsData?.[field]; // Check top-level then blob
+      
+                      const currentValueExists = currentValue !== undefined;
+      
+                      // 3. Check for redundancy (case-insensitive for strings)
+                      let isRedundant = false;
+                      if (currentValueExists) {
+                          if (typeof suggestedValue === 'string' && typeof currentValue === 'string') {
+                              isRedundant = suggestedValue.toLowerCase() === currentValue.toLowerCase();
+                          } else {
+                              // Simple equality check for other types (numbers, booleans)
+                              // Use JSON stringify for basic comparison of simple objects/arrays if needed
+                              // This won't handle deep object equality perfectly but covers many cases
+                              try {
+                                  isRedundant = JSON.stringify(suggestedValue) === JSON.stringify(currentValue);
+                              } catch (e) {
+                                  // Fallback to simple equality if stringify fails
+                                  isRedundant = suggestedValue === currentValue;
+                              }
+                          }
+                      }
+      
+                      // Don't render if the suggestion is redundant
+                      if (isRedundant) {
+                          // console.log(`Skipping redundant suggestion for ${field}`); // Optional log
+                          return null; // Don't render this item
+                      }
+      
+                      // 4. If checks pass, render the List Item
+                      return (
+                        <List.Item key={field}> {/* Add key prop here */}
+                          <Space align="start" style={{ width: '100%' }}>
+                            <Checkbox
+                              style={{ paddingTop: '5px' }}
+                              onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)}
+                              // Use the check for existence, works for null/0/false
+                              checked={acceptedSuggestions[docKey]?.[field] !== undefined}
+                            >
+                              {/* Intentionally blank label */}
+                            </Checkbox>
+                            <div style={{ flexGrow: 1 }}>
+                              {/* Use the helper function to format the label */}
+                              <Text strong>{formatFieldName(field)}: </Text>
+                              <Text code style={{ whiteSpace: 'pre-wrap' }}>
+                                {/* Display suggested value */}
+                                {JSON.stringify(suggestedValue)}
+                              </Text>
+                              <br />
+                              {currentValueExists ? (
+                                <Text type="secondary">
+                                  {/* Display current value */}
+                                  Current: <Text code style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(currentValue)}</Text>
+                                </Text>
+                              ) : (
+                                <Text type="secondary">Current: Not Set</Text>
+                              )}
+                            </div>
+                          </Space>
+                        </List.Item>
+                      );
                     }}
+                    // ---### END REPLACEMENT for renderItem ###---
                   />
                 </Collapse.Panel>
               ))}
