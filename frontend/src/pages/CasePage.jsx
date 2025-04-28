@@ -86,13 +86,14 @@ function CasePage() {
   const [copied, setCopied] = useState(false); // State for copy feedback
   
   const fetchCaseDetails = useCallback(() => {
-    if (!isApplying) setLoading(true);
+    setLoading(true);
     setError(null);
     setGenerationError(null);
     setGenerationResult('');
     api.getCase(caseId)
       .then(response => {
         setCaseDetails(response.data);
+        console.log("Updated case details:", response.data); // Add logging
       })
       .catch(err => {
         console.error(`Error fetching case ${caseId}:`, err);
@@ -100,9 +101,9 @@ function CasePage() {
         setCaseDetails(null);
       })
       .finally(() => {
-         if (!isApplying) setLoading(false);
+         setLoading(false);
       });
-  }, [caseId, isApplying]);
+  }, [caseId]);
 
   const handleCheckboxChange = useCallback((docKey, field, suggestedValue, isChecked) => {
       setAcceptedSuggestions(prev => {
@@ -227,7 +228,10 @@ function CasePage() {
       setApplySuccess(true);
       setTimeout(() => setApplySuccess(false), 3000);
       setAcceptedSuggestions({});
-      fetchCaseDetails();
+        // Add a small delay before fetching to ensure backend has processed
+      setTimeout(() => {
+        fetchCaseDetails();
+      }, 500);
     } catch (err) {
       console.error("Failed to apply changes:", err);
       setError(`Failed to apply changes: ${err.response?.data?.error || err.message}`);

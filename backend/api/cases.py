@@ -1,6 +1,7 @@
 # --- backend/api/cases.py ---
 import os # Needed for delete file path
 import io
+import datetime # <<< ADD THIS IMPORT
 from flask import send_file, current_app # Import send_file and current_app (might need current_app for config later)
 from flask import request, jsonify
 from flask_login import login_required, current_user # <-- ADDED/ENSURE THIS
@@ -29,14 +30,17 @@ TEMPLATE_CONTEXT_MAP = {
         'judge':              {'source': 'direct', 'attribute': 'judge',              'default': ''},
         'case_number':        {'source': 'direct', 'attribute': 'case_number',        'default': ''},
         # 'official_case_name': {'source': 'direct', 'attribute': 'official_case_name', 'default': ''}, # Uncomment if template needs {{official_case_name}}
-
-        # --- Read OTHER fields from case_details JSON ---
-        # *** IMPORTANT: Adjust the 'key' value to match the key name your AI analysis
-        #     actually saves inside the case_details JSON blob ***
-        'complaint_filed':    {'source': 'case_details', 'key': 'filing_date',     'default': ''}, # Example: Map {{complaint_filed}} to JSON key 'filing_date'
-        'incident_date':      {'source': 'case_details', 'key': 'key_dates.incident_date', 'default': ''}, # Example reading nested JSON key
-        'court_county':       {'source': 'case_details', 'key': 'court_info.county', 'default': ''}, # Example reading nested JSON key
-        'court_jurisdiction': {'source': 'case_details', 'key': 'court_info.jurisdiction', 'default': ''}, # Example reading nested JSON key
+        'jurisdiction':             {'source': 'direct', 'attribute': 'jurisdiction',             'default': ''},
+        'county':                   {'source': 'direct', 'attribute': 'county',                   'default': ''},
+        'filing_date':              {'source': 'direct', 'attribute': 'filing_date',              'default': ''}, # Note: Will be Date object, format in template if needed
+        'trial_date':               {'source': 'direct', 'attribute': 'trial_date',               'default': ''}, # Note: Will be Date object
+        'incident_date':            {'source': 'direct', 'attribute': 'incident_date',            'default': ''}, # Note: Will be Date object
+        'incident_location':        {'source': 'direct', 'attribute': 'incident_location',        'default': ''},
+        'incident_description':     {'source': 'direct', 'attribute': 'incident_description',     'default': ''},
+        'case_type':                {'source': 'direct', 'attribute': 'case_type',                'default': ''},
+        'defendant_counsel_info':   {'source': 'direct', 'attribute': 'defendant_counsel_info',   'default': ''},
+        'plaintiff_counsel_info':   {'source': 'direct', 'attribute': 'plaintiff_counsel_info',   'default': ''},
+        'vehicle_details':          {'source': 'direct', 'attribute': 'vehicle_details',          'default': ''},
 
         # Add configuration for any other placeholders in jury_fees_template.docx
         # Ensure 'key' points to the correct field within your case_details JSON
@@ -390,6 +394,9 @@ def download_word_document(case_id):
 # === End of updated function ===
 
 # === REPLACE the existing build_dynamic_context function with this corrected version ===
+# === Function: build_dynamic_context in backend/api/cases.py ===
+# Make sure 'import datetime' is at the top of the file
+
 def build_dynamic_context(template_name, case_data):
     context = {}
     template_config = TEMPLATE_CONTEXT_MAP.get(template_name)
@@ -408,27 +415,18 @@ def build_dynamic_context(template_name, case_data):
         default_value_config = config.get('default', '') # Default default is empty string
 
         try:
-            # --- Get value based on source ---
+            # --- Get value based on source (Keep your existing logic) ---
             if source == 'case_details':
                 key = config.get('key')
                 if key:
-                    # Handle potentially nested keys like "court_info.county"
                     current_level = details_dict
                     nested_keys = key.split('.')
                     for i, nested_key in enumerate(nested_keys):
                          if isinstance(current_level, dict):
-                              # Check if this is the last key in the path
-                              if i == len(nested_keys) - 1:
-                                   value_found = current_level.get(nested_key) # Get the final value
-                              else:
-                                   current_level = current_level.get(nested_key) # Go deeper
-                                   if current_level is None: # Stop if path breaks
-                                        break
-                         else: # Path broken, cannot traverse further
-                              value_found = None
-                              break
-                    # If loop completed but current_level is not dict (e.g., key was "plaintiff.name" but plaintiff is string)
-                    # value_found should correctly be None or the target value here
+                             if i == len(nested_keys) - 1: value_found = current_level.get(nested_key)
+                             else: current_level = current_level.get(nested_key)
+                             if current_level is None: break
+                         else: value_found = None; break
                 else:
                      print(f"Warning: Missing 'key' in config for {context_key} (source: case_details)")
 
@@ -438,35 +436,52 @@ def build_dynamic_context(template_name, case_data):
                     value_found = getattr(case_data, attribute, None)
                 else:
                      print(f"Warning: Missing 'attribute' in config for {context_key} (source: direct)")
+            # --- End Get value ---
+
+
+            # ---### START CHANGE: Format Date Objects ###---
+            # Store the potentially formatted value
+            value_to_use_in_context = value_found
+
+            # Check if the found value is a date object (and not a datetime object)
+            if isinstance(value_found, datetime.date) and not isinstance(value_found, datetime.datetime):
+                try:
+                    # Format as "Month day, year"
+                    value_to_use_in_context = value_found.strftime('%B %d, %Y')
+                    print(f"Formatted date for key '{context_key}': {value_to_use_in_context}") # Added log
+                except ValueError:
+                     # Handle potential errors with date formatting if needed
+                     print(f"Warning: Could not format date {value_found} for key {context_key}. Using original or default.")
+                     value_to_use_in_context = value_found # Revert to original on format error
+            # ---### END CHANGE ###---
+
 
             # --- Determine the default value if needed ---
             default_to_use = None
             if callable(default_value_config):
-                 # If default is a function, call it potentially with details and case
+                 # ... (Keep your existing lambda default logic) ...
                  try:
-                      import inspect
-                      sig = inspect.signature(default_value_config)
-                      params_to_pass = {}
-                      if 'details' in sig.parameters: params_to_pass['details'] = details_dict
-                      if 'case' in sig.parameters: params_to_pass['case'] = case_data
-                      default_to_use = default_value_config(**params_to_pass)
+                     import inspect
+                     sig = inspect.signature(default_value_config)
+                     params_to_pass = {}
+                     if 'details' in sig.parameters: params_to_pass['details'] = details_dict
+                     if 'case' in sig.parameters: params_to_pass['case'] = case_data
+                     default_to_use = default_value_config(**params_to_pass)
                  except Exception as lambda_err:
-                      print(f"Error executing lambda default for {context_key}: {lambda_err}")
-                      default_to_use = '' # Fallback default on lambda error
+                     print(f"Error executing lambda default for {context_key}: {lambda_err}")
+                     default_to_use = '' # Fallback default on lambda error
             else:
-                 default_to_use = default_value_config # Use the static default value
+                default_to_use = default_value_config # Use the static default value
 
             # --- Assign to final context ---
-            # Use the found value if it's not None, otherwise use the calculated default
-            context[context_key] = value_found if value_found is not None else default_to_use
+            # Use the potentially FORMATTED value if it's not None, otherwise use the calculated default
+            context[context_key] = value_to_use_in_context if value_to_use_in_context is not None else default_to_use
 
         except Exception as e:
-             # Log error and assign default on unexpected error during processing this key
+             # ... (Keep your existing error handling for key processing) ...
              print(f"Error processing context key '{context_key}' for template '{template_name}': {e}")
-             # Determine default value even on error
-             default_to_use_on_error = default_value_config if not callable(default_value_config) else '' # Safer default on error
+             default_to_use_on_error = default_value_config if not callable(default_value_config) else ''
              context[context_key] = default_to_use_on_error
 
-
     return context
-# === END REPLACEMENT ===
+# === End Function ===

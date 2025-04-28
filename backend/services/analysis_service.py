@@ -56,19 +56,16 @@ def analyze_text_with_gemini(text_content):
               "defendant": "string or null",
               "plaintiff_address": "string or null",
               "defendant_counsel_info": "string describing firm/lawyer contact info or null",
-              "case_number_doc": "string identifying case number mentioned in doc or null",
-              "court_info": {{
-                "county": "string or null",
-                "jurisdiction": "string or null"
+              "case_number": "string identifying case number, will be referred to as Case No. within analyzed doc., or null",
+              "county": "string or null",
+              "jurisdiction": "string, UNLIMITED JURISDICTION, or null"
               }},
               "judge_doc": "string name of judge mentioned in doc or null",
               "case_type": "string or null (e.g., 'Breach of Contract', 'Personal Injury')",
-              "key_dates": {{
-                "filing_date": "Month day, year string or null",
-                "incident_date": "Month day, year string or null",
-                "cmc_date": "Month day, year string or null",
-                "trial_date": "Month day, year string or null"
-              }},
+              "filing_date": "Month day, year string or null",
+              "incident_date": "Month day, year string or null",
+              "cmc_date": "Month day, year string or null",
+              "trial_date": "Month day, year string or null",
               "incident_location": "string describing location or null",
               "incident_description": "string describing alleged cause/reason for incident or null",
               "general_allegations": "string summarizing general allegations or null",

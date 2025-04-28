@@ -15,9 +15,21 @@ class Case(db.Model):
     defendant = db.Column(db.String(200), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     case_details = db.Column(db.JSON, nullable=True) # For flexible/additional fields
+    jurisdiction = db.Column(db.String(200), nullable=True)
+    county = db.Column(db.String(200), nullable=True)
+    filing_date = db.Column(db.Date, nullable=True)
+    trial_date = db.Column(db.Date, nullable=True)
+    incident_date = db.Column(db.Date, nullable=True)
+    incident_location = db.Column(db.String(200), nullable=True)
+    incident_description = db.Column(db.String(200), nullable=True)
+    case_type = db.Column(db.String(200), nullable=True)
+    defendant_counsel_info = db.Column(db.String(200), nullable=True)
+    trial_date = db.Column(db.Date, nullable=True)
+    vehicle_details = db.Column(db.String(200), nullable=True)
+    plaintiff_counsel_info = db.Column(db.String(200), nullable=True)
+
 
     # Relationship: A case can have many documents
     documents = db.relationship('Document', backref='case', lazy=True, cascade="all, delete-orphan")

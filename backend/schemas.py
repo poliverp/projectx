@@ -63,6 +63,18 @@ class CaseInputBaseSchema(Schema):
     judge = fields.Str(required=False, allow_none=True)
     plaintiff = fields.Str(required=False, allow_none=True)
     defendant = fields.Str(required=False, allow_none=True)
+    jurisdiction = fields.Str(required=False, allow_none=True)
+    county = fields.Str(required=False, allow_none=True)
+    filing_date = fields.Str(required=False, allow_none=True)
+    trial_date = fields.Str(required=False, allow_none=True)
+    incident_date = fields.Str(required=False, allow_none=True)
+    incident_location = fields.Str(required=False, allow_none=True)
+    incident_description = fields.Str(required=False, allow_none=True)
+    case_type = fields.Str(required=False, allow_none=True)
+    defendant_counsel_info = fields.Str(required=False, allow_none=True)
+    trial_date = fields.Str(required=False, allow_none=True)
+    vehicle_details = fields.Str(required=False, allow_none=True)
+    plaintiff_counsel_info = fields.Str(required=False, allow_none=True)
     case_details = fields.Dict(keys=fields.Str(), values=fields.Raw(), required=False, allow_none=True)
 
 class CaseCreateInputSchema(CaseInputBaseSchema):
