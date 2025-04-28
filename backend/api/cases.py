@@ -158,6 +158,8 @@ def update_case_details(case_id):
     data = request.get_json()  # Use a consistent variable name
     if not data:
         return jsonify({'error': 'No update data provided'}), 400
+    
+    case_details = data.pop('case_details', None)
 
     try:
         # First verify the case exists and belongs to the user
@@ -169,6 +171,10 @@ def update_case_details(case_id):
         errors = case_update_input_schema.validate(data, partial=True)
         if errors:
             return jsonify({'error': 'Validation failed', 'messages': errors}), 400
+        
+        # Put case_details back into data 
+        if case_details is not None:
+            data['case_details'] = case_details
             
         # Call the update service with the validated data
         updated_case = update_case(case_id, data, user_id=current_user.id)  # Use the same variable name
@@ -187,10 +193,6 @@ def update_case_details(case_id):
         print(f"Error updating case: {e}")
         return jsonify({'error': str(e)}), 500
     
-    errors = case_schema.validate(data, partial=True)
-    if errors:
-        print(f"Detailed validation errors: {errors}")
-    return jsonify({'error': 'Validation failed', 'messages': errors}), 400
 
 
 @bp.route('/cases/<int:case_id>', methods=['DELETE'])

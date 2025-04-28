@@ -28,7 +28,12 @@ class CaseSchema(SQLAlchemyAutoSchema):
     """Schema for Case model OUTPUT (Serialization)"""
     created_at = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
     updated_at = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
-    case_details = fields.Dict(keys=fields.Str(), values=fields.Raw(), allow_none=True)
+    case_details = fields.Dict(
+        keys=fields.Str(), 
+        values=fields.Raw(allow_none=True),  # Explicitly allow null values for any field
+        required=False, 
+        allow_none=True
+    )   
     documents = fields.Nested(DocumentSchema, many=True, dump_only=True)
     owner = fields.Nested(UserSchema, dump_only=True)
     class Meta:
@@ -66,7 +71,12 @@ class CaseCreateInputSchema(CaseInputBaseSchema):
 
 class CaseUpdateInputSchema(CaseInputBaseSchema):
     """Schema for VALIDATING Case update (PUT)"""
-    pass
+    class Meta:
+        # Exclude case_details from validation during partial updates.
+        # The service layer will handle merging the received case_details dict.
+        # This prevents validation errors for null values inside the JSON blob.
+        exclude = ("case_details",)
+# ---### END CHANGE ###---
 
 class GenerateDocumentInputSchema(Schema):
     """Schema for VALIDATING the document generation request (POST)"""
