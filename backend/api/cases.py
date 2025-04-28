@@ -10,7 +10,8 @@ from marshmallow import ValidationError # <<< Import ValidationError
 from backend.extensions import db # Import db from extensions
 from backend.models import Case, Document # Import necessary models
 from . import bp # Import the blueprint instance from api/__init__.py
-from backend.schemas import CaseSchema, case_schema, cases_schema # <<< CORRECT IMPORT
+from backend.schemas import case_schema, case_update_input_schema, case_update_input_schema, case_create_input_schema, cases_schema
+
 from backend.services.case_service import (
     create_case, get_case_by_id, update_case, delete_case, # Add update/delete
     DuplicateCaseError, CaseServiceError, CaseNotFoundError
@@ -71,58 +72,57 @@ TEMPLATE_CONTEXT_MAP = {
 @bp.route('/cases', methods=['GET', 'POST'])
 @login_required
 def handle_cases():
-    """Handles fetching all cases for a user (GET) and creating a new case (POST)."""
+    """Handles fetching all cases (GET) and creating a new case (POST)."""
     if request.method == 'GET':
+        # --- GET Logic (Serialization using output schema) ---
         print("--- Handling GET /api/cases (Blueprint) ---")
         try:
-            # Fetch cases using the service function (if it exists) or query directly
-            # cases = get_all_cases_for_user(current_user.id) # Assumes service function exists
             cases = Case.query.filter_by(user_id=current_user.id).order_by(Case.display_name).all()
-            
             result = cases_schema.dump(cases)
             return jsonify(result)
-            # ---### END CHANGE ###---
         except Exception as e:
             print(f"Error fetching cases: {e}")
-            db.session.rollback()
             return jsonify({'error': 'Failed to fetch cases'}), 500
 
     elif request.method == 'POST':
-        print("--- Handling POST /api/cases (Blueprint - AUTH REQUIRED")
-        data = request.get_json()
-        if not data:
+        # --- POST Logic (Validation using input schema, call service, Serialization using output schema) ---
+        print("--- Handling POST /api/cases (Blueprint - AUTH REQUIRED by user {current_user.id}) ---") # Added user logging
+        request_data = request.get_json()
+        if not request_data:
             return jsonify({'error': 'No data provided'}), 400
 
-        data['user_id'] = current_user.id
-
+        # ---### START CHANGE ###---
+        # 1. Validate input data using the specific CREATE input schema
         try:
-            
-            try:
-                validated_data = case_schema.load(data)
-                                # After validation, ensure user_id is set correctly (belt and suspenders)
-                if validated_data.user_id != current_user.id:
-                    validated_data.user_id = current_user.id
-            except ValidationError as err:
-                print(f"Validation Error on Case Create: {err.messages}")
-                return jsonify({'error': 'Validation failed', 'messages': err.messages}), 400
+            # Use validate() which doesn't require session or instance
+            errors = case_create_input_schema.validate(request_data) # Use create schema
+            if errors:
+                print(f"Validation Error on Case Create: {errors}")
+                return jsonify({'error': 'Validation failed', 'messages': errors}), 400
+            # Data is structurally valid according to CaseCreateInputSchema
+        except Exception as val_err:
+             print(f"Error during validation call: {val_err}")
+             return jsonify({'error': 'Data validation process failed'}), 500
 
-            db.session.add(validated_data)
-            db.session.commit()
-            
-            result = case_schema.dump(validated_data)
-            return jsonify(result), 201
+        # 2. Call the service function with the original (now validated) data
+        try:
+            # Pass the original request_data dictionary to the service
+            new_case = create_case(request_data, user_id=current_user.id)
+
+            # 3. Serialize the successful response using the standard OUTPUT schema
+            result = case_schema.dump(new_case)
+            return jsonify(result), 201 # Created
 
         # Handle specific errors raised by the service
-        except ValueError as e:
-            return jsonify({'error': str(e)}), 400 # Bad Request
-        except DuplicateCaseError as e:
-            return jsonify({'error': str(e)}), 409 # Conflict
-        except CaseServiceError as e:
-            return jsonify({'error': str(e)}), 500 # Internal Server Error
+        except ValueError as e: return jsonify({'error': str(e)}), 400 # e.g., display_name empty
+        except DuplicateCaseError as e: return jsonify({'error': str(e)}), 409
+        except CaseServiceError as e: return jsonify({'error': str(e)}), 500
         except Exception as e:
-            # Catch any other unexpected errors
             print(f"Unexpected error handling POST /api/cases: {e}")
+            # Potentially rollback if service didn't already
+            # db.session.rollback()
             return jsonify({'error': 'An unexpected error occurred'}), 500
+        # ---### END CHANGE ###---
         
     return jsonify({'error': 'Method not allowed'}), 405
 
@@ -166,7 +166,7 @@ def update_case_details(case_id):
             return jsonify({'error': 'Case not found'}), 404
             
         # Validate the data structure
-        errors = case_schema.validate(data, partial=True)  # Use the same variable name
+        errors = case_update_input_schema.validate(data, partial=True)
         if errors:
             return jsonify({'error': 'Validation failed', 'messages': errors}), 400
             

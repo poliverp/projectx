@@ -4,32 +4,50 @@ from backend.models import User # Import User model
 from backend.extensions import db # Import db instance
 from sqlalchemy.exc import IntegrityError # To catch potential unique constraint errors
 from flask_login import login_user, logout_user, login_required, current_user
+from marshmallow import ValidationError # <<< Import ValidationError
+
+# ---### START CHANGE: Imports ###---
+# Import the necessary schemas
+from backend.schemas import user_schema, registration_input_schema, login_input_schema
+# ---### END CHANGE ###---
+
 # Create blueprint instance
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """Handles user registration."""
-    data = request.get_json()
-    if not data:
+    """Handles user registration with input validation and output serialization."""
+    json_data = request.get_json()
+    if not json_data:
         return jsonify({"error": "No input data provided"}), 400
 
-    username = data.get('username')
-    password = data.get('password')
-    email = data.get('email') # Optional email
+    # ---### START CHANGE: Input Validation ###---
+    try:
+        # Validate incoming data using the registration schema
+        # load() validates and returns the validated dictionary
+        validated_data = registration_input_schema.load(json_data)
+    except ValidationError as err:
+        print(f"Validation Error on Registration: {err.messages}")
+        return jsonify({"error": "Validation failed", "messages": err.messages}), 400
+    except Exception as val_err:
+         print(f"Error during validation call: {val_err}")
+         return jsonify({'error': 'Data validation process failed'}), 500
+    # ---### END CHANGE ###---
 
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
+    # Use validated data
+    username = validated_data.get('username')
+    password = validated_data.get('password')
+    email = validated_data.get('email')
 
     # --- Check if username or email already exists ---
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 409 # 409 Conflict
     if email and User.query.filter_by(email=email).first():
-         # Only check email if provided and it exists
-         return jsonify({"error": "Email already exists"}), 409
+        return jsonify({"error": "Email already exists"}), 409
 
     # --- Create new user ---
     try:
+        # Use validated data to create the user
         new_user = User(username=username, email=email)
         new_user.set_password(password) # Hashes the password
 
@@ -37,21 +55,19 @@ def register():
         db.session.commit()
 
         print(f"User registered successfully: {username}")
-        # Return limited user info on success (don't return hash!)
+
+        # ---### START CHANGE: Output Serialization ###---
+        # Serialize the new user object using the UserSchema (excludes password hash)
+        user_data = user_schema.dump(new_user)
         return jsonify({
             "message": "User registered successfully",
-            "user": {
-                "id": new_user.id,
-                "username": new_user.username,
-                "email": new_user.email
-            }
+            "user": user_data # Embed serialized user data
         }), 201 # 201 Created
+        # ---### END CHANGE ###---
 
     except IntegrityError as e:
-        # Catch potential race conditions for unique constraints if check somehow missed
         db.session.rollback()
         print(f"IntegrityError during registration for {username}: {e}")
-        # Determine if it was username or email based on error details if possible/needed
         return jsonify({"error": "Username or email might already exist (Integrity error)"}), 409
     except Exception as e:
         db.session.rollback()
@@ -60,46 +76,54 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """Handles user login."""
-    data = request.get_json()
-    if not data:
+    """Handles user login with input validation and output serialization."""
+    json_data = request.get_json()
+    if not json_data:
         return jsonify({"error": "No input data provided"}), 400
 
-    username = data.get('username')
-    password = data.get('password')
-    remember = data.get('remember', False) # Optional "Remember Me" functionality
+    # ---### START CHANGE: Input Validation ###---
+    try:
+        # Validate incoming data using the login schema
+        validated_data = login_input_schema.load(json_data)
+    except ValidationError as err:
+        print(f"Validation Error on Login: {err.messages}")
+        return jsonify({"error": "Validation failed", "messages": err.messages}), 400
+    except Exception as val_err:
+         print(f"Error during validation call: {val_err}")
+         return jsonify({'error': 'Data validation process failed'}), 500
+    # ---### END CHANGE ###---
 
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
+    # Use validated data
+    username = validated_data.get('username')
+    password = validated_data.get('password')
+    remember = validated_data.get('remember', False) # Get optional remember field
 
     # Find user by username
     user = User.query.filter_by(username=username).first()
 
     # Validate user exists and password is correct
     if user is None or not user.check_password(password):
-        # Generic error to avoid revealing if username exists or not
         return jsonify({"error": "Invalid username or password"}), 401 # 401 Unauthorized
 
     # Log the user in using Flask-Login's function
-    # This manages the session cookie
     login_user(user, remember=remember)
 
     print(f"User logged in successfully: {username}")
-    # Return user info (excluding hash) on successful login
+
+    # ---### START CHANGE: Output Serialization ###---
+    # Serialize the logged-in user object using UserSchema
+    user_data = user_schema.dump(user)
     return jsonify({
         "message": "Login successful",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email
-            # Add any other non-sensitive fields needed by frontend
-        }
+        "user": user_data # Embed serialized user data
     }), 200
+    # ---### END CHANGE ###---
 
 @auth_bp.route('/logout', methods=['POST'])
 @login_required # Ensure user must be logged in to log out
 def logout():
     """Handles user logout."""
+    # No input validation or output serialization needed here
     username = current_user.username # Get username before logout for logging
     logout_user() # Clears the user session cookie
     print(f"User logged out: {username}")
@@ -109,15 +133,14 @@ def logout():
 @login_required # Requires user to be logged in
 def status():
     """Returns information about the currently logged-in user."""
-    # current_user is populated by Flask-Login's user_loader
+    # No input validation needed
+
+    # ---### START CHANGE: Output Serialization ###---
+    # Serialize the current_user object using UserSchema
+    user_data = user_schema.dump(current_user)
     return jsonify({
-        "user": {
-            "id": current_user.id,
-            "username": current_user.username,
-            "email": current_user.email
-            # Add other non-sensitive fields
-        }
-     }), 200
+        "user": user_data # Embed serialized user data
+        # You could add other status info here if needed
+    }), 200
+    # ---### END CHANGE ###---
 
-
-# --- Add Login, Logout routes below later ---

@@ -9,6 +9,7 @@ import {EditOutlined, CopyOutlined, CloseOutlined,
 CheckCircleTwoTone, LoadingOutlined
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
+import { caseFieldConfig, getCaseFieldValue } from '../config/caseFieldConfig';
 
 const { Title, Text, Paragraph } = Typography; // Destructure Typography components
 const { TextArea } = Input; // Destructure TextArea
@@ -55,6 +56,7 @@ function CasePage() {
   // --- Hooks MUST Be Called Unconditionally at the Top ---
   const { caseId } = useParams();
   const navigate = useNavigate(); // Keep if needed
+  const [form] = Form.useForm(); // <<< ADD THIS LINE
 
   // State for Case Data Fetching
   const [caseDetails, setCaseDetails] = useState(null);
@@ -71,6 +73,8 @@ function CasePage() {
   const [editFormData, setEditFormData] = useState({}); // Holds data being edited in modal
   const [editLoading, setEditLoading] = useState(false); // Loading state for modal save
   const [editError, setEditError] = useState(null);      // Error state for modal save
+ 
+  const [isAllDetailsModalOpen, setIsAllDetailsModalOpen] = useState(false);
 
   // State for Document Generation
   const [docTypes, setDocTypes] = useState([]);
@@ -121,17 +125,23 @@ function CasePage() {
   const handleOpenEditModal = () => {
       if (!caseDetails) return; // Safety check
 
-      // Initialize the edit form state with current case details
-      setEditFormData({
-          // Use empty string '' as fallback for null/undefined values from backend
-          display_name: caseDetails.display_name || '',
-          official_case_name: caseDetails.official_case_name || '',
-          case_number: caseDetails.case_number || '',
-          judge: caseDetails.judge || '',
-          plaintiff: caseDetails.plaintiff || '',
-          defendant: caseDetails.defendant || '',
-          // We are NOT editing the case_details JSON blob in this form
+      // Dynamically build initial form data based on editable fields in config
+      const initialEditData = {};
+      caseFieldConfig.forEach(field => {
+          if (field.isEditable) {
+              // Get current value, checking top-level then case_details if needed
+              const currentValue = field.isDedicated
+                  ? caseDetails[field.name]
+                  // Check case_details only if the field is NOT dedicated
+                  : (caseDetails.case_details ? caseDetails.case_details[field.name] : undefined);
+
+              // Use current value or empty string as default for form field
+              initialEditData[field.name] = currentValue ?? '';
+          }
       });
+
+      form.setFieldsValue(initialEditData); // <<< SET VALUES USING FORM INSTANCE
+
       setEditError(null); // Clear any previous errors in the modal
       setIsEditModalOpen(true); // Open the modal
   };
@@ -166,13 +176,12 @@ function CasePage() {
       if (typeof acceptedSuggestions[docKey] === 'object' && acceptedSuggestions[docKey] !== null) {
         for (const field in acceptedSuggestions[docKey]) {
           const acceptedValue = acceptedSuggestions[docKey][field];
-          const dedicatedFields = [
-            'official_case_name',
-            'case_number',
-            'judge',
-            'plaintiff',
-            'defendant'
-          ];
+          // ---### START CHANGE ###---
+          // Dynamically determine dedicated fields from the config
+          const dedicatedFields = caseFieldConfig
+            .filter(field => field.isDedicated === true) // Find fields that are top-level columns
+            .map(field => field.name); // Get just the names
+          // ---### END CHANGE ###---
           if (dedicatedFields.includes(field)) {
             updatePayload[field] = acceptedValue;
             console.log(`Applying to dedicated column: ${field} = ${JSON.stringify(acceptedValue)}`);
@@ -260,45 +269,55 @@ function CasePage() {
     event.preventDefault(); // Prevent default form submission (page reload)
     if (!caseDetails || editLoading) return; // Safety check
 
-    setEditLoading(true);
-    setEditError(null);
-
-    // Prepare the payload: Only include the fields edited in the modal
-    // Keys MUST match the backend model/API expectations (snake_case)
-    const updatePayload = {
-        display_name: editFormData.display_name,
-        official_case_name: editFormData.official_case_name,
-        case_number: editFormData.case_number,
-        judge: editFormData.judge,
-        plaintiff: editFormData.plaintiff,
-        defendant: editFormData.defendant,
-        // We are intentionally NOT sending the 'case_details' JSON here
-        // as we are updating the dedicated columns directly via this modal.
-    };
-
-    console.log("Attempting to save changes with payload:", updatePayload);
-
+    // Validate fields and get e directly from AntD form instance
     try {
-        // Call the existing updateCase API function
-        await api.updateCase(caseId, updatePayload);
+      // validateFields() checks rules and returns values if valid
+      const formValues = await form.validateFields();
+      console.log("Validated Form Values:", formValues);
 
-        
-        console.log("Case updated successfully.");
-        setIsEditModalOpen(false); // Close the modal on success
-        fetchCaseDetails(); // Re-fetch case details to show the updated data
+      // Prepare the payload using the validated values from the form
+      // Only include fields that were actually in the form (editable fields)
+      const updatePayload = { ...formValues }; // Spread the validated values
 
-        // Optional: Clear form data state if needed, though re-fetching usually handles it
-        // setEditFormData({});
+      // We are intentionally NOT sending the 'case_details' JSON here
+      // as we are updating the dedicated columns directly via this modal.
+      // If you added editable fields that are NOT dedicated later, adjust this.
 
-    } catch (err) {
-        console.error("Failed to save case changes:", err);
-        console.error("Error details:", err.response?.data);
-        setEditError(`Failed to save changes: ${err.response?.data?.error || err.message}`);
-        // Keep the modal open so the user sees the error and can retry/cancel
-    } finally {
-        setEditLoading(false); // Ensure loading state is turned off
-    }
-  };
+      // ---### END CHANGE ###---
+
+      setEditLoading(true);
+      setEditError(null);
+
+      console.log("Attempting to save changes with payload:", updatePayload);
+
+      await api.updateCase(caseId, updatePayload); // Call API
+
+      console.log("Case updated successfully.");
+      setIsEditModalOpen(false); // Close modal
+      setEditLoading(false); // Add this line to reset loading state
+      fetchCaseDetails(); // Refresh data
+      // form.resetFields(); // Optional: Reset form fields after successful save
+
+  } catch (errorInfo) {
+      // Handle validation errors from form.validateFields()
+      if (errorInfo.errorFields) {
+          console.log('Form Validation Failed:', errorInfo);
+          setEditError("Please check the form for errors."); // Set a generic validation error
+      } else {
+          // Handle API errors from api.updateCase()
+          console.error("Failed to save case changes:", errorInfo); // Log the actual error
+          const apiError = errorInfo; // Rename for clarity
+          setEditError(`Failed to save changes: ${apiError.response?.data?.error || apiError.response?.data?.messages || apiError.message}`);
+      }
+      setEditLoading(false); // Ensure loading stops on error
+  } finally {
+       // Ensure loading stops even if validation fails early
+       // Check if still loading before setting false
+       if (editLoading) { // This check might be redundant depending on flow
+           setEditLoading(false);
+       }
+  }
+};
   // Handler for Copy Button (No changes needed here for the modal)
   const handleCopyGeneratedText = useCallback(() => {
     if (!generationResult) return;
@@ -403,17 +422,37 @@ function CasePage() {
   const pendingSuggestions = caseDetailsData.pending_suggestions;
   const lastAnalyzedDocId = caseDetailsData.last_analyzed_doc_id;
 
-  // --- Callback Functions & Handlers (Defined at Top Level) ---
-  const detailsItems = [
-    { key: '1', label: 'Official Name', children: official_case_name || caseDetailsData.official_case_name || 'N/A', span: 2 },
-    { key: '2', label: 'Case Number', children: case_number || caseDetailsData.case_number_doc || 'N/A' },
-    { key: '3', label: 'Judge', children: judge || caseDetailsData.judge_doc || 'N/A' },
-    { key: '4', label: 'Plaintiff', children: plaintiff || caseDetailsData.plaintiff || 'N/A' },
-    { key: '5', label: 'Defendant', children: defendant || caseDetailsData.defendant || 'N/A' },
-    // Add other relevant fields as needed, following the pattern:
-    // { key: 'X', label: 'Field Name', children: caseDetails.dedicated_field || caseDetailsData.json_field || 'N/A' }
-  ];
+  // --- ADD THIS BLOCK before the return() statement ---
+// --- Generate initial detailsItems dynamically ---
+  const detailsItems = caseDetails ? caseFieldConfig
+    .filter(field => field.showInitially === true) // Filter based on the flag
+    .map((field) => ({
+      key: field.name, // Use field name as key
+      label: field.label, // Use label from config
+      // Use helper function or inline logic to get value based on config
+      // children: getCaseFieldValue(caseDetails, field.name, caseFieldConfig), // Using helper
+      // OR Inline Logic:
+      children: field.isDedicated
+                ? (caseDetails[field.name] ?? 'N/A') // Access top-level
+                : (caseDetailsData[field.name] ?? 'N/A'), // Access inside case_details
+      span: field.span || 1, // Use configured span or default to 1
+  })) : []; // Return empty array if caseDetails is somehow null here
   // --- END ADD ---
+
+  const allDetailsItems = caseDetails ? caseFieldConfig
+  // Optional: Filter out purely internal fields if needed
+    .filter(field => field.name !== 'id' && field.name !== 'user_id') // Example: exclude id/user_id
+    .map((field) => ({
+      key: field.name,
+      label: field.label,
+      // Use the same logic to get the value
+      children: field.isDedicated
+                ? (caseDetails[field.name] ?? 'N/A')
+                : (caseDetailsData[field.name] ?? 'N/A'),
+      // Use span 1 for modal layout for simplicity
+      span: 1,
+  })) : [];
+// --- END ADD ---
    // --- JSX Rendering (Main structure using Space) ---
    return (
     // Use Space for vertical stacking of sections
@@ -461,20 +500,48 @@ function CasePage() {
       {/* Official Details Section will go here (Next Snippet) */}
       <Card
         title="Official Details"
-        extra={ // Place button in the card header
-          <Button
-            icon={<EditOutlined />}
-            onClick={handleOpenEditModal}
-            disabled={!caseDetails || editLoading} // Disable if no details or modal is saving
-          >
-            Edit Case Info
-          </Button>
+        extra={
+          <Space> {/* Wrap buttons in Space */}
+            <Button onClick={() => setIsAllDetailsModalOpen(true)}> {/* New Button */}
+                 Show All Details
+            </Button>
+            <Button
+              icon={<EditOutlined />}
+              onClick={handleOpenEditModal}
+              disabled={!caseDetails || editLoading}
+            >
+              Edit Case Info
+            </Button>
+          </Space>
         }
       >
         <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} items={detailsItems} size="small"/>
       </Card>
 
-      {/* Modal to Show All Details (Needs to be added later, driven by caseFieldConfig) */}
+      <Modal
+          title="All Case Details"
+          open={isAllDetailsModalOpen}
+          onCancel={() => setIsAllDetailsModalOpen(false)} // Close handler
+          footer={[ // Simple footer with just a Close button
+              <Button key="close" onClick={() => setIsAllDetailsModalOpen(false)}>
+                  Close
+              </Button>
+          ]}
+          width={800} // Make modal wider to fit details
+          destroyOnClose // Optional: Reset state within modal when closed
+      >
+          {/* Render Descriptions using allDetailsItems */}
+          {allDetailsItems.length > 0 ? (
+              <Descriptions
+                  bordered
+                  column={1} // Use 1 column layout for clarity in modal
+                  items={allDetailsItems}
+                  size="small"
+              />
+          ) : (
+              <Text type="secondary">Details not available.</Text>
+          )}
+      </Modal>
       {/* <Modal title="All Case Details" ... > ... </Modal> */}
 
       {/* --- Pending Suggestions Section --- */}
@@ -626,7 +693,11 @@ function CasePage() {
       <Modal
         title="Edit Case Info"
         open={isEditModalOpen}
-        onCancel={() => setIsEditModalOpen(false)}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setEditLoading(false); // <<< ADD THIS LINE
+          setEditError(null); // Also good to clear error on cancel
+        }}
         confirmLoading={editLoading} // Use confirmLoading for the OK button
         // Use default OK/Cancel buttons tied to onOk/onCancel
         // Or keep custom footer if preferred:
@@ -654,61 +725,37 @@ function CasePage() {
              />
         )}
         {/* Wrap inputs in Form for structure, labels, and potential validation later */}
-        <Form layout="vertical" onFinish={handleSaveChanges}> {/* onFinish can trigger save */}
-          <Form.Item label="Display Name (Internal)" required> {/* Example required */}
-            <Input
-              name="display_name"
-              value={editFormData.display_name || ''}
-              onChange={handleEditFormChange}
-              disabled={editLoading}
-              placeholder="Enter a short name for easy identification"
-            />
-          </Form.Item>
-          <Form.Item label="Official Case Name">
-            <Input
-              name="official_case_name"
-              value={editFormData.official_case_name || ''}
-              onChange={handleEditFormChange}
-              disabled={editLoading}
-              placeholder="e.g., Smith v. Jones"
-            />
-          </Form.Item>
-           <Form.Item label="Case Number">
-            <Input
-              name="case_number"
-              value={editFormData.case_number || ''}
-              onChange={handleEditFormChange}
-              disabled={editLoading}
-               placeholder="e.g., 2:24-cv-01234"
-            />
-          </Form.Item>
-           <Form.Item label="Judge">
-            <Input
-              name="judge"
-              value={editFormData.judge || ''}
-              onChange={handleEditFormChange}
-              disabled={editLoading}
-               placeholder="e.g., Hon. Jane Doe"
-            />
-          </Form.Item>
-           <Form.Item label="Plaintiff">
-            <Input
-              name="plaintiff"
-              value={editFormData.plaintiff || ''}
-              onChange={handleEditFormChange}
-              disabled={editLoading}
-              placeholder="Primary plaintiff name"
-            />
-          </Form.Item>
-           <Form.Item label="Defendant">
-            <Input
-              name="defendant"
-              value={editFormData.defendant || ''}
-              onChange={handleEditFormChange}
-              disabled={editLoading}
-              placeholder="Primary defendant name"
-            />
-          </Form.Item>
+        <Form
+            form={form} // <<< ADD THIS PROP
+            layout="vertical"
+            onFinish={handleSaveChanges} // Keep using onFinish
+        >
+         
+          {/* ---### START CHANGE: Dynamic Form Item Generation ###--- */}
+            {caseFieldConfig
+              .filter(field => field.isEditable === true) // Only include fields marked as editable
+              .map(field => (
+                <Form.Item
+                  label={field.label} // Use label from config
+                  key={field.name}    // Use name as key
+                  // 'name' prop links this item to AntD Form state if using form instance directly,
+                  // but here we primarily use it for identification.
+                  // We still control input value/onChange manually via editFormData state.
+                  name={field.name}
+                  required={field.isRequired} // Use required flag from config
+                  // You could add validation rules here later based on config
+                  // rules={[{ required: field.isRequired, message: `Please input ${field.label}!` }]}
+                >
+                  <Input
+                    name={field.name} // Pass name to input for handleEditFormChange
+                    disabled={editLoading}
+                    placeholder={field.placeholder} // Use placeholder from config
+                    // Add specific input types later if needed (e.g., Input.TextArea)
+                  />
+                </Form.Item>
+              ))
+            }
+            {/* ---### END CHANGE ###--- */}
           {/* If using Form's onFinish, the submit button within the footer might implicitly work,
               or you might need type="submit" on the save button if it's outside the <Form> tags
               but logically associated. Keeping onClick={handleSaveChanges} on the button is explicit. */}

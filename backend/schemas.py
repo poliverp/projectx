@@ -1,77 +1,112 @@
 # backend/schemas.py
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import fields
-from .models import Case, Document, User # Import your models
-from .extensions import ma, db 
+from marshmallow import fields, Schema, validate # <<< Import validate
+from .models import Case, Document, User
+from .extensions import ma
 
-
-
-# --- Define Schemas ---
+# --- Schemas for API OUTPUT Serialization ---
 
 class UserSchema(SQLAlchemyAutoSchema):
-    """Schema for User model (excluding password)"""
+    """Schema for User model OUTPUT (excluding password)"""
+    # Ensure email validation on output if desired, though usually done on input
+    email = fields.Email()
     class Meta:
         model = User
-        load_instance = True # Optional: If you want to load data into User objects
-        # Exclude sensitive fields from serialization
-        exclude = ("password_hash", "cases") # Exclude password and potentially relationships loaded elsewhere
+        load_instance = True
+        exclude = ("password_hash", "cases") # Exclude password and relationships
 
 class DocumentSchema(SQLAlchemyAutoSchema):
-    """Schema for Document model"""
-    # Customize date format if needed
-    upload_date = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True) # Allow None for dates
-    updated_at = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True) # Allow None for dates
-
+    """Schema for Document model OUTPUT"""
+    upload_date = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
+    updated_at = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
     class Meta:
         model = Document
         load_instance = True
-        # Include foreign key for context, or exclude if not needed in API
-        # exclude = ("case",) # Exclude relationship backref if desired
-        include_fk = True # Include case_id
+        include_fk = True
 
 class CaseSchema(SQLAlchemyAutoSchema):
-    """
-    Schema for Case model. Handles serialization and basic deserialization.
-    Includes nested Document schema.
-    """
-    # Customize date formats
-    created_at = auto_field(format="%Y-%m-%dT%H:%M:%S") # Example ISO format
-    updated_at = auto_field(format="%Y-%m-%dT%H:%M:%S") # Example ISO format
-
-    # --- Handling case_details (JSON field) ---
-    # Option 1: Treat as a raw dictionary (simplest)
+    """Schema for Case model OUTPUT (Serialization)"""
+    created_at = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
+    updated_at = auto_field(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
     case_details = fields.Dict(keys=fields.Str(), values=fields.Raw(), allow_none=True)
-    # Option 2: Define a nested schema if case_details has a consistent structure
-   
-    # Use 'exclude' to avoid infinite loops if DocumentSchema includes 'case' backref
     documents = fields.Nested(DocumentSchema, many=True, dump_only=True)
     owner = fields.Nested(UserSchema, dump_only=True)
-
     class Meta:
         model = Case
-        load_instance = True # Allow loading data into Case objects
-        include_relationships = True # Include relationships defined above
-        include_fk = True # Include user_id
+        load_instance = True
+        include_relationships = True
+        include_fk = True
 
-        # --- Field Exclusion/Selection ---
-        # Exclude fields if they shouldn't be in the API response/request body
-        # exclude = ("owner",) # Example: Exclude owner details if not needed
+class DiscoveryResponseSchema(Schema):
+    """Schema for the response of the interrogatory generation endpoint."""
+    generated_content = fields.Str(required=True)
 
-        # Or explicitly list fields to include (more controlled)
-        # fields = ("id", "display_name", "official_case_name", "case_number",
-        #           "judge", "plaintiff", "defendant", "case_details",
-        #           "created_at", "updated_at", "user_id", "documents")
+class GeneratedDocumentSchema(Schema):
+    """Schema for the response of the document generation endpoint."""
+    message = fields.Str(required=True)
+    case_id = fields.Int(required=True)
+    document_type = fields.Str(required=True)
+    generated_content = fields.Str(required=True)
+
+# --- Schemas for API INPUT Validation ---
+
+class CaseInputBaseSchema(Schema):
+    """Base schema for common editable Case fields (for validation ONLY)"""
+    display_name = fields.Str(required=False, allow_none=False)
+    official_case_name = fields.Str(required=False, allow_none=True)
+    case_number = fields.Str(required=False, allow_none=True)
+    judge = fields.Str(required=False, allow_none=True)
+    plaintiff = fields.Str(required=False, allow_none=True)
+    defendant = fields.Str(required=False, allow_none=True)
+    case_details = fields.Dict(keys=fields.Str(), values=fields.Raw(), required=False, allow_none=True)
+
+class CaseCreateInputSchema(CaseInputBaseSchema):
+    """Schema for VALIDATING Case creation (POST)"""
+    display_name = fields.Str(required=True, error_messages={'required': 'Display name is required.'})
+
+class CaseUpdateInputSchema(CaseInputBaseSchema):
+    """Schema for VALIDATING Case update (PUT)"""
+    pass
+
+class GenerateDocumentInputSchema(Schema):
+    """Schema for VALIDATING the document generation request (POST)"""
+    document_type = fields.Str(required=True, error_messages={'required': 'Document type is required.'})
+    custom_instructions = fields.Str(required=False, allow_none=True)
+
+# --- ### START NEW SECTION: Schemas for Auth Input Validation ### ---
+class RegistrationInputSchema(Schema):
+    """Schema for VALIDATING user registration (POST /register)"""
+    username = fields.Str(required=True, validate=validate.Length(min=3, error="Username must be at least 3 characters long."))
+    # Add email validation using Marshmallow's built-in validator
+    email = fields.Email(required=True, error_messages={'required': 'Email is required.', 'invalid': 'Not a valid email address.'})
+    password = fields.Str(required=True, validate=validate.Length(min=8, error="Password must be at least 8 characters long."))
+
+class LoginInputSchema(Schema):
+    """Schema for VALIDATING user login (POST /login)"""
+    username = fields.Str(required=True, error_messages={'required': 'Username is required.'})
+    password = fields.Str(required=True, error_messages={'required': 'Password is required.'})
+    remember = fields.Bool(required=False) # Optional remember me field
+# --- ### END NEW SECTION ### ---
 
 
-# --- Instantiate Schemas (for convenience) ---
-# You can instantiate them here or directly in your routes/services
+# --- Instantiate Schemas ---
 
-user_schema = UserSchema(session=db.session)
-case_schema = CaseSchema(session=db.session)
-document_schema = DocumentSchema(session=db.session)
+# Schemas for Serialization (Output)
+user_schema = UserSchema() # Used for single user output
+case_schema = CaseSchema()
+document_schema = DocumentSchema()
+discovery_response_schema = DiscoveryResponseSchema()
+generated_document_schema = GeneratedDocumentSchema()
 
 # Collection schemas (for lists)
-users_schema = UserSchema(many=True, session=db.session)
-cases_schema = CaseSchema(many=True, session=db.session)
-documents_schema = DocumentSchema(many=True, session=db.session)
+users_schema = UserSchema(many=True)
+cases_schema = CaseSchema(many=True)
+documents_schema = DocumentSchema(many=True)
+
+# Schemas for Validation (Input)
+case_create_input_schema = CaseCreateInputSchema()
+case_update_input_schema = CaseUpdateInputSchema()
+generate_document_input_schema = GenerateDocumentInputSchema()
+registration_input_schema = RegistrationInputSchema() # <<< Instantiate new input schema
+login_input_schema = LoginInputSchema() # <<< Instantiate new input schema
 

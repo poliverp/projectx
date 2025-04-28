@@ -53,7 +53,7 @@ def create_case(data, user_id):
     # --- Refactored: Get allowed fields from model ---
     mapper = inspect(Case)
     # Fields that are auto-managed or set explicitly elsewhere
-    protected_keys = {'id', 'user_id', 'created_at', 'updated_at'}
+    protected_keys = {'id', 'user_id', 'created_at', 'updated_at', 'display_name'}
     allowed_keys = {col.key for col in mapper.columns if col.key not in protected_keys}
     # Note: 'display_name' is handled separately above, but keep it in allowed_keys
     # if you want to allow setting it via the generic loop (though explicit handling is safer)
