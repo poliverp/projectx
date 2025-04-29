@@ -138,7 +138,7 @@ function ManageCasesScreen() {
   return (
     <div>
       {/* Use AntD Typography Title */}
-      <Title level={2}>Manage Cases</Title>
+      <Title level={2}>Cases</Title>
 
       {/* Use AntD Space, Button, Input.Search */}
       <Space style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap' }}>
