@@ -82,6 +82,9 @@ function CasePage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState(null);
   const [isAllDetailsModalOpen, setIsAllDetailsModalOpen] = useState(false);
+  // --- ADD THIS STATE ---
+  const [isDeleting, setIsDeleting] = useState(false);
+  // --- END ADD ---
 
   // State for Document Generation
   const [docTypes, setDocTypes] = useState([]);
@@ -443,6 +446,38 @@ function CasePage() {
         setIsClearing(false); // Reset loading state
     }
   };
+
+  // --- ADD THIS HANDLER FUNCTION ---
+const handleDeleteCase = async () => {
+  // Don't need to check caseDetails, Popconfirm handles visibility
+  // Prevent multiple clicks while deleting
+  if (isDeleting) return;
+
+  setIsDeleting(true);
+  setError(null); // Clear previous page errors
+
+  console.log(`Attempting to delete case ${caseId}`);
+
+  try {
+      // Call the existing API function
+      await api.deleteCase(caseId);
+      toast.success(`Case "${display_name || caseId}" deleted successfully!`);
+      // Navigate back to the main case list after successful deletion
+      navigate('/manage-cases');
+      // No need to call fetchCaseDetails as we are leaving the page
+  } catch (err) {
+      console.error("Failed to delete case:", err);
+      // Try to get a more specific error message
+      const errorMsg = err.response?.data?.messages
+                       ? JSON.stringify(err.response.data.messages)
+                       : (err.response?.data?.error || err.message);
+      setError(`Failed to delete case: ${errorMsg}`); // Show error in the main Alert
+      toast.error("Failed to delete case.");
+      setIsDeleting(false); // Reset loading state only on error (on success we navigate away)
+  }
+  // No finally block needed here as success navigates away
+};
+// --- END ADD ---
 
   const handleCopyGeneratedText = useCallback(() => {
     if (!generationResult) return;

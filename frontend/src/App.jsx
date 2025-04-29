@@ -164,26 +164,44 @@ const PageBreadcrumb = () => {
   const location = useLocation();
   const pathSnippets = location.pathname.split('/').filter(i => i);
 
-  // Build breadcrumb items
-  const breadcrumbItems = pathSnippets.map((snippet, index) => {
-    const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
-    const isLast = index === pathSnippets.length - 1;
-    
-    // Get the display name from our mapping, or use the snippet with first letter capitalized
-    let displayName = pathToBreadcrumb[snippet];
-    if (!displayName) {
-      // Check if this is a case ID
-      if (snippet.match(/^[0-9a-f]{24}$/i)) {
-        displayName = 'Case';
-      } else {
-        displayName = snippet.charAt(0).toUpperCase() + snippet.slice(1);
+    // ---### START REPLACEMENT ###---
+  // Build breadcrumb items dynamically
+  const breadcrumbItems = pathSnippets
+    .map((snippet, index) => {
+      const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
+      const isLast = index === pathSnippets.length - 1;
+
+      // --- Logic Modification ---
+      // 1. Skip the 'case' path segment entirely
+      if (snippet === 'case' && index === 0) { // Check if it's the first segment after root
+          return null; // Don't create a breadcrumb item for '/case'
       }
-    }
-    
-    return {
-      title: isLast ? displayName : <Link to={url}>{displayName}</Link>,
-    };
-  });
+
+      // 2. Handle the Case ID segment (now the second segment, index 1, if '/case' was skipped)
+      // Or more robustly, check if the previous segment was 'case'
+      const isCaseIdSegment = index > 0 && pathSnippets[index - 1] === 'case';
+
+      let displayName;
+      if (isCaseIdSegment && isLast) {
+          // For now, just display the Case ID itself as the last item
+          // TODO: Fetch display_name later if needed
+          displayName = `Case ${snippet}`; // Display "Case [ID]"
+      } else {
+          // Use mapping for other known segments or format the snippet
+          displayName = pathToBreadcrumb[snippet] || (snippet.charAt(0).toUpperCase() + snippet.slice(1));
+      }
+
+      // --- End Logic Modification ---
+
+      return {
+        // Only make it a link if it's NOT the last item
+        title: isLast ? displayName : <Link to={url}>{displayName}</Link>,
+        // Optional: Add key if needed for React list rendering
+        // key: url,
+      };
+    })
+    .filter(item => item !== null); // Remove any null items created by skipping '/case'
+  // ---### END REPLACEMENT ###---
 
   // Always add Home at the beginning
   breadcrumbItems.unshift({
