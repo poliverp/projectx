@@ -1,0 +1,218 @@
+// src/pages/CasePage/components/tabs/SuggestionsTab.jsx
+import React from 'react';
+import { 
+  Typography, Card, Space, Button, Badge, Collapse, List, Checkbox, 
+  Tag, Divider, Popconfirm, Empty,
+} from 'antd';
+import { 
+  FileTextOutlined, CheckCircleTwoTone, CloseOutlined, 
+  SearchOutlined 
+} from '@ant-design/icons';
+import { Link } from 'react-router-dom';
+import { useSuggestions } from '../../hooks/useSuggestions';
+
+const { Text } = Typography;
+
+function SuggestionsTab({ caseDetails, refreshCase, caseId }) {
+  const {
+    acceptedSuggestions,
+    dismissedSuggestions,
+    isApplying,
+    isClearing,
+    applySuccess,
+    handleCheckboxChange,
+    handleDismissLocally,
+    handleApplyChanges,
+    handleClearSuggestions
+  } = useSuggestions(caseDetails, refreshCase);
+  
+  if (!caseDetails) return null;
+  
+  const caseDetailsData = caseDetails.case_details || {};
+  const pendingSuggestions = caseDetailsData.pending_suggestions || {};
+  const lastAnalyzedDocId = caseDetailsData.last_analyzed_doc_id;
+  
+  // Helper function to format field names
+  const formatFieldName = (fieldName) => {
+    if (!fieldName) return '';
+    return fieldName
+      .replace(/[_-]/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
+  };
+  
+  // Determine if we have pending suggestions
+  const hasSuggestions = pendingSuggestions && Object.keys(pendingSuggestions).length > 0;
+  
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <Card 
+        title="AI Analysis Suggestions" 
+        type="inner"
+        extra={
+          <Space>
+            {hasSuggestions && (
+              <Popconfirm
+                title="Clear all suggestions?"
+                description="Are you sure? This cannot be undone."
+                onConfirm={handleClearSuggestions}
+                okText="Yes, Clear All"
+                cancelText="No"
+                okButtonProps={{ danger: true }}
+                disabled={isApplying || isClearing}
+              >
+                <Button
+                  danger
+                  size="small"
+                  loading={isClearing}
+                  disabled={isApplying || isClearing}
+                >
+                  Clear All Suggestions
+                </Button>
+              </Popconfirm>
+            )}
+            <Button
+              type="primary"
+              size="small"
+              onClick={handleApplyChanges}
+              loading={isApplying}
+              disabled={Object.keys(acceptedSuggestions).length === 0 || isApplying || isClearing}
+              icon={applySuccess ? <CheckCircleTwoTone twoToneColor="#52c41a" /> : null}
+            >
+              {isApplying ? 'Applying...' : (applySuccess ? 'Applied!' : 'Apply Selected')}
+            </Button>
+          </Space>
+        }
+      >
+        {hasSuggestions ? (
+          <Collapse 
+            accordion
+            expandIconPosition="end"
+            bordered={false}
+          >
+            {Object.entries(pendingSuggestions).map(([docKey, suggestions]) => (
+              <Collapse.Panel 
+                header={
+                  <Space>
+                    <FileTextOutlined />
+                    <span>Suggestions from Document: {docKey}</span>
+                  </Space>
+                } 
+                key={docKey}
+              >
+                <List
+                  itemLayout="vertical"
+                  dataSource={Object.entries(suggestions)}
+                  renderItem={([field, suggestedValue]) => {
+                    // Check if suggestion is locally dismissed
+                    if (dismissedSuggestions[docKey]?.[field]) {
+                      return null;
+                    }
+                    
+                    // Filter out null or 0 suggestions
+                    if (suggestedValue === null || suggestedValue === 0) {
+                      return null;
+                    }
+                    
+                    // Get the current value for comparison
+                    let currentValue = caseDetails?.[field] !== undefined
+                                      ? caseDetails[field]
+                                      : caseDetailsData?.[field];
+                    const currentValueExists = currentValue !== undefined;
+                    
+                    // Filter out redundant suggestions
+                    let isRedundant = false;
+                    if (currentValueExists) {
+                      if (typeof suggestedValue === 'string' && typeof currentValue === 'string') {
+                        isRedundant = suggestedValue.toLowerCase() === currentValue.toLowerCase();
+                      } else {
+                        try {
+                          isRedundant = JSON.stringify(suggestedValue) === JSON.stringify(currentValue);
+                        } catch (e) { isRedundant = suggestedValue === currentValue; }
+                      }
+                    }
+                    if (isRedundant) { return null; }
+                    
+                    return (
+                      <List.Item key={field}>
+                        <Card
+                          size="small"
+                          bordered={false}
+                          style={{ background: '#f9f9f9', marginBottom: '8px' }}
+                        >
+                          <Space align="start" style={{ width: '100%' }}>
+                            <Checkbox
+                              style={{ paddingTop: '4px' }}
+                              onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)}
+                              checked={acceptedSuggestions[docKey]?.[field] !== undefined}
+                            />
+                            <Popconfirm
+                              title="Dismiss suggestion?"
+                              onConfirm={() => handleDismissLocally(docKey, field)}
+                              okText="Dismiss"
+                              cancelText="Cancel"
+                              placement="top"
+                            >
+                              <Button
+                                type="text"
+                                danger
+                                size="small"
+                                icon={<CloseOutlined />}
+                                style={{ marginLeft: '8px', padding: '0 4px' }}
+                              />
+                            </Popconfirm>
+                            
+                            <div style={{ flexGrow: 1 }}>
+                              <Text strong>{formatFieldName(field)}:</Text>
+                              <Divider type="vertical" />
+                              <Tag color="blue">Suggestion</Tag>
+                              
+                              <div style={{ marginTop: '8px' }}>
+                                <Text code style={{ whiteSpace: 'pre-wrap', display: 'block', background: '#e6f7ff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #91d5ff' }}>
+                                  {JSON.stringify(suggestedValue, null, 2)}
+                                </Text>
+                              </div>
+                              
+                              {currentValueExists ? (
+                                <div style={{ marginTop: '8px' }}>
+                                  <Text type="secondary">Current Value:</Text>
+                                  <Text code type="secondary" style={{ whiteSpace: 'pre-wrap', display: 'block', background: '#fafafa', padding: '4px 8px', borderRadius: '4px', border: '1px solid #d9d9d9' }}>
+                                    {JSON.stringify(currentValue, null, 2)}
+                                  </Text>
+                                </div>
+                              ) : (
+                                <div style={{ marginTop: '8px' }}>
+                                  <Text type="secondary">Current: Not Set</Text>
+                                </div>
+                              )}
+                            </div>
+                          </Space>
+                        </Card>
+                      </List.Item>
+                    );
+                  }}
+                />
+              </Collapse.Panel>
+            ))}
+          </Collapse>
+        ) : (
+          <Empty 
+            image={Empty.PRESENTED_IMAGE_SIMPLE} 
+            description={
+              <Space direction="vertical" align="center">
+                <Text>No pending suggestions found</Text>
+                {lastAnalyzedDocId && (
+                  <Text type="secondary">Last analyzed document ID: {lastAnalyzedDocId}</Text>
+                )}
+                <Button type="primary" icon={<SearchOutlined />} onClick={() => {}}>
+                  Analyze Documents
+                </Button>
+              </Space>
+            }
+          />
+        )}
+      </Card>
+    </Space>
+  );
+}
+
+export default SuggestionsTab;

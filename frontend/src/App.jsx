@@ -45,7 +45,7 @@ import {
 
 // Import Pages
 import ManageCasesScreen from './pages/ManageCasesScreen';
-import CasePage from './pages/CasePage';
+import CasePage from './pages/CasePage/index';
 import FilesPage from './pages/FilesPage';
 import DocumentAnalysisPage from './pages/DocumentAnalysisPage';
 import CreateDocumentPage from './pages/CreateDocumentPage';
