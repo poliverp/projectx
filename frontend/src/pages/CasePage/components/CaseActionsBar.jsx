@@ -29,11 +29,7 @@ function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
         <Button
           icon={<FileAddOutlined />}
         >
-          <Link to={`/case/${caseId}/create-doc`}>Create Document</Link>
-        </Button>
-        <Button
-          icon={<FileDoneOutlined />}
-        >
+
           <Link to={`/case/${caseId}/create-discovery-response`}>Discovery Response</Link>
         </Button>
       </Space>
