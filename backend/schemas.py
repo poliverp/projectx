@@ -1,19 +1,26 @@
 # backend/schemas.py
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import fields, Schema, validate # <<< Import validate
+from marshmallow import fields, Schema, validate, EXCLUDE  # <<< Import validate
 from .models import Case, Document, User
 from .extensions import ma
+from backend.models import User
 
 # --- Schemas for API OUTPUT Serialization ---
+APPROVED_FIRMS = ["Adamson Ahdoot LLC"]
 
 class UserSchema(SQLAlchemyAutoSchema):
     """Schema for User model OUTPUT (excluding password)"""
-    # Ensure email validation on output if desired, though usually done on input
     email = fields.Email()
+    created_at = fields.DateTime(format="%Y-%m-%dT%H:%M:%S")
+    approved_at = fields.DateTime(format="%Y-%m-%dT%H:%M:%S")
+    
     class Meta:
         model = User
         load_instance = True
-        exclude = ("password_hash", "cases") # Exclude password and relationships
+        exclude = ("password_hash", "cases", "approval_token")
+
+# --- Instantiate Schemas ---
+
 
 class DocumentSchema(SQLAlchemyAutoSchema):
     """Schema for Document model OUTPUT"""
@@ -95,20 +102,27 @@ class GenerateDocumentInputSchema(Schema):
     document_type = fields.Str(required=True, error_messages={'required': 'Document type is required.'})
     custom_instructions = fields.Str(required=False, allow_none=True)
 
-# --- ### START NEW SECTION: Schemas for Auth Input Validation ### ---
 class RegistrationInputSchema(Schema):
     """Schema for VALIDATING user registration (POST /register)"""
     username = fields.Str(required=True, validate=validate.Length(min=3, error="Username must be at least 3 characters long."))
-    # Add email validation using Marshmallow's built-in validator
     email = fields.Email(required=True, error_messages={'required': 'Email is required.', 'invalid': 'Not a valid email address.'})
     password = fields.Str(required=True, validate=validate.Length(min=8, error="Password must be at least 8 characters long."))
+    # New field for firm with validation
+    firm = fields.Str(
+        required=True, 
+        validate=validate.OneOf(APPROVED_FIRMS, error="Selected firm is not approved. Please choose from the list of approved firms."),
+        error_messages={'required': 'Firm is required.'}
+    )
 
 class LoginInputSchema(Schema):
-    """Schema for VALIDATING user login (POST /login)"""
+    """Schema for VALIDATING user login inputs only"""
     username = fields.Str(required=True, error_messages={'required': 'Username is required.'})
     password = fields.Str(required=True, error_messages={'required': 'Password is required.'})
-    remember = fields.Bool(required=False) # Optional remember me field
-# --- ### END NEW SECTION ### ---
+    remember = fields.Bool(required=False)
+    
+    class Meta:
+        # Standard Marshmallow option to handle extra fields
+        unknown = EXCLUDE  # Ignore unknown fields
 
 
 # --- Instantiate Schemas ---
@@ -132,3 +146,5 @@ generate_document_input_schema = GenerateDocumentInputSchema()
 registration_input_schema = RegistrationInputSchema() # <<< Instantiate new input schema
 login_input_schema = LoginInputSchema() # <<< Instantiate new input schema
 
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)

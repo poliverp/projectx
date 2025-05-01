@@ -3,6 +3,7 @@ import os
 from flask import Flask, request, jsonify # Ensure all needed flask components are imported
 from dotenv import load_dotenv
 from .config import Config # <<< ADD THIS IMPORT
+from flask_mail import Mail
 
 # Import extensions from our extensions module
 # Ensure backend/extensions.py exists and defines these instances
@@ -10,6 +11,8 @@ from .extensions import db, migrate, login_manager, cors, ma
 # Import models (needed for user_loader)
 # Ensure models are defined in backend/models.py
 from .models import User
+
+mail = Mail()
 
 # Correctly find project root and .env path
 # __file__ is backend/__init__.py, dirname is backend/, parent is project root
@@ -36,7 +39,8 @@ def create_app(config_class=Config):
     app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent client-side JS access
     app.config['SESSION_COOKIE_SAMESITE'] = 'None' # Allow sending with cross-site requests (Required for cross-origin credentialed requests)
     # --- END ADDED ---
-    
+    mail.init_app(app)
+
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)

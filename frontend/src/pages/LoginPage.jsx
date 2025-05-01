@@ -1,28 +1,23 @@
 // frontend/src/pages/LoginPage.jsx
-import React, { useState, useEffect } from 'react'; // Keep useEffect
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-// --- ADDED: Import Ant Design components ---
-import { Form, Input, Button, Checkbox, Alert } from 'antd';
-// --- END ADDED ---
+import { Form, Input, Button, Checkbox, Alert, Typography } from 'antd';
+
+const { Title, Paragraph } = Typography;
+
+console.log("LOGIN PAGE COMPONENT LOADED");
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, currentUser } = useAuth();
-  // --- ADDED: AntD Form instance ---
-  const [form] = Form.useForm();
-  // --- END ADDED ---
-
-  // State for loading and general form errors
+  const { login, currentUser, pendingApproval, setPendingApproval } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [form] = Form.useForm();
 
-  // --- State variables for username, password, remember are no longer needed ---
-  // AntD Form manages field state internally via the 'name' prop on Form.Item
-
-  // Redirect if already logged in (Keep this logic)
+  // Redirect if already logged in
   useEffect(() => {
     if (currentUser) {
       console.log('User already logged in, redirecting from Login page...');
@@ -30,7 +25,6 @@ function LoginPage() {
     }
   }, [currentUser, navigate]);
 
-  // --- MODIFIED: Use onFinish for AntD Form submission ---
   const handleLogin = async (values) => {
     // 'values' contains { username: '...', password: '...', remember: true/false }
     const { username, password, remember } = values;
@@ -38,103 +32,120 @@ function LoginPage() {
     setIsLoading(true);
     setError(null); // Clear previous errors
 
-    // No need to check '!username || !password' here,
-    // AntD Form rules handle required fields before calling onFinish
-
     try {
+      // Use the API directly instead of context.login
       const response = await api.login({ username, password, remember });
-      console.log('Login successful:', response.data);
+      
       if (response.data && response.data.user) {
-        login(response.data.user); // Update context state
+        // Update context with user data
+        login(response.data.user);
         toast.success(`Welcome back, ${response.data.user.username}!`);
-        navigate('/manage-cases');
+        // Let the useEffect handle navigation
       } else {
-         const errorMsg = 'Login succeeded but no user data received.';
-         setError(errorMsg);
-         toast.warn(errorMsg);
+        const errorMsg = 'Login succeeded but no user data received.';
+        setError(errorMsg);
+        toast.warn(errorMsg);
       }
     } catch (err) {
       console.error('Login failed:', err);
-      const errorMsg = err.response?.data?.error || 'Login failed. Please check credentials.';
-      setError(errorMsg); // Set error state for Alert display
-      // toast.error(errorMsg); // Optionally keep toast for errors too
+      
+      // Handle pending approval error specifically
+      if (err.response?.status === 403 && 
+          err.response?.data?.error === "Account pending approval") {
+        setPendingApproval(true);
+        setError("Your account is pending admin approval. You'll receive an email once approved.");
+      } else {
+        const errorMsg = err.response?.data?.error || 'Login failed. Please check credentials.';
+        setError(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
   };
-  // --- END MODIFIED ---
 
-  // Render nothing while redirecting (Keep this logic)
+  // Render nothing while redirecting
   if (currentUser) {
-      return <div>Redirecting...</div>;
+    return <div>Redirecting...</div>;
+  }
+
+  // If account is pending approval, show special message
+  if (pendingApproval) {
+    return (
+      <div style={{ maxWidth: '500px', margin: '40px auto', padding: '30px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#fff', textAlign: 'center' }}>
+        <Title level={2}>Account Pending Approval</Title>
+        <div style={{ margin: '20px 0', padding: '20px', backgroundColor: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: '4px' }}>
+          <Title level={4} style={{ color: '#1890ff' }}>Your account is awaiting administrator approval</Title>
+          <Paragraph>
+            Thank you for registering with ClerkLegal. Your account has been created successfully but requires administrator approval before you can log in.
+          </Paragraph>
+          <Paragraph>
+            You will receive an email notification when your account has been approved.
+          </Paragraph>
+        </div>
+        <Button type="primary" onClick={() => navigate('/')}>
+          Return to Login
+        </Button>
+      </div>
+    );
   }
 
   // Optional: Define layout for Form Items
   const formItemLayout = {
-    labelCol: { xs: { span: 24 }, sm: { span: 6 } }, // Label takes full width on small screens
-    wrapperCol: { xs: { span: 24 }, sm: { span: 16 } }, // Input takes full width on small screens
+    labelCol: { xs: { span: 24 }, sm: { span: 6 } },
+    wrapperCol: { xs: { span: 24 }, sm: { span: 16 } },
   };
   const tailFormItemLayout = {
-    wrapperCol: { xs: { span: 24, offset: 0 }, sm: { span: 16, offset: 6 } }, // Align button with inputs on larger screens
+    wrapperCol: { xs: { span: 24, offset: 0 }, sm: { span: 16, offset: 6 } },
   };
 
   return (
-    // Add some basic centering and styling for the form container
     <div style={{ maxWidth: '500px', margin: '40px auto', padding: '30px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#fff' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Login</h2>
 
-      {/* --- MODIFIED: Use AntD Form component --- */}
       <Form
         {...formItemLayout}
         form={form}
         name="login"
-        onFinish={handleLogin} // Use onFinish instead of onSubmit
-        initialValues={{ remember: false }} // Set default for checkbox
+        onFinish={handleLogin}
+        initialValues={{ remember: false }}
         scrollToFirstError
       >
-        {/* Display general form error if API call fails */}
         {error && (
-            <Form.Item wrapperCol={{ ...tailFormItemLayout.wrapperCol }} style={{ marginBottom: 16 }}>
-               <Alert message={error} type="error" showIcon closable onClose={() => setError(null)} />
-            </Form.Item>
+          <Form.Item wrapperCol={{ ...tailFormItemLayout.wrapperCol }} style={{ marginBottom: 16 }}>
+            <Alert message={error} type="error" showIcon closable onClose={() => setError(null)} />
+          </Form.Item>
         )}
 
-        {/* Username Input */}
         <Form.Item
-          name="username" // Used by onFinish to collect value
+          name="username"
           label="Username"
-          rules={[{ required: true, message: 'Please input your Username!' }]} // Basic validation rule
+          rules={[{ required: true, message: 'Please input your Username!' }]}
         >
           <Input />
         </Form.Item>
 
-        {/* Password Input */}
         <Form.Item
-          name="password" // Used by onFinish
+          name="password"
           label="Password"
           rules={[{ required: true, message: 'Please input your Password!' }]}
         >
-          {/* Use Input.Password for visibility toggle icon */}
           <Input.Password />
         </Form.Item>
 
-        {/* Remember Me Checkbox */}
         <Form.Item
           name="remember"
-          valuePropName="checked" // Needed for Checkbox within Form.Item
-          {...tailFormItemLayout} // Align it like the button
+          valuePropName="checked"
+          {...tailFormItemLayout}
         >
           <Checkbox>Remember Me</Checkbox>
         </Form.Item>
 
-        {/* Submit Button */}
-        <Form.Item {...tailFormItemLayout}> {/* Align the button */}
-          <Button type="primary" htmlType="submit" loading={isLoading} block> {/* block makes button full width */}
+        <Form.Item {...tailFormItemLayout}>
+          <Button type="primary" htmlType="submit" loading={isLoading} block>
             {isLoading ? 'Logging In...' : 'Login'}
           </Button>
         </Form.Item>
       </Form>
-      {/* --- END MODIFIED --- */}
 
       <p style={{ marginTop: '20px', textAlign: 'center' }}>
         Don't have an account? <Link to="/register">Register here</Link>

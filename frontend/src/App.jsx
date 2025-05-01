@@ -12,6 +12,8 @@ import {
 import { useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import AdminDashboard from './pages/AdminDashboard';
+
 
 // Ant Design imports
 import { 
@@ -54,6 +56,7 @@ import RegistrationPage from './pages/RegistrationPage';
 import CreateDiscoveryPage2 from './pages/CreateDiscoveryPage2';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import UserProfileDropdown from './components/UserProfileDropdown';
 
 // Destructure AntD Layout components
 const { Header, Content, Footer, Sider } = Layout;
@@ -510,38 +513,12 @@ function AppContent() {
                     justifyContent: 'center'
                   }}
                 />
-                
                 {/* User avatar/dropdown */}
-                <Dropdown 
-                  menu={{ items: userMenuItems }} 
-                  placement="bottomRight" 
-                  trigger={['click']}
-                  arrow={{
-                    pointAtCenter: true,
-                  }}
-                >
-                  <Space style={{ cursor: 'pointer' }}>
-                    <Avatar 
-                      style={{ 
-                        backgroundColor: token.colorPrimary,
-                        cursor: 'pointer' 
-                      }} 
-                      icon={<UserOutlined />} 
-                    />
-                    <Text 
-                      style={{ 
-                        fontWeight: '500',
-                        display: 'inline-block',
-                        maxWidth: '120px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {currentUser.name || currentUser.email || 'User'}
-                    </Text>
-                  </Space>
-                </Dropdown>
+                <UserProfileDropdown 
+                  currentUser={currentUser} 
+                  logout={logout} 
+                  token={token} 
+                />
               </Space>
             )}
           </div>
@@ -581,6 +558,7 @@ function AppContent() {
                 <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
                 <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
                 <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
               </Route>
 
               {/* Not Found Route */}

@@ -1,92 +1,128 @@
 // frontend/src/context/AuthContext.jsx
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import api from '../services/api'; // Or wherever your api functions are exported
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
 // Create the context
 const AuthContext = createContext(null);
 
-// Create a provider component
+// Custom hook to use the auth context
+export const useAuth = () => useContext(AuthContext);
+
+// Provider component
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Start loading until initial check is done
-
-  // Function to check auth status (e.g., on initial load)
-  const checkAuthStatus = useCallback(async () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [pendingApproval, setPendingApproval] = useState(false);
+  
+  // Check authentication status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await api.getAuthStatus();
+        if (response.data && response.data.user) {
+          setCurrentUser(response.data.user);
+        }
+      } catch (error) {
+        console.log('User is not authenticated');
+        // This is normal when not logged in, so we don't set an error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
+  
+  useEffect(() => {
+    console.log("Authentication state changed:", { 
+      isAuthenticated: !!currentUser,
+      user: currentUser 
+    });
+  }, [currentUser]);
+  // Login function
+  const login = async (credentials) => {
     setIsLoading(true);
+    setAuthError(null);
+    setPendingApproval(false);
+    
     try {
-      // Use the getAuthStatus function from api.js
-      const response = await api.getAuthStatus();
+
+      console.log("Login credentials:", {
+        ...credentials, 
+        password: "***" // Don't log actual password
+      });
+
+      const response = await api.login(credentials);
+      
+      console.log("Login server response:", response.data);
+
       if (response.data && response.data.user) {
+        console.log("Setting current user state:", response.data.user);
         setCurrentUser(response.data.user);
-        console.log("Auth Status Check: User is logged in.", response.data.user);
+        return { success: true };
       } else {
-        setCurrentUser(null);
-        console.log("Auth Status Check: User is not logged in.");
+        throw new Error('Login response missing user data');
       }
     } catch (error) {
-      // Likely a 401 if not logged in, which is expected
-      if (error.response && error.response.status === 401) {
-          console.log("Auth Status Check: No active session (401).");
-      } else {
-          console.error("Auth Status Check: Error fetching auth status", error);
+      console.error('Login error:', error);
+      
+      // Handle pending approval error specifically
+      if (error.response && error.response.status === 403 && error.response.data.error === "Account pending approval") {
+        setPendingApproval(true);
+        setAuthError("Your account is pending approval. You'll receive an email when approved.");
+        return { success: false, pendingApproval: true, message: error.response.data.message };
       }
-      setCurrentUser(null);
+      
+      const errorMessage = error.response?.data?.error || 'Login failed. Please try again.';
+      setAuthError(errorMessage);
+      toast.error(errorMessage);
+      return { success: false, message: errorMessage };
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  // Check status when the provider mounts
-  useEffect(() => {
-    console.log("AuthProvider mounted. Checking auth status...");
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
-  // Login function (to be called by LoginPage)
-  const login = (userData) => {
-    // This function doesn't perform the API call,
-    // it just updates the state *after* a successful API login
-    console.log("AuthContext: Setting current user.", userData);
-    setCurrentUser(userData);
   };
-
-  // Logout function (to be called anywhere)
+  
+  // Logout function
   const logout = async () => {
     try {
-      await api.logout(); // Call backend logout endpoint
-      console.log("AuthContext: Logout successful on backend.");
-    } catch (error) {
-      console.error("AuthContext: Logout API call failed", error);
-      // Still clear frontend state even if backend call fails
-    } finally {
-      console.log("AuthContext: Clearing current user.");
+      await api.logout();
       setCurrentUser(null);
-      // Optionally redirect here or handle in component
+      toast.success('Logged out successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Logout failed. Please try again.');
+      return { success: false };
     }
   };
-
-  // Value provided to consuming components
+  
+  // Register function (only used to check status, actual registration is in RegistrationPage)
+  const checkRegistrationStatus = async (username) => {
+    try {
+      const user = await api.getUserByUsername(username);
+      if (user.data && user.data.pending_approval) {
+        setPendingApproval(true);
+        return { pendingApproval: true };
+      }
+      return { pendingApproval: false };
+    } catch (error) {
+      console.error('Error checking registration status:', error);
+      return { error: true };
+    }
+  };
+  
+  // Provide the auth context value
   const value = {
     currentUser,
     isLoading,
-    login, // Provide login state updater
-    logout, // Provide logout function
-    checkAuthStatus // Provide function to re-check if needed
+    authError,
+    pendingApproval,
+    login,
+    logout,
+    checkRegistrationStatus
   };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {/* Don't render children until initial auth check is complete */}
-      {!isLoading ? children : <div>Loading Application...</div>}
-    </AuthContext.Provider>
-  );
-};
-
-// Custom hook to use the auth context easily
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

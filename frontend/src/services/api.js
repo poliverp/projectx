@@ -20,7 +20,17 @@ const apiClient = axios.create({
     // if using session cookies for auth.
   },
 });
+export const getPendingUsers = () => {
+  return apiClient.get('/auth/admin/pending-users');
+};
 
+export const approveUser = (userId) => {
+  return apiClient.post(`/auth/admin/approve/${userId}`);
+};
+
+export const getUserByUsername = (username) => {
+  return apiClient.get(`/auth/users/${username}`);
+};
 // --- Case Management ---
 export const getCases = () => apiClient.get('/cases');
 export const getCase = (caseId) => apiClient.get(`/cases/${caseId}`);
@@ -182,7 +192,11 @@ const api = {
   register,
   login,
   logout,
-  getAuthStatus
+  getAuthStatus,
+    // Admin functions
+  getPendingUsers,
+  approveUser,
+  getUserByUsername,
   // --- End Auth functions ---
 };
 

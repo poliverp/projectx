@@ -1,27 +1,27 @@
 // frontend/src/pages/RegistrationPage.jsx
-import React, { useState, useEffect } from 'react'; // Keep useEffect
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Keep useAuth hook
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { toast } from 'react-toastify'; // Keep toast import
-// --- ADDED: Import Ant Design components ---
-import { Form, Input, Button, Alert } from 'antd';
-// --- END ADDED ---
+import { toast } from 'react-toastify';
+import { Form, Input, Button, Alert, Select, Typography } from 'antd';
+
+const { Option } = Select;
+const { Title, Paragraph, Text } = Typography;
+
+// List of approved firms
+const APPROVED_FIRMS = ["Adamson Ahdoot LLC"];
 
 function RegistrationPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  // --- ADDED: AntD Form instance ---
   const [form] = Form.useForm();
-  // --- END ADDED ---
-
-  // State only needed for loading and general form errors now
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
-  // --- Removed useState for username, password, email ---
-
-  // Redirect if already logged in (Keep this logic)
+  // Redirect if already logged in
   useEffect(() => {
     if (currentUser) {
       console.log('User already logged in, redirecting from Register page...');
@@ -29,61 +29,82 @@ function RegistrationPage() {
     }
   }, [currentUser, navigate]);
 
-  // --- MODIFIED: Use onFinish for AntD Form submission ---
   const handleRegister = async (values) => {
-    // values = { username: '...', password: '...', email: '...' } from Form
-    const { username, password, email } = values;
+    const { username, password, email, firm } = values;
 
     setIsLoading(true);
-    setError(null); // Clear previous errors
-
-    // AntD rules handle required fields
+    setError(null);
 
     try {
-      const response = await api.register({ username, password, email });
+      const response = await api.register({ username, password, email, firm });
       console.log('Registration successful:', response.data);
-      toast.success('Registration successful! Please log in.');
-      form.resetFields(); // Reset form fields on success
-      navigate('/login'); // Redirect to login page
+      toast.success('Registration successful! Your account is pending approval.');
+      form.resetFields();
+      setRegistrationSuccess(true);
     } catch (err) {
       console.error('Registration failed:', err);
       const errorMsg = err.response?.data?.error || 'Registration failed. Please try again.';
-      setError(errorMsg); // Set error state for Alert display
-      toast.error(errorMsg); // Also show toast notification
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
   };
-  // --- END MODIFIED ---
 
-  // Render nothing while redirecting (Keep this logic)
   if (currentUser) {
-      return <div>Redirecting...</div>;
+    return <div>Redirecting...</div>;
   }
 
-  // Optional: Define layout for Form Items (consistent with LoginPage)
+  // If registration was successful, show the pending approval message
+  if (registrationSuccess) {
+    return (
+      <div style={{ maxWidth: '600px', margin: '40px auto', padding: '30px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#fff', textAlign: 'center' }}>
+        <Title level={2}>Registration Successful!</Title>
+        <div style={{ margin: '20px 0', padding: '20px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '4px' }}>
+          <Title level={4} style={{ color: '#52c41a' }}>Your account is pending approval</Title>
+          <Paragraph>
+            Thank you for registering with ClerkLegal. Your account has been created successfully but requires administrator approval before you can log in.
+          </Paragraph>
+          <Paragraph>
+            You will receive an email notification when your account has been approved.
+          </Paragraph>
+        </div>
+        <Button type="primary" onClick={() => navigate('/login')}>
+          Return to Login
+        </Button>
+      </div>
+    );
+  }
+
   const formItemLayout = {
     labelCol: { xs: { span: 24 }, sm: { span: 6 } },
     wrapperCol: { xs: { span: 24 }, sm: { span: 16 } },
   };
+  
   const tailFormItemLayout = {
     wrapperCol: { xs: { span: 24, offset: 0 }, sm: { span: 16, offset: 6 } },
   };
 
   return (
-    // Use consistent styling for the form container
     <div style={{ maxWidth: '500px', margin: '40px auto', padding: '30px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#fff' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Register New Account</h2>
 
-      {/* --- MODIFIED: Use AntD Form component --- */}
+      {/* Information about approval process */}
+      <Alert
+        message="Account Approval Required"
+        description="After registration, your account will need to be approved by an administrator before you can log in."
+        type="info"
+        showIcon
+        style={{ marginBottom: '20px' }}
+      />
+
       <Form
         {...formItemLayout}
         form={form}
         name="register"
-        onFinish={handleRegister} // Use onFinish
-        scrollToFirstError // Scrolls to the first validation error on submit
+        onFinish={handleRegister}
+        scrollToFirstError
       >
-        {/* Display general form error */}
         {error && (
            <Form.Item wrapperCol={{ ...tailFormItemLayout.wrapperCol }} style={{ marginBottom: 16 }}>
                <Alert message={error} type="error" showIcon closable onClose={() => setError(null)} />
@@ -95,8 +116,8 @@ function RegistrationPage() {
           name="username"
           label="Username"
           rules={[
-            { required: true, message: 'Please input your desired Username!', whitespace: true }
-            // Add other username rules if needed (e.g., length)
+            { required: true, message: 'Please input your desired Username!', whitespace: true },
+            { min: 3, message: 'Username must be at least 3 characters long.' }
           ]}
         >
           <Input />
@@ -108,28 +129,25 @@ function RegistrationPage() {
           label="Password"
           rules={[
             { required: true, message: 'Please input your Password!' },
-            // Optional: Add password complexity rules here
-            // { min: 8, message: 'Password must be at least 8 characters!' }
+            { min: 8, message: 'Password must be at least 8 characters long.' }
           ]}
-          hasFeedback // Shows validation status icon
+          hasFeedback
         >
           <Input.Password />
         </Form.Item>
 
-        {/* Confirm Password (Example - Recommended) */}
-        {/* This requires adding a 'confirm' state/field and validator */}
+        {/* Confirm Password */}
         <Form.Item
             name="confirm"
             label="Confirm Password"
-            dependencies={['password']} // Makes this field re-validate when 'password' changes
+            dependencies={['password']}
             hasFeedback
             rules={[
                 { required: true, message: 'Please confirm your password!' },
-                // Custom validator function
                 ({ getFieldValue }) => ({
                     validator(_, value) {
                         if (!value || getFieldValue('password') === value) {
-                            return Promise.resolve(); // Validation passes
+                            return Promise.resolve();
                         }
                         return Promise.reject(new Error('The two passwords that you entered do not match!'));
                     },
@@ -139,17 +157,31 @@ function RegistrationPage() {
             <Input.Password />
         </Form.Item>
 
-
         {/* Email Input */}
         <Form.Item
           name="email"
           label="E-mail"
           rules={[
             { type: 'email', message: 'The input is not valid E-mail!' },
-            { required: true, message: 'Please input your E-mail!' } // Now required
+            { required: true, message: 'Please input your E-mail!' }
           ]}
         >
           <Input />
+        </Form.Item>
+
+        {/* Firm Dropdown - NEW */}
+        <Form.Item
+          name="firm"
+          label="Law Firm"
+          rules={[{ required: true, message: 'Please select your law firm!' }]}
+        >
+          <Select placeholder="Select your law firm">
+            {APPROVED_FIRMS.map(firm => (
+              <Option key={firm} value={firm}>
+                {firm}
+              </Option>
+            ))}
+          </Select>
         </Form.Item>
 
         {/* Submit Button */}
@@ -159,7 +191,6 @@ function RegistrationPage() {
           </Button>
         </Form.Item>
       </Form>
-      {/* --- END MODIFIED --- */}
 
       <p style={{ marginTop: '20px', textAlign: 'center' }}>
         Already have an account? <Link to="/login">Login here</Link>

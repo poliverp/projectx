@@ -3,7 +3,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from backend.extensions import db 
-
+import secrets
 
 class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True) # Auto-incrementing primary key
@@ -54,29 +54,58 @@ class Document(db.Model):
         return f'<Document {self.file_name} (Case ID: {self.case_id})>'
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'users' # Optional: Define table name explicitly
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
-    email = db.Column(db.String(120), index=True, unique=True, nullable=False)# Optional email
-    password_hash = db.Column(db.String(256), nullable=False) # Increased length for hash
+    email = db.Column(db.String(120), index=True, unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    
+    # New fields for approval system
+    firm = db.Column(db.String(100), nullable=False)
+    pending_approval = db.Column(db.Boolean, default=True)
+    approval_token = db.Column(db.String(64), nullable=True, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    approved_at = db.Column(db.DateTime, nullable=True)
 
-    # Relationship to cases (one-to-many: one user owns many cases)
+    # Relationship to cases
     cases = db.relationship('Case', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
 
     def set_password(self, password):
-        # Hash the password using Werkzeug's helper
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        # Check the hashed password using Werkzeug's helper
         return check_password_hash(self.password_hash, password)
+    
+    def generate_approval_token(self):
+        """Generate a secure token for user approval"""
+        self.approval_token = secrets.token_urlsafe(32)
+        return self.approval_token
+    
+    def approve(self):
+        """Approve this user account"""
+        self.pending_approval = False
+        self.approved_at = datetime.utcnow()
+        self.approval_token = None  # Clear the token after use
+        
+    def is_active(self):
+        """Override UserMixin is_active to check approval status"""
+        # Users can only be active if they're approved
+        return not self.pending_approval
+        
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "firm": self.firm,
+            "pending_approval": self.pending_approval,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "approved_at": self.approved_at.isoformat() if self.approved_at else None
+        }
 
     def __repr__(self):
         return f'<User {self.username}>'
-    
-    # Inside class User(UserMixin, db.Model):
- # ... (keep existing columns and methods) ...
 
     def to_dict(self):
         # Exclude sensitive information like password hash

@@ -4,7 +4,10 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow # <<< Import Marshmallow
+from flask_mail import Mail
 
+# Create mail extension instance
+mail = Mail()
 
 db = SQLAlchemy()
 migrate = Migrate()

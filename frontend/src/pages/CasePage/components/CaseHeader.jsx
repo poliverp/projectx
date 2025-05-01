@@ -1,17 +1,16 @@
-// src/pages/CasePage/components/CaseHeader.jsx
 import React from 'react';
 import { Row, Col, Space, Typography, Button, Tag, Tooltip, Popconfirm } from 'antd';
 import { EditOutlined, DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-function CaseHeader({ 
-  caseDetails, 
-  onEdit, 
-  onExport, 
-  onDelete, 
-  loading, 
-  isDeleting 
+function CaseHeader({
+  caseDetails,
+  onEdit,
+  onExport,
+  onDelete,
+  loading,
+  isDeleting
 }) {
   if (!caseDetails) return null;
   
@@ -37,7 +36,7 @@ function CaseHeader({
   
   return (
     <Row gutter={[24, 16]} align="middle">
-      <Col xs={24} sm={24} md={16} lg={18}>
+      <Col xs={24} sm={24} md={14} lg={16}>
         <Space direction="vertical" size={0}>
           <Space align="center">
             <Title level={3} style={{ margin: 0 }}>{display_name}</Title>
@@ -49,22 +48,22 @@ function CaseHeader({
           </Space>
         </Space>
       </Col>
-      <Col xs={24} sm={24} md={8} lg={6} style={{ textAlign: 'right' }}>
-        <Space>
+      <Col xs={24} sm={24} md={10} lg={8} style={{ textAlign: 'right' }}>
+        <Space wrap>
           <Tooltip title="Edit Case Info">
-            <Button 
-              icon={<EditOutlined />} 
-              onClick={onEdit} 
-              disabled={!caseDetails || loading}
+            <Button
+               icon={<EditOutlined />}
+               onClick={onEdit}
+               disabled={!caseDetails || loading}
             >
               Edit
             </Button>
           </Tooltip>
           <Tooltip title="Download Case Summary">
-            <Button 
-              icon={<DownloadOutlined />}
-              onClick={onExport}
-              disabled={!caseDetails || loading}
+            <Button
+               icon={<DownloadOutlined />}
+               onClick={onExport}
+               disabled={!caseDetails || loading}
             >
               Export
             </Button>
@@ -79,9 +78,9 @@ function CaseHeader({
             disabled={loading || isDeleting}
           >
             <Tooltip title="Delete Case">
-              <Button 
+              <Button
                 danger
-                icon={<DeleteOutlined />} 
+                icon={<DeleteOutlined />}
                 loading={isDeleting}
                 disabled={!caseDetails || loading || isDeleting}
               />

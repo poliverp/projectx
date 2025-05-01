@@ -1,150 +1,149 @@
-// src/pages/LoginPage2.jsx
-import React, { useState } from 'react';
+// frontend/src/pages/LoginPage.jsx
+// THISISMYSIGNINPAGE WHICH I THINK IS UPDATED AND CURRENT
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import { Form, Input, Button, Checkbox, Alert, Typography } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 
-function SigninPage() {
-  console.log("NEW LOGIN PAGE RENDERED - THIS SHOULD APPEAR IN CONSOLE");
-  
+const { Title, Paragraph } = Typography;
+
+console.log("SIGNIN PAGE COMPONENT LOADED");
+
+function LoginPage() {
   const navigate = useNavigate();
-  const { login, currentUser } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
+  const { login, currentUser, authError, pendingApproval } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [form] = Form.useForm();
 
-  // Skip rendering login form if user is already logged in
-  React.useEffect(() => {
+  // Redirect if already logged in
+  useEffect(() => {
     if (currentUser) {
-      console.log("User already logged in, redirecting...");
+      console.log('User already logged in, redirecting from Login page...');
       navigate('/manage-cases');
     }
   }, [currentUser, navigate]);
-  
-  if (currentUser) {
-    return <div>Redirecting...</div>;
-  }
 
-  // Test function to verify event handling
-  const testButtonClick = () => {
-    console.log("Test button clicked!");
-    alert("Test button clicked! This confirms event handling works.");
-  };
-
-  // Direct login function that bypasses form submission
-  const attemptDirectLogin = async () => {
-    console.log("Direct login attempt with:", { username, password });
-    
-    if (!username || !password) {
-      setError("Username and password are required");
-      return;
+  // Set error from auth context
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
     }
+  }, [authError]);
+
+  const handleLogin = async (values) => {
+    const { username, password, remember } = values;
     
     setIsLoading(true);
     setError(null);
-    
+  
     try {
-      const response = await api.login({ username, password, remember });
-      console.log("Login response:", response.data);
-      
-      if (response.data && response.data.user) {
-        login(response.data.user);
-        navigate('/manage-cases');
-      } else {
-        setError("Login succeeded but received invalid user data");
-      }
+      // ONLY pass credentials - don't check result.success
+      await login({ username, password, remember });
+      // Do not do anything else here - redirect will happen in useEffect
     } catch (err) {
-      console.error("Login failed:", err);
-      setError(err.response?.data?.error || "Login failed");
+      console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Regular form submission handler
-  const handleFormSubmit = (event) => {
-    console.log("Form submitted!");
-    event.preventDefault();
-    attemptDirectLogin();
-  };
+  // Render nothing while redirecting
+  if (currentUser) {
+    return <div>Redirecting...</div>;
+  }
+
+  // If account is pending approval, show special message
+  if (pendingApproval) {
+    return (
+      <div style={{ maxWidth: '500px', margin: '40px auto', padding: '30px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#fff', textAlign: 'center' }}>
+        <Title level={2}>Account Pending Approval</Title>
+        <div style={{ margin: '20px 0', padding: '20px', backgroundColor: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: '4px' }}>
+          <Title level={4} style={{ color: '#1890ff' }}>Your account is awaiting administrator approval</Title>
+          <Paragraph>
+            Thank you for registering with ClerkLegal. Your account has been created successfully but requires administrator approval before you can log in.
+          </Paragraph>
+          <Paragraph>
+            You will receive an email notification when your account has been approved.
+          </Paragraph>
+        </div>
+        <Button type="primary" onClick={() => navigate('/')}>
+          Return to Login
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div style={{padding: '20px', border: '2px solid blue'}}>
-      <h1>New Login Page</h1>
-      <p>This is a completely new component to test login functionality.</p>
-      
-      {/* Test button outside the form */}
-      <button 
-        onClick={testButtonClick}
-        style={{background: 'red', color: 'white', padding: '10px', margin: '10px 0'}}
+    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <Title level={2}>ClerkLegal Login</Title>
+      </div>
+
+      {error && (
+        <Alert
+          message="Login Error"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          onClose={() => setError(null)}
+          style={{ marginBottom: '20px' }}
+        />
+      )}
+
+      <Form
+        form={form}
+        name="login"
+        initialValues={{ remember: true }}
+        onFinish={handleLogin}
+        layout="vertical"
       >
-        Test Button (Click Me!)
-      </button>
-      
-      <form onSubmit={handleFormSubmit}>
-        {error && <p style={{color: 'red'}}>{error}</p>}
-        
-        <div style={{margin: '10px 0'}}>
-          <label htmlFor="username">Username: </label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div style={{margin: '10px 0'}}>
-          <label htmlFor="password">Password: </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div style={{margin: '10px 0'}}>
-          <label>
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-            />
-            Remember Me
-          </label>
-        </div>
-        
-        <button 
-          type="submit"
-          disabled={isLoading}
-          style={{background: 'blue', color: 'white', padding: '8px 15px'}}
+        <Form.Item
+          name="username"
+          rules={[{ required: true, message: 'Please input your Username!' }]}
         >
-          {isLoading ? 'Logging In...' : 'Login (Form Submit)'}
-        </button>
-        
-        <button 
-          type="button"
-          onClick={attemptDirectLogin}
-          style={{background: 'green', color: 'white', padding: '8px 15px', marginLeft: '10px'}}
+          <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Username" size="large" />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          rules={[{ required: true, message: 'Please input your Password!' }]}
         >
-          Login (Direct)
-        </button>
-      </form>
-      
-      <p style={{marginTop: '20px'}}>
-        Don't have an account? <Link to="/register">Register here</Link>
-      </p>
-      
-      <p>
-        <Link to="/login-test">Go to test route</Link>
-      </p>
+          <Input.Password
+            prefix={<LockOutlined className="site-form-item-icon" />}
+            placeholder="Password"
+            size="large"
+          />
+        </Form.Item>
+
+        <Form.Item>
+          <Form.Item name="remember" valuePropName="checked" noStyle>
+            <Checkbox>Remember me</Checkbox>
+          </Form.Item>
+        </Form.Item>
+
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isLoading}
+            style={{ width: '100%', height: '40px' }}
+          >
+            {isLoading ? 'Logging in...' : 'Log in'}
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <p>
+          Don't have an account? <Link to="/register">Register now!</Link>
+        </p>
+      </div>
     </div>
   );
 }
 
-export default SigninPage;
+export default LoginPage;

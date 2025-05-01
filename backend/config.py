@@ -34,5 +34,14 @@ class Config:
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
     AI_API_KEY = os.environ.get("AI_API_KEY")
-
-# You could add DevelopmentConfig(Config), ProductionConfig(Config) etc. later if needed
+    
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME', 'your-email@gmail.com')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', 'your-app-password')  # Use app-specific password
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'ClerkLegal <your-email@gmail.com>')
+    ADMIN_EMAIL = 'oliverpizarro@gmail.com'  # Email to receive approval requests
+    # You could add DevelopmentConfig(Config), ProductionConfig(Config) etc. later if needed
+    MAIL_SUPPRESS_SEND = True  # <-- Add this line to prevent sending real emails
+    MAIL_DEBUG = True  # <-- Enable debug loggin
