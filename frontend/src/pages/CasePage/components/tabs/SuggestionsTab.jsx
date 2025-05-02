@@ -1,5 +1,5 @@
-// Updated SuggestionsTab.jsx
-import React, { useEffect, useState } from 'react';
+// Updated SuggestionsTab.jsx to fix the infinite loop
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   Typography, Card, Space, Button, Collapse, List, Checkbox, 
   Tag, Divider, Popconfirm, Empty,
@@ -15,6 +15,7 @@ const { Text } = Typography;
 
 function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false }) {
   const [activeCollapseKeys, setActiveCollapseKeys] = useState([]);
+  const processedAutoExpand = useRef(false);
   
   const {
     acceptedSuggestions,
@@ -82,14 +83,23 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false }
   // Determine if we have pending suggestions after filtering
   const hasSuggestions = Object.keys(filteredPendingSuggestions).length > 0;
   
-  // Auto-expand effect
+  // Auto-expand effect - use useRef to ensure it only runs once per autoExpand=true
   useEffect(() => {
-    if (autoExpand && hasSuggestions) {
-      // Set the first document key as active
-      const firstDocKey = Object.keys(filteredPendingSuggestions)[0];
-      setActiveCollapseKeys([firstDocKey]);
+    if (autoExpand && hasSuggestions && !processedAutoExpand.current) {
+      // Get the first document key
+      const suggestionsKeys = Object.keys(filteredPendingSuggestions);
+      if (suggestionsKeys.length > 0) {
+        const firstDocKey = suggestionsKeys[0];
+        setActiveCollapseKeys([firstDocKey]);
+        processedAutoExpand.current = true;
+      }
     }
-  }, [autoExpand, hasSuggestions, filteredPendingSuggestions]);
+    
+    // Reset the ref when autoExpand changes back to false
+    if (!autoExpand) {
+      processedAutoExpand.current = false;
+    }
+  }, [autoExpand, hasSuggestions]);
   
   // Handle Collapse change
   const handleCollapseChange = (key) => {
@@ -173,8 +183,34 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false }
                     let isRedundant = false;
                     if (currentValueExists) {
                       if (isDateField(field)) {
-                        // Use special date comparison for date fields
-                        isRedundant = datesAreEqual(suggestedValue, currentValue);
+                        // Simple date comparison that ignores time portion
+                        const stripTimeFromDate = (dateValue) => {
+                          if (!dateValue) return null;
+                          
+                          let dateString;
+                          // Handle string dates
+                          if (typeof dateValue === 'string') {
+                            // Just take the date portion if it's a string with a date format
+                            dateString = dateValue.split('T')[0].split(' ')[0];
+                            return dateString;
+                          }
+                          
+                          // Handle Date objects
+                          if (dateValue instanceof Date) {
+                            // Get just YYYY-MM-DD without timezone conversion
+                            const year = dateValue.getFullYear();
+                            const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+                            const day = String(dateValue.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          }
+                          
+                          return String(dateValue);
+                        };
+                        
+                        const strippedCurrent = stripTimeFromDate(currentValue);
+                        const strippedSuggested = stripTimeFromDate(suggestedValue);
+                        
+                        isRedundant = strippedCurrent === strippedSuggested;
                       } else if (typeof suggestedValue === 'string' && typeof currentValue === 'string') {
                         // Case-insensitive string comparison for string fields
                         isRedundant = suggestedValue.toLowerCase() === currentValue.toLowerCase();
