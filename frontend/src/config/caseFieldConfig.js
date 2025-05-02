@@ -73,6 +73,7 @@ export const caseFieldConfig = [
    {
     name: 'filing_date', // This key should match what your AI/analysis saves
     label: 'Filing Date',
+    type: 'date', // Add this property
     isDedicated: false,
     isEditable: false,
     showInList: false,
@@ -101,6 +102,7 @@ export const caseFieldConfig = [
   {
     name: 'filing_date',
     label: 'Filing Date',
+    type: 'date', // Add this property
     isDedicated: true,
     isEditable: true,
     showInList: false,
@@ -112,6 +114,7 @@ export const caseFieldConfig = [
   {
     name: 'trial_date',
     label: 'Trial Date',
+    type: 'date', // Add this property
     isDedicated: true,
     isEditable: true,
     showInList: false,
@@ -122,6 +125,7 @@ export const caseFieldConfig = [
   {
     name: 'incident_date',
     label: 'Incident Date',
+    type: 'date', // Add this property
     isDedicated: true,
     isEditable: true,
     showInList: false,

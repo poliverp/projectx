@@ -2,21 +2,40 @@
 import React from 'react';
 import { Card, Descriptions, Button, Space } from 'antd';
 import { caseFieldConfig } from '../../../../config/caseFieldConfig';
+import { formatDate } from '../../../../utils/dateUtils';
 
 function CaseDetailsTab({ caseDetails, onShowAllDetails }) {
   if (!caseDetails) return null;
   
+  // Helper function to determine if a field is a date field
+  const isDateField = (fieldName) => {
+    return fieldName.includes('date') || (fieldName.type === 'date');
+  };
+  
   // Generate details items from config
   const detailsItems = caseFieldConfig
     .filter(field => field.showInitially === true)
-    .map((field) => ({
-      key: field.name,
-      label: field.label,
-      children: field.isDedicated
-        ? (caseDetails[field.name] ?? 'N/A')
-        : (caseDetails.case_details?.[field.name] ?? 'N/A'),
-      span: field.span || 1,
-    }));
+    .map((field) => {
+      let value;
+      
+      if (field.isDedicated) {
+        value = caseDetails[field.name] ?? 'N/A';
+      } else {
+        value = caseDetails.case_details?.[field.name] ?? 'N/A';
+      }
+      
+      // Format date fields
+      if (isDateField(field.name)) {
+        value = formatDate(value);
+      }
+      
+      return {
+        key: field.name,
+        label: field.label,
+        children: value,
+        span: field.span || 1,
+      };
+    });
   
   return (
     <Space direction="vertical" style={{ width: '100%' }}>

@@ -2,21 +2,40 @@
 import React from 'react';
 import { Modal, Button, Tabs, Descriptions, Empty } from 'antd';
 import { caseFieldConfig } from '../../../../config/caseFieldConfig';
+import { formatDate } from '../../../../utils/dateUtils';
 
 function AllDetailsModal({ isOpen, onCancel, caseDetails }) {
   if (!caseDetails) return null;
   
+  // Helper function to determine if a field is a date field
+  const isDateField = (fieldName) => {
+    return fieldName.includes('date') || (fieldName.type === 'date');
+  };
+  
   // Generate all details items
   const allDetailsItems = caseFieldConfig
     .filter(field => field.name !== 'id' && field.name !== 'user_id')
-    .map((field) => ({
-      key: field.name,
-      label: field.label,
-      children: field.isDedicated
-        ? (caseDetails[field.name] ?? 'N/A')
-        : (caseDetails.case_details?.[field.name] ?? 'N/A'),
-      span: 1,
-    }));
+    .map((field) => {
+      let value;
+      
+      if (field.isDedicated) {
+        value = caseDetails[field.name] ?? 'N/A';
+      } else {
+        value = caseDetails.case_details?.[field.name] ?? 'N/A';
+      }
+      
+      // Format date fields
+      if (isDateField(field.name)) {
+        value = formatDate(value);
+      }
+      
+      return {
+        key: field.name,
+        label: field.label,
+        children: value,
+        span: 1,
+      };
+    });
   
   return (
     <Modal
