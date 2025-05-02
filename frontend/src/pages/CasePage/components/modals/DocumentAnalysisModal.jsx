@@ -1,12 +1,14 @@
-// src/pages/CasePage/components/modals/DocumentAnalysisModal.jsx
-import React, { useEffect } from 'react';
-import { Select, Button, Space, Alert, Spin, Typography } from 'antd';
-import { ExperimentOutlined, FileTextOutlined } from '@ant-design/icons';
+// Updated DocumentAnalysisModal.jsx
+import React, { useEffect, useState } from 'react';
+import { Select, Button, Space, Alert, Spin, Typography, Result } from 'antd';
+import { ExperimentOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useDocumentAnalysis } from "../../hooks/useDocumentAnalysis.js";
 const { Text, Paragraph } = Typography;
 const { Option } = Select;
 
-function DocumentAnalysisModal({ caseId, onComplete }) {
+function DocumentAnalysisModal({ caseId, onComplete, switchToSuggestionsTab }) {
+  const [analysisCompleted, setAnalysisCompleted] = useState(false);
+  
   const {
     documents,
     loadingDocs,
@@ -25,14 +27,39 @@ function DocumentAnalysisModal({ caseId, onComplete }) {
   const handleAnalyze = async () => {
     const success = await analyzeDocument();
     if (success) {
-      // Add a small delay before closing to show the success message
-      setTimeout(() => {
-        if (onComplete) {
-          onComplete();
-        }
-      }, 1500); // 1.5 seconds to read the success message
+      setAnalysisCompleted(true);
     }
   };
+  
+  const handleGoToSuggestions = () => {
+    if (switchToSuggestionsTab) {
+      switchToSuggestionsTab();
+    }
+    if (onComplete) {
+      onComplete();
+    }
+  };
+  
+  // Show success state if analysis is completed
+  if (analysisCompleted) {
+    return (
+      <Result
+        status="success"
+        title="Analysis Complete!"
+        subTitle="The document has been successfully analyzed and suggestions are ready to review."
+        extra={[
+          <Button 
+            type="primary" 
+            key="suggestions" 
+            onClick={handleGoToSuggestions}
+            icon={<CheckCircleOutlined />}
+          >
+            Go to Pending Suggestions
+          </Button>
+        ]}
+      />
+    );
+  }
   
   return (
     <Spin spinning={loadingDocs} tip="Loading documents...">

@@ -1,5 +1,5 @@
-// src/pages/CasePage/components/tabs/SuggestionsTab.jsx
-import React from 'react';
+// Updated SuggestionsTab.jsx
+import React, { useEffect, useState } from 'react';
 import { 
   Typography, Card, Space, Button, Collapse, List, Checkbox, 
   Tag, Divider, Popconfirm, Empty,
@@ -13,7 +13,9 @@ import { formatDate, datesAreEqual } from '../../../../utils/dateUtils';
 
 const { Text } = Typography;
 
-function SuggestionsTab({ caseDetails, refreshCase, caseId }) {
+function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false }) {
+  const [activeCollapseKeys, setActiveCollapseKeys] = useState([]);
+  
   const {
     acceptedSuggestions,
     dismissedSuggestions,
@@ -42,12 +44,16 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId }) {
   
   // Helper function to check if a value should be filtered out (null, zero, or empty string)
   const shouldFilterValue = (value) => {
+    // Check for null/undefined
     if (value === null || value === undefined) return true;
-    if (value === 0 || value === "0") return true;
-    if (value === "") return true;
-    // For empty objects or arrays
+    // Check for empty strings, zeros
+    if (value === 0 || value === "0" || value === "") return true;
+    // Check for empty arrays
     if (Array.isArray(value) && value.length === 0) return true;
+    // Check for empty objects
     if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) return true;
+    // Check for strings that only contain whitespace
+    if (typeof value === 'string' && value.trim() === '') return true;
     return false;
   };
   
@@ -75,6 +81,20 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId }) {
   
   // Determine if we have pending suggestions after filtering
   const hasSuggestions = Object.keys(filteredPendingSuggestions).length > 0;
+  
+  // Auto-expand effect
+  useEffect(() => {
+    if (autoExpand && hasSuggestions) {
+      // Set the first document key as active
+      const firstDocKey = Object.keys(filteredPendingSuggestions)[0];
+      setActiveCollapseKeys([firstDocKey]);
+    }
+  }, [autoExpand, hasSuggestions, filteredPendingSuggestions]);
+  
+  // Handle Collapse change
+  const handleCollapseChange = (key) => {
+    setActiveCollapseKeys(Array.isArray(key) ? key : [key]);
+  };
   
   return (
     <Space direction="vertical" style={{ width: '100%' }}>
@@ -121,6 +141,8 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId }) {
             accordion
             expandIconPosition="end"
             bordered={false}
+            activeKey={activeCollapseKeys}
+            onChange={handleCollapseChange}
           >
             {Object.entries(filteredPendingSuggestions).map(([docKey, suggestions]) => (
               <Collapse.Panel 

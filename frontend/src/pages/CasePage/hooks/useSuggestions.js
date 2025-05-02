@@ -50,9 +50,12 @@ export function useSuggestions(caseDetails, refreshCase) {
   }, []);
   
   const handleApplyChanges = useCallback(async () => {
+    
+    
     if (!caseDetails || Object.keys(acceptedSuggestions).length === 0 || isApplying) {
       return;
     }
+    
     
     setIsApplying(true);
     setApplySuccess(false);

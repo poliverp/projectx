@@ -1,4 +1,4 @@
-// Final updated CasePage/index.jsx
+// Updated CasePage/index.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
@@ -33,6 +33,8 @@ function CasePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAllDetailsModalOpen, setIsAllDetailsModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [autoExpandSuggestions, setAutoExpandSuggestions] = useState(false);
+
   
   // Active tab state
   const [activeTab, setActiveTab] = useState("details");
@@ -69,6 +71,16 @@ function CasePage() {
     setIsDeleting(false);
   };
   
+
+  const switchToSuggestionsTab = () => {
+    setActiveTab("suggestions");
+    setAutoExpandSuggestions(true);
+    
+    // Reset the auto-expand flag after a short delay
+    setTimeout(() => {
+      setAutoExpandSuggestions(false);
+    }, 500);
+  };
   // Modal handlers
   const handleOpenFilesModal = () => setIsFilesModalOpen(true);
   const handleCloseFilesModal = () => setIsFilesModalOpen(false);
@@ -203,6 +215,7 @@ function CasePage() {
                   caseDetails={caseDetails}
                   refreshCase={fetchCaseDetails}
                   caseId={caseId}
+                  autoExpand={autoExpandSuggestions}
                 />
               )
             },
@@ -259,7 +272,8 @@ function CasePage() {
       >
         <DocumentAnalysisModal 
           caseId={caseId} 
-          onComplete={handleCloseAnalysisModal} 
+          onComplete={handleCloseAnalysisModal}
+          switchToSuggestionsTab={switchToSuggestionsTab}
         />
       </Modal>
       
