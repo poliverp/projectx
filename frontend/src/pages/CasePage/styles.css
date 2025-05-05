@@ -1,12 +1,18 @@
+/* Container for the whole case page */
+.case-page-container {
+  padding: 24px;
+}
+
 /* Mobile-first responsive adjustments */
-@media (max-width: 768px) {
-    .case-details-two-column .ant-layout-sider {
-      position: relative !important;
-      height: auto !important;
-      width: 100% !important;
-    }
-    
-    .case-details-two-column .ant-layout-content {
-      margin-right: 0 !important;
-    }
+@media (max-width: 992px) {
+  .case-page-container > div {
+    flex-direction: column !important;
   }
+  
+  .case-page-container > div > div:last-child {
+    width: 100% !important;
+    position: relative !important;
+    top: 0 !important;
+    margin-top: 24px !important;
+  }
+}

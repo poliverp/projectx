@@ -22,6 +22,9 @@ import AllDetailsModal from './components/modals/AllDetailsModal';
 import CaseDetailsTab from './components/tabs/CaseDetailsTab';
 import SuggestionsTab from './components/tabs/SuggestionsTab';
 import DocumentGenerationTab from './components/tabs/DocumentGenerationTab';
+import CaseDetailsSidebar from './components/CaseDetailsSidebar';
+import './styles.css';
+
 
 function CasePage() {
   const { caseId } = useParams();
@@ -37,8 +40,7 @@ function CasePage() {
 
   
   // Active tab state
-  const [activeTab, setActiveTab] = useState("details");
-  
+  const [activeTab, setActiveTab] = useState("suggestions");  
   // Use our custom hook
   const {
     caseDetails,
@@ -146,7 +148,7 @@ function CasePage() {
   
   return (
     <div className="case-page-container">
-      {/* Global Error Banner */}
+      {/* Global Error Banner - unchanged */}
       {error && caseDetails && (
         <Alert
           message="Operation Error"
@@ -158,7 +160,7 @@ function CasePage() {
         />
       )}
       
-      {/* Header Section */}
+      {/* Header Section - full width at top */}
       <Card className="case-header-card">
         <CaseHeader 
           caseDetails={caseDetails}
@@ -170,86 +172,94 @@ function CasePage() {
         />
       </Card>
       
-      {/* Quick Action Buttons */}
-      <CaseActionsBar 
-        caseId={caseId}
-        onManageFiles={handleOpenFilesModal}
-        onAnalyzeDocuments={handleOpenAnalysisModal}
-      />
-      
-      {/* Main Content Tabs */}
-      <Card style={{ marginTop: '16px' }}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          size="large"
-          items={[
-            {
-              label: (
-                <span>
-                  <InfoCircleOutlined  />
-                  Case Details
-                </span>
-              ),
-              key: "details",
-              children: (
-                <CaseDetailsTab 
-                  caseDetails={caseDetails} 
-                  onShowAllDetails={() => setIsAllDetailsModalOpen(true)}
-                />
-              )
-            },
-            {
-              label: (
-                <span>
-                  <BulbOutlined />
-                  Suggestions
-                  {suggestionsCount > 0 && (
-                    <Badge count={suggestionsCount} offset={[5, -5]} size="small" />
-                  )}
-                </span>
-              ),
-              key: "suggestions",
-              children: (
-                <SuggestionsTab
-                  caseDetails={caseDetails}
-                  refreshCase={fetchCaseDetails}
-                  caseId={caseId}
-                  autoExpand={autoExpandSuggestions}
-                />
-              )
-            },
-            {
-              label: (
-                <span>
-                  <FileTextOutlined />
-                  Document Generation
-                </span>
-              ),
-              key: "generate",
-              children: (
-                <DocumentGenerationTab caseId={caseId} />
-              )
-            }
-          ]}
-        />
-      </Card>
-      
-      {/* Footer Navigation */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginTop: '20px'
-      }}>
-        <Button type="default">
-          <Link to="/manage-cases">
-            <Space>
-              <RightOutlined style={{ transform: 'rotate(180deg)' }} />
-              Back to Cases
-            </Space>
-          </Link>
-        </Button>
+      {/* Main container with flex layout - starting below header */}
+      <div style={{ display: 'flex', gap: '24px', maxWidth: '1600px', margin: '0 auto', marginTop: '16px' }}>
+        {/* Left column - Main content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Quick Action Buttons */}
+          <CaseActionsBar 
+            caseId={caseId}
+            onManageFiles={handleOpenFilesModal}
+            onAnalyzeDocuments={handleOpenAnalysisModal}
+          />
+          
+          {/* Main Content Tabs */}
+          <Card style={{ marginTop: '16px' }}>
+          <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              size="large"
+              items={[
+                {
+                  label: (
+                    <span>
+                      <BulbOutlined />
+                      Suggestions
+                      {suggestionsCount > 0 && (
+                        <Badge count={suggestionsCount} offset={[5, -5]} size="small" />
+                      )}
+                    </span>
+                  ),
+                  key: "suggestions",
+                  children: (
+                    <SuggestionsTab
+                      caseDetails={caseDetails}
+                      refreshCase={fetchCaseDetails}
+                      caseId={caseId}
+                      autoExpand={autoExpandSuggestions}
+                    />
+                  )
+                },
+                {
+                  label: (
+                    <span>
+                      <FileTextOutlined />
+                      Document Generation
+                    </span>
+                  ),
+                  key: "generate",
+                  children: (
+                    <DocumentGenerationTab caseId={caseId} />
+                  )
+                }
+              ]}
+            />
+          </Card>
+          
+          {/* Footer Navigation */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            width: '100%',
+            marginTop: '20px'
+          }}>
+            <Button type="default">
+              <Link to="/manage-cases">
+                <Space>
+                  <RightOutlined style={{ transform: 'rotate(180deg)' }} />
+                  Back to Cases
+                </Space>
+              </Link>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Right column - Case Details Sidebar */}
+        <div style={{ 
+          width: '400px',
+          position: 'sticky',
+          top: '24px',
+          alignSelf: 'flex-start',
+          maxHeight: 'calc(100vh - 48px)',
+          overflowY: 'auto'
+        }}>
+          <Card style={{ borderRadius: '8px' }}>
+            <CaseDetailsSidebar 
+              caseDetails={caseDetails}
+              onShowAllDetails={() => setIsAllDetailsModalOpen(true)}
+            />
+          </Card>
+        </div>
       </div>
       
       {/* Modals */}
