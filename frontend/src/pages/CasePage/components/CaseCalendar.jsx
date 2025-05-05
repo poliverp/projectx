@@ -1,5 +1,5 @@
 // src/pages/CasePage/components/CaseCalendar.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Card, Calendar, Badge, List, Typography, Space } from 'antd';
 import { CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -19,13 +19,16 @@ const DATE_FIELDS = [
 ];
 
 function CaseCalendar({ caseDetails }) {
+  const [selectedDate, setSelectedDate] = useState(null);
+  
   // Extract and format all dates from case
-  const { events, dateRange } = useMemo(() => {
+  const { events, dateRange, mostRecentDate } = useMemo(() => {
     const events = [];
     let minDate = null;
     let maxDate = null;
+    let mostRecentDate = null;
 
-    if (!caseDetails) return { events: [], dateRange: null };
+    if (!caseDetails) return { events: [], dateRange: null, mostRecentDate: null };
 
     // Process each date field
     DATE_FIELDS.forEach(({ key, label }) => {
@@ -54,7 +57,6 @@ function CaseCalendar({ caseDetails }) {
           key,
           date: dateObj,
           label,
-          // Use your existing formatDate function
           formattedDate: formatDate(value)
         });
 
@@ -65,6 +67,14 @@ function CaseCalendar({ caseDetails }) {
         if (!maxDate || dateObj.isAfter(maxDate)) {
           maxDate = dateObj;
         }
+        
+        // Track most recent date (closest to now)
+        const now = dayjs();
+        if (!mostRecentDate || 
+            (dateObj.isBefore(now) && dateObj.isAfter(mostRecentDate)) || 
+            (mostRecentDate.isAfter(now) && dateObj.isBefore(mostRecentDate))) {
+          mostRecentDate = dateObj;
+        }
       } catch (error) {
         console.error(`Error parsing date for ${key}:`, value, error);
       }
@@ -73,16 +83,16 @@ function CaseCalendar({ caseDetails }) {
     // Sort events by date
     events.sort((a, b) => a.date.valueOf() - b.date.valueOf());
 
-    // Calculate date range with one year padding
+    // Calculate date range (don't need full year padding anymore)
     let range = null;
     if (minDate && maxDate) {
       range = {
-        start: minDate.subtract(1, 'year'),
-        end: maxDate.add(1, 'year')
+        start: minDate.subtract(1, 'month'),
+        end: maxDate.add(1, 'month')
       };
     }
 
-    return { events, dateRange: range };
+    return { events, dateRange: range, mostRecentDate };
   }, [caseDetails]);
 
   // Create a map for quick date lookup
@@ -98,58 +108,65 @@ function CaseCalendar({ caseDetails }) {
     return map;
   }, [events]);
 
-  // Custom cell renderer for calendar
+  // Set initial date when component mounts
+  React.useEffect(() => {
+    if (mostRecentDate) {
+      setSelectedDate(mostRecentDate);
+    } else if (events.length > 0) {
+      setSelectedDate(events[0].date);
+    }
+  }, [mostRecentDate, events]);
+
+  // Custom cell renderer for calendar - simplified
   const dateCellRender = (current) => {
     const dateKey = current.format('YYYY-MM-DD');
     const dayEvents = eventsByDate.get(dateKey);
     
     if (!dayEvents) return null;
 
+    // Simplified indicator - just a colored dot with count if multiple
     return (
-      <ul style={{ margin: 0, padding: 0 }}>
-        {dayEvents.map((event, index) => (
-          <li key={event.key} style={{ listStyle: 'none' }}>
-            <Badge
-              color={getBadgeColor(event.key)}
-              text=""
-              style={{ display: 'inline-block', marginRight: '4px' }}
-            />
-          </li>
-        ))}
-      </ul>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        marginTop: '2px'
+      }}>
+        <Badge 
+          count={dayEvents.length} 
+          size="small" 
+          style={{ 
+            backgroundColor: getBadgeColor(dayEvents[0].key),
+            boxShadow: 'none'
+          }} 
+          overflowCount={9} 
+        />
+      </div>
     );
   };
 
   // Get badge color based on event type
   const getBadgeColor = (eventKey) => {
     const colorMap = {
-      filing_date: 'blue',
-      trial_date: 'red',
-      incident_date: 'orange',
-      created_at: 'green'
+      filing_date: '#1890ff',  // blue
+      trial_date: '#f5222d',    // red
+      incident_date: '#fa8c16', // orange
+      created_at: '#52c41a'     // green
     };
-    return colorMap[eventKey] || 'default';
+    return colorMap[eventKey] || '#d9d9d9';
   };
 
-  // Scroll to date in calendar
-  const scrollToDate = (date) => {
-    const calendarContainer = document.querySelector('.ant-picker-calendar');
-    if (!calendarContainer) return;
+  // Navigate to a specific date in calendar
+  const navigateToDate = (date) => {
+    setSelectedDate(date);
+  };
 
-    // Get the month panel for the target date
-    const dateKey = date.format('YYYY-MM');
-    const monthPanel = calendarContainer.querySelector(`[data-date="${dateKey}"]`);
-    
-    if (monthPanel) {
-      monthPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Handle month change in calendar
+  const onPanelChange = (date, mode) => {
+    // Only update if mode changes or if in month view
+    if (mode === 'month') {
+      setSelectedDate(date);
     }
   };
-
-  // Get valid date range for calendar
-  const validRange = useMemo(() => {
-    if (!dateRange) return undefined;
-    return [dateRange.start, dateRange.end];
-  }, [dateRange]);
 
   return (
     <Card
@@ -162,18 +179,23 @@ function CaseCalendar({ caseDetails }) {
     >
       {events.length > 0 ? (
         <>
-          <Calendar
-            dateCellRender={dateCellRender}
-            mode="month"
-            validRange={validRange}
-            defaultValue={events[0]?.date}
-          />
+          <div className="compact-calendar">
+            <Calendar
+              dateCellRender={dateCellRender}
+              mode="month"
+              fullscreen={false}
+              value={selectedDate}
+              onChange={navigateToDate}
+              onPanelChange={onPanelChange}
+            />
+          </div>
           
-          <div style={{ marginTop: '24px' }}>
+          <div className="calendar-dates-list">
             <Text strong style={{ fontSize: '16px', marginBottom: '12px', display: 'block' }}>
               Important Dates
             </Text>
             <List
+              className="case-timeline-list"
               dataSource={events}
               renderItem={(event) => (
                 <List.Item
@@ -182,7 +204,7 @@ function CaseCalendar({ caseDetails }) {
                     borderBottom: '1px solid #f0f0f0',
                     padding: '8px 0'
                   }}
-                  onClick={() => scrollToDate(event.date)}
+                  onClick={() => navigateToDate(event.date)}
                 >
                   <Space size="middle" align="center">
                     <Badge
