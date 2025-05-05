@@ -1,0 +1,12 @@
+/* Mobile-first responsive adjustments */
+@media (max-width: 768px) {
+    .case-details-two-column .ant-layout-sider {
+      position: relative !important;
+      height: auto !important;
+      width: 100% !important;
+    }
+    
+    .case-details-two-column .ant-layout-content {
+      margin-right: 0 !important;
+    }
+  }
