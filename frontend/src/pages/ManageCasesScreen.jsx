@@ -5,7 +5,7 @@ import api from '../services/api';
 import { toast } from 'react-toastify';
 // --- ADDED: Ant Design Imports ---
 import { Table, Button, Input, Space, Typography, Popconfirm, Alert, Spin } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 // --- END ADDED ---
 
 const { Title } = Typography;
@@ -30,7 +30,6 @@ function ManageCasesScreen() {
         console.error("Error fetching cases:", err);
         const errorMsg = err.response?.data?.error || "Failed to load cases. Please try again.";
         setError(errorMsg);
-        // toast.error(errorMsg); // Optionally show toast on fetch error
         setCases([]);
       })
       .finally(() => setLoading(false));
@@ -50,12 +49,9 @@ function ManageCasesScreen() {
     // Filter primarily on display_name, add others if desired
     return cases.filter(c =>
       (c.display_name?.toLowerCase() || '').includes(lowerSearchTerm) ||
-      (c.official_case_name?.toLowerCase() || '').includes(lowerSearchTerm) ||
       (c.case_number?.toLowerCase() || '').includes(lowerSearchTerm)
     );
   }, [searchTerm, cases]);
-
-  // --- REMOVED: handleCreateCase using prompt ---
 
   // Handle Delete (Adapts slightly for Popconfirm)
   const handleDeleteCase = async (caseId) => {
@@ -82,13 +78,11 @@ function ManageCasesScreen() {
       dataIndex: 'display_name',
       key: 'display_name',
       sorter: (a, b) => a.display_name.localeCompare(b.display_name),
-      render: (text, record) => <Link to={`/case/${record.id}`}>{text}</Link>, // Make name a link
-    },
-    {
-      title: 'Official Name',
-      dataIndex: 'official_case_name',
-      key: 'official_case_name',
-      sorter: (a, b) => (a.official_case_name || '').localeCompare(b.official_case_name || ''),
+      render: (text, record) => (
+        <Link to={`/case/${record.id}`} style={{ fontWeight: 'bold' }}>
+          {text}
+        </Link>
+      ),
     },
     {
       title: 'Case Number',
@@ -96,44 +90,49 @@ function ManageCasesScreen() {
       key: 'case_number',
     },
     {
+      title: 'Filing Date',
+      dataIndex: 'filing_date',
+      key: 'filing_date',
+      render: (date) => date ? new Date(date).toLocaleDateString() : '-',
+      sorter: (a, b) => new Date(a.filing_date || 0) - new Date(b.filing_date || 0),
+    },
+    {
+      title: 'Case Type',
+      dataIndex: 'case_type',
+      key: 'case_type',
+    },
+    {
       title: 'Last Updated',
       dataIndex: 'updated_at',
       key: 'updated_at',
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-', // Format date
+      render: (date) => date ? new Date(date).toLocaleDateString() : '-',
       sorter: (a, b) => new Date(a.updated_at || 0) - new Date(b.updated_at || 0),
     },
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record) => ( // Use '_' if first argument (text) isn't needed
+      render: (_, record) => (
         <Space size="middle">
-          <Button
-             type="link" // Use link style button for less emphasis
-             icon={<EyeOutlined />}
-             onClick={() => navigate(`/case/${record.id}`)}
-          >
-            View
-          </Button>
-          {/* Add Edit button later */}
-          {/* <Button type="link" icon={<EditOutlined />} onClick={() => navigate(`/case/${record.id}/edit`)}>Edit</Button> */}
           <Popconfirm
             title="Delete the case"
             description={`Are you sure you want to delete "${record.display_name}"?`}
             onConfirm={() => handleDeleteCase(record.id)}
             okText="Yes"
             cancelText="No"
-            okButtonProps={{ danger: true }} // Make OK button red
+            okButtonProps={{ danger: true }}
           >
-            <Button danger icon={<DeleteOutlined />}> {/* Use danger style button */}
-                Delete
-            </Button>
+            <Button 
+              danger 
+              icon={<DeleteOutlined />}
+              type="text"
+              style={{ padding: '4px 8px' }}
+            />
           </Popconfirm>
         </Space>
       ),
     },
   ];
   // --- END ADDED ---
-
 
   return (
     <div>
@@ -158,8 +157,6 @@ function ManageCasesScreen() {
           style={{ width: 300 }}
           loading={loading && cases.length > 0} // Show loading indicator on search if desired
         />
-        {/* Keep Back link if needed, maybe style as button */}
-        {/* <Button><Link to="/">Back to Home</Link></Button> */}
       </Space>
 
       {/* Use AntD Alert for general errors */}

@@ -13,7 +13,7 @@ import { formatDate, datesAreEqual } from '../../../../utils/dateUtils';
 
 const { Text } = Typography;
 
-function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false }) {
+function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, onAnalyzeDocuments }) {
   const [activeCollapseKeys, setActiveCollapseKeys] = useState([]);
   const processedAutoExpand = useRef(false);
   
@@ -315,7 +315,7 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false }
                 {lastAnalyzedDocId && (
                   <Text type="secondary">Last analyzed document ID: {lastAnalyzedDocId}</Text>
                 )}
-                <Button type="primary" icon={<SearchOutlined />} onClick={() => {}}>
+                <Button type="primary" icon={<SearchOutlined />} onClick={onAnalyzeDocuments}>
                   Analyze Documents
                 </Button>
               </Space>

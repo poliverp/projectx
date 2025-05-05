@@ -24,6 +24,8 @@ import SuggestionsTab from './components/tabs/SuggestionsTab';
 import DocumentGenerationTab from './components/tabs/DocumentGenerationTab';
 import CaseDetailsSidebar from './components/CaseDetailsSidebar';
 import './styles.css';
+import CaseCalendar from "./components/CaseCalendar";
+import './calendar.css';
 
 
 function CasePage() {
@@ -193,6 +195,18 @@ function CasePage() {
                 {
                   label: (
                     <span>
+                      <FileTextOutlined />
+                      Document Generation
+                    </span>
+                  ),
+                  key: "generate",
+                  children: (
+                    <DocumentGenerationTab caseId={caseId} />
+                  )
+                },
+                {
+                  label: (
+                    <span>
                       <BulbOutlined />
                       Suggestions
                       {suggestionsCount > 0 && (
@@ -207,24 +221,15 @@ function CasePage() {
                       refreshCase={fetchCaseDetails}
                       caseId={caseId}
                       autoExpand={autoExpandSuggestions}
+                      onAnalyzeDocuments={handleOpenAnalysisModal} 
                     />
                   )
                 },
-                {
-                  label: (
-                    <span>
-                      <FileTextOutlined />
-                      Document Generation
-                    </span>
-                  ),
-                  key: "generate",
-                  children: (
-                    <DocumentGenerationTab caseId={caseId} />
-                  )
-                }
               ]}
             />
           </Card>
+
+          <CaseCalendar caseDetails={caseDetails} />
           
           {/* Footer Navigation */}
           <div style={{
