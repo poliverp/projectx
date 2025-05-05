@@ -137,7 +137,7 @@ function CreateDocumentPage() {
         <Space direction="vertical" style={{ width: '100%', padding: '20px' }} size="large">
             {/* Page Title and Back Button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <Title level={2} style={{ margin: 0 }}>Create/Generate Document for Case {caseId}</Title>
+                 <Title level={2} style={{ margin: 0 }}>Generate Document for Case {caseId}</Title>
                  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/case/${caseId}`)}>
                     Back to Case
                  </Button>

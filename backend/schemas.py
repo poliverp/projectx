@@ -82,6 +82,12 @@ class CaseInputBaseSchema(Schema):
     trial_date = fields.Str(required=False, allow_none=True)
     vehicle_details = fields.Str(required=False, allow_none=True)
     plaintiff_counsel_info = fields.Str(required=False, allow_none=True)
+    defendant_counsel_attorneys = fields.Str(required=False, allow_none=True)
+    defendant_counsel_firm = fields.Str(required=False, allow_none=True)
+    defendant_counsel_address = fields.Str(required=False, allow_none=True)
+    defendant_counsel_contact = fields.Str(required=False, allow_none=True)
+    acting_attorney = fields.Str(required=False, allow_none=True)
+    acting_clerk = fields.Str(required=False, allow_none=True)
     case_details = fields.Dict(keys=fields.Str(), values=fields.Raw(), required=False, allow_none=True)
 
 class CaseCreateInputSchema(CaseInputBaseSchema):
@@ -95,7 +101,6 @@ class CaseUpdateInputSchema(CaseInputBaseSchema):
         # The service layer will handle merging the received case_details dict.
         # This prevents validation errors for null values inside the JSON blob.
         exclude = ("case_details",)
-# ---### END CHANGE ###---
 
 class GenerateDocumentInputSchema(Schema):
     """Schema for VALIDATING the document generation request (POST)"""

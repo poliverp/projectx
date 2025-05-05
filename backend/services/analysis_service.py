@@ -55,6 +55,10 @@ def analyze_text_with_gemini(text_content):
               "plaintiff": "string or null",
               "defendant": "string or null",
               "plaintiff_address": "string or null",
+              "defendant_counsel_attorneys": "string with attorney names or null",
+              "defendant_counsel_firm": "string with firm name or null",
+              "defendant_counsel_address": "string with firm address or null", 
+              "defendant_counsel_contact": "string with contact info (phone/fax/email) or null",
               "defendant_counsel_info": "string describing firm/lawyer contact info or null",
               "case_number": "string identifying case number, will be referred to as Case No. within analyzed doc., or null",
               "county": "string or null",
@@ -78,6 +82,8 @@ def analyze_text_with_gemini(text_content):
               "drivers_license_mentioned": "boolean, true if mentioned, false/null otherwise",
               "extracted_value": "number or null (e.g., monetary amount mentioned)",
               "summary": "A brief summary of the document's core subject matter (string or null)"
+              "acting_attorney": "string with current attorney handling case or null",
+              "acting_clerk": "string with current clerk, which would be found as the last name signing the document or null"
             }}
 
             Here is the document text:

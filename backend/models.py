@@ -25,10 +25,15 @@ class Case(db.Model):
     incident_location = db.Column(db.String(200), nullable=True)
     incident_description = db.Column(db.String(200), nullable=True)
     case_type = db.Column(db.String(200), nullable=True)
-    defendant_counsel_info = db.Column(db.String(1000), nullable=True)
     trial_date = db.Column(db.Date, nullable=True)
     vehicle_details = db.Column(db.String(200), nullable=True)
     plaintiff_counsel_info = db.Column(db.String(1000), nullable=True)
+    defendant_counsel_attorneys = db.Column(db.String(1000), nullable=True)
+    defendant_counsel_firm = db.Column(db.String(1000), nullable=True) 
+    defendant_counsel_address = db.Column(db.String(1000), nullable=True)
+    defendant_counsel_contact = db.Column(db.String(1000), nullable=True)
+    acting_attorney = db.Column(db.String(200), nullable=True)
+    acting_clerk = db.Column(db.String(200), nullable=True)
 
 
     # Relationship: A case can have many documents

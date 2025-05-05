@@ -41,12 +41,6 @@ const UserProfileDropdown = ({ currentUser, logout, token }) => {
       icon: <UserOutlined />,
       onClick: () => navigate('/profile')
     },
-    {
-      key: 'settings',
-      label: 'Settings',
-      icon: <SettingOutlined />,
-      onClick: () => navigate('/settings')
-    },
     { type: 'divider' },
     {
       key: 'logout',

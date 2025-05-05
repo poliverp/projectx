@@ -187,7 +187,7 @@ function CasePage() {
             {
               label: (
                 <span>
-                  <InfoCircleOutlined />
+                  <InfoCircleOutlined  />
                   Case Details
                 </span>
               ),

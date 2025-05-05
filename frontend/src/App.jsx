@@ -13,7 +13,7 @@ import { useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AdminDashboard from './pages/AdminDashboard';
-
+import ProfilePage from './pages/ProfilePage';
 
 // Ant Design imports
 import { 
@@ -42,7 +42,6 @@ import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   SearchOutlined,
-  BellOutlined
 } from '@ant-design/icons';
 
 // Import Pages
@@ -254,12 +253,6 @@ function AppContent() {
       label: 'My Profile',
       icon: <UserOutlined />,
       onClick: () => navigate('/profile')
-    },
-    {
-      key: 'settings',
-      label: 'Settings',
-      icon: <SettingOutlined />,
-      onClick: () => navigate('/settings')
     },
     { type: 'divider' },
     {
@@ -503,23 +496,11 @@ function AppContent() {
             
             {/* Notification icon for logged in users */}
             {currentUser && (
-              <Space size="large">
-                <Button
-                  type="text"
-                  icon={<BellOutlined style={{ fontSize: '18px' }} />}
-                  style={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                />
-                {/* User avatar/dropdown */}
                 <UserProfileDropdown 
                   currentUser={currentUser} 
                   logout={logout} 
                   token={token} 
                 />
-              </Space>
             )}
           </div>
         </Header>
@@ -559,6 +540,7 @@ function AppContent() {
                 <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
                 <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/profile" element={<ProfilePage />} />  {/* Add this line */}
               </Route>
 
               {/* Not Found Route */}

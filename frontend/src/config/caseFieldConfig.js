@@ -87,17 +87,19 @@ export const caseFieldConfig = [
     showInList: false,   // Don't show in list table
     showInitially: false, // Don't show in initial details view
     isRequired: false,   // Not required
-    placeholder: 'e.g., Superior Court',
+    placeholder: 'e.g., UNLIMITED JURISDICTION',
+    displayTransform: value => value, // No transformation needed, already uppercase
   },
   {
-    name: 'county', // Assuming this was added based on migration output
+    name: 'county', 
     label: 'County',
     isDedicated: true,
     isEditable: true,
     showInList: false,
     showInitially: false,
     isRequired: false,
-    placeholder: 'e.g., Los Angeles County',
+    placeholder: 'e.g., LOS ANGELES COUNTY',
+    displayTransform: value => value, // No transformation needed, already uppercase
   },
   {
     name: 'filing_date',
@@ -165,18 +167,51 @@ export const caseFieldConfig = [
     placeholder: 'e.g., Personal Injury, Breach of Contract',
   },
   {
-    name: 'defendant_counsel_info',
-    label: 'Defendant Counsel Info',
+    name: 'defendant_counsel_attorneys',
+    label: 'Defendant Attorneys',
     isDedicated: true,
     isEditable: true,
     showInList: false,
     showInitially: false,
     isRequired: false,
-    placeholder: 'Name, Firm, Contact Info',
-    // Note: Might need a TextArea component in forms later
+    placeholder: 'e.g., W. CHRISTOPHER MALONEY, ESQ.',
+    group: 'defendant_counsel',
   },
   {
-    name: 'plaintiff_counsel_info', // Assuming this was added
+    name: 'defendant_counsel_firm',
+    label: 'Defendant Firm',
+    isDedicated: true,
+    isEditable: true,
+    showInList: false,
+    showInitially: false,
+    isRequired: false,
+    placeholder: 'e.g., WILSON, ELSER, MOSKOWITZ',
+    group: 'defendant_counsel',
+  },
+  {
+    name: 'defendant_counsel_address',
+    label: 'Defendant Firm Address',
+    isDedicated: true,
+    isEditable: true,
+    showInList: false,
+    showInitially: false,
+    isRequired: false,
+    placeholder: 'e.g., 655 Montgomery Street, Suite 900',
+    group: 'defendant_counsel',
+  },
+  {
+    name: 'defendant_counsel_contact',
+    label: "Defendent Firm Contact",
+    isDedicated: true,
+    isEditable: true,
+    showInList: false,
+    showInitially: false,
+    isRequired: false,
+    placeholder: 'Phone, fax, email',
+    group: 'defendant_counsel',
+  },
+  {
+    name: 'plaintiff_counsel_info',
     label: 'Plaintiff Counsel Info',
     isDedicated: true,
     isEditable: true,
@@ -195,8 +230,26 @@ export const caseFieldConfig = [
     isRequired: false,
     placeholder: 'e.g., Make, Model, License Plate',
   },
-  // ---### END CHANGE ###---
-  // --- Read-only/System Fields ---
+  {
+    name: 'acting_attorney',
+    label: 'Acting Attorney',
+    isDedicated: true,
+    isEditable: true,
+    showInList: false,
+    showInitially: false,
+    isRequired: false,
+    placeholder: 'Current attorney handling the case',
+  },
+  {
+    name: 'acting_clerk',
+    label: 'Acting Clerk',
+    isDedicated: true,
+    isEditable: true,
+    showInList: false,
+    showInitially: false,
+    isRequired: false,
+    placeholder: 'Current clerk assigned to the case',
+  },
   {
     name: 'id',
     label: 'Case ID',
