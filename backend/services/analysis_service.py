@@ -38,7 +38,7 @@ def analyze_text_with_gemini(text_content):
 
         # --- Choose a Model ---
         # gemini-1.5-flash-latest is fast and capable for text tasks
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-04-17')
 
         # --- Define the Prompt ---
         # Instruct the model clearly: context, task, desired output format (JSON!)
@@ -59,10 +59,9 @@ def analyze_text_with_gemini(text_content):
               "defendant_counsel_firm": "string with firm name or null",
               "defendant_counsel_address": "string with firm address or null", 
               "defendant_counsel_contact": "string with contact info (phone/fax/email) or null",
-              "defendant_counsel_info": "string describing firm/lawyer contact info or null",
               "case_number": "string identifying case number, will be referred to as Case No. within analyzed doc., or null",
-              "county": "string or null",
-              "jurisdiction": "string, UNLIMITED JURISDICTION, or null"
+              "county": "string, always caps lock or null",
+              "jurisdiction": "string, always caps lock, UNLIMITED JURISDICTION, or null"
               }},
               "judge_doc": "string name of judge mentioned in doc or null",
               "case_type": "string or null (e.g., 'Breach of Contract', 'Personal Injury')",
@@ -75,11 +74,9 @@ def analyze_text_with_gemini(text_content):
               "general_allegations": "string summarizing general allegations or null",
               "causes_of_action": [
                 "string cause 1 or null",
-                "string cause 2 or null"
-              ],
+                "string cause 2 or null",]
               "injuries_described": "string describing injuries or list[string] or null",
               "vehicle_details": "string describing relevant vehicle info (make, plate) or null",
-              "drivers_license_mentioned": "boolean, true if mentioned, false/null otherwise",
               "extracted_value": "number or null (e.g., monetary amount mentioned)",
               "summary": "A brief summary of the document's core subject matter (string or null)"
               "acting_attorney": "string with current attorney handling case or null",
@@ -103,6 +100,11 @@ def analyze_text_with_gemini(text_content):
         print(f"--- Text Content Type: {type(text_content)} ---")
         print(f"--- Prompt Start (first 500 chars): {prompt[:500]}...")
 
+        json_output_config = GenerationConfig(
+            response_mime_type="application/json",
+            # For now, we'll use temperature to control precision instead of thinking budget
+            temperature=0.1  # Lower temperature for more precise/deterministic responses
+        )
         # --- Make the API Call ---
         print(f"--- Calling Gemini API (Model: {model.model_name}) ---")
         start_time = time.time()

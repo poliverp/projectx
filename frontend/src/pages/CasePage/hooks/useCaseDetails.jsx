@@ -24,13 +24,70 @@ export function useCaseDetails(caseId) {
       const dataCompleteness = calculateDataCompleteness(response.data);
       setCaseProgress(dataCompleteness);
       
-      // Count pending suggestions
+      // Count pending suggestions with filtering
       const pendingSuggestions = response.data.case_details?.pending_suggestions || {};
       let count = 0;
-      Object.values(pendingSuggestions).forEach(docSuggestions => {
-        count += Object.keys(docSuggestions).length;
+
+      // Helper function to check if a value should be filtered out
+      const shouldFilterValue = (value) => {
+        // Check for null/undefined
+        if (value === null || value === undefined) return true;
+        // Check for empty strings, zeros
+        if (value === 0 || value === "0" || value === "") return true;
+        // Check for empty arrays
+        if (Array.isArray(value) && value.length === 0) return true;
+        // Check for empty objects
+        if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) return true;
+        // Check for strings that only contain whitespace
+        if (typeof value === 'string' && value.trim() === '') return true;
+        return false;
+      };
+
+      // Helper function to determine if a field is a date field
+      const isDateField = (fieldName) => {
+        return fieldName.includes('date');
+      };
+
+      // Filter and count only valid suggestions
+      Object.entries(pendingSuggestions).forEach(([docKey, suggestions]) => {
+        Object.entries(suggestions).forEach(([field, value]) => {
+          // Skip if value should be filtered
+          if (shouldFilterValue(value)) return;
+          
+          // Check for redundancy with current case values
+          let currentValue = response.data[field] !== undefined ? 
+            response.data[field] : response.data.case_details?.[field];
+          
+          if (currentValue !== undefined) {
+            // For date fields
+            if (isDateField(field)) {
+              // Simple date comparison - just compare string representations
+              const strippedCurrent = String(currentValue).split('T')[0].split(' ')[0];
+              const strippedSuggested = String(value).split('T')[0].split(' ')[0];
+              
+              if (strippedCurrent === strippedSuggested) return; // Skip if dates match
+            } 
+            // For string values
+            else if (typeof value === 'string' && typeof currentValue === 'string') {
+              if (value.toLowerCase() === currentValue.toLowerCase()) return; // Skip if strings match
+            }
+            // For other types
+            else {
+              try {
+                // Try JSON comparison
+                if (JSON.stringify(value) === JSON.stringify(currentValue)) return;
+              } catch (e) {
+                // Fallback to direct comparison
+                if (value === currentValue) return;
+              }
+            }
+          }
+          
+          // If we get here, this is a valid suggestion to count
+          count++;
+        });
       });
-      
+
       setSuggestionsCount(count);
     } catch (err) {
       console.error(`Error fetching case ${caseId}:`, err);
