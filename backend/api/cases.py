@@ -32,16 +32,22 @@ TEMPLATE_CONTEXT_MAP = {
         # 'official_case_name': {'source': 'direct', 'attribute': 'official_case_name', 'default': ''}, # Uncomment if template needs {{official_case_name}}
         'jurisdiction':             {'source': 'direct', 'attribute': 'jurisdiction',             'default': ''},
         'county':                   {'source': 'direct', 'attribute': 'county',                   'default': ''},
-        'filing_date':              {'source': 'direct', 'attribute': 'filing_date',              'default': ''}, # Note: Will be Date object, format in template if needed
-        'trial_date':               {'source': 'direct', 'attribute': 'trial_date',               'default': ''}, # Note: Will be Date object
-        'incident_date':            {'source': 'direct', 'attribute': 'incident_date',            'default': ''}, # Note: Will be Date object
+        'filing_date':              {'source': 'direct', 'attribute': 'filing_date',              'default': ''}, 
+        'trial_date':               {'source': 'direct', 'attribute': 'trial_date',               'default': ''}, 
+        'incident_date':            {'source': 'direct', 'attribute': 'incident_date',            'default': ''}, 
         'incident_location':        {'source': 'direct', 'attribute': 'incident_location',        'default': ''},
         'incident_description':     {'source': 'direct', 'attribute': 'incident_description',     'default': ''},
         'case_type':                {'source': 'direct', 'attribute': 'case_type',                'default': ''},
         'defendant_counsel_info':   {'source': 'direct', 'attribute': 'defendant_counsel_info',   'default': ''},
         'plaintiff_counsel_info':   {'source': 'direct', 'attribute': 'plaintiff_counsel_info',   'default': ''},
         'vehicle_details':          {'source': 'direct', 'attribute': 'vehicle_details',          'default': ''},
-
+        'defendant_counsel_attorneys': {'source': 'direct', 'attribute': 'defendant_counsel_attorneys', 'default': ''},
+        'defendant_counsel_firm': {'source': 'direct', 'attribute': 'defendant_counsel_firm', 'default': ''},
+        'defendant_counsel_address': {'source': 'direct', 'attribute': 'defendant_counsel_address', 'default': ''},
+        'defendant_counsel_contact': {'source': 'direct', 'attribute': 'defendant_counsel_contact', 'default': ''},
+        'acting_attorney':          {'source': 'direct', 'attribute': 'acting_attorney', 'default': ''},
+        'acting_clerk':             {'source': 'direct', 'attribute': 'acting_clerk', 'default': ''},
+        'case_details':             {'source': 'direct', 'attribute': 'case_details', 'default': {}}
         # Add configuration for any other placeholders in jury_fees_template.docx
         # Ensure 'key' points to the correct field within your case_details JSON
         # 'summary':            {'source': 'case_details', 'key': 'summary',           'default': ''},
