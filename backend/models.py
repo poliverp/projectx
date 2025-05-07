@@ -1,5 +1,5 @@
 from backend.extensions import db # Import the 'db' object created in app.py
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from backend.extensions import db 
@@ -73,11 +73,17 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     approved_at = db.Column(db.DateTime, nullable=True)
 
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    password_changed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login_at = db.Column(db.DateTime, nullable=True)
+    last_login_ip = db.Column(db.String(45), nullable=True)
     # Relationship to cases
     cases = db.relationship('Case', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
+        self.password_changed_at = datetime.utcnow()
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -97,6 +103,38 @@ class User(UserMixin, db.Model):
         """Override UserMixin is_active to check approval status"""
         # Users can only be active if they're approved
         return not self.pending_approval
+    
+    def is_account_locked(self):
+        """Check if account is temporarily locked due to failed login attempts"""
+        if self.locked_until and self.locked_until > datetime.utcnow():
+            return True
+        return False
+    
+    def increment_login_attempts(self):
+        """Track failed login attempts and lock account if threshold exceeded"""
+        self.failed_login_attempts += 1
+        
+        # Lock account for progressively longer times based on failed attempts
+        if self.failed_login_attempts >= 10:
+            # Lock for 24 hours after 10 attempts
+            self.locked_until = datetime.utcnow() + timedelta(hours=24)
+        elif self.failed_login_attempts >= 5:
+            # Lock for 15 minutes after 5 attempts
+            self.locked_until = datetime.utcnow() + timedelta(minutes=15)
+        
+        db.session.commit()
+        
+    def reset_login_attempts(self):
+        """Reset counter after successful login"""
+        self.failed_login_attempts = 0
+        self.locked_until = None
+        self.last_login_at = datetime.utcnow()
+        db.session.commit()
+        
+    def record_login_ip(self, ip_address):
+        """Record the IP address of a successful login"""
+        self.last_login_ip = ip_address
+        db.session.commit()
         
     def to_dict(self):
         return {

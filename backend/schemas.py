@@ -1,9 +1,35 @@
 # backend/schemas.py
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import fields, Schema, validate, EXCLUDE  # <<< Import validate
+from marshmallow import fields, Schema, validate, ValidationError, validates, EXCLUDE
 from .models import Case, Document, User
 from .extensions import ma
 from backend.models import User
+import re
+
+# --- Define password validation ---
+def validate_password_strength(password):
+    """
+    Validates password strength requirements:
+    - At least 8 characters
+    - Contains at least one uppercase letter
+    - Contains at least one lowercase letter
+    - Contains at least one digit
+    - Contains at least one special character
+    """
+    if len(password) < 8:
+        raise ValidationError("Password must be at least 8 characters long")
+    
+    if not re.search(r'[A-Z]', password):
+        raise ValidationError("Password must contain at least one uppercase letter")
+    
+    if not re.search(r'[a-z]', password):
+        raise ValidationError("Password must contain at least one lowercase letter")
+    
+    if not re.search(r'\d', password):
+        raise ValidationError("Password must contain at least one digit")
+    
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        raise ValidationError("Password must contain at least one special character")
 
 # --- Schemas for API OUTPUT Serialization ---
 APPROVED_FIRMS = ["Adamson Ahdoot LLC"]
@@ -13,14 +39,13 @@ class UserSchema(SQLAlchemyAutoSchema):
     email = fields.Email()
     created_at = fields.DateTime(format="%Y-%m-%dT%H:%M:%S")
     approved_at = fields.DateTime(format="%Y-%m-%dT%H:%M:%S")
+    last_login_at = fields.DateTime(format="%Y-%m-%dT%H:%M:%S", allow_none=True)
     
     class Meta:
         model = User
         load_instance = True
-        exclude = ("password_hash", "cases", "approval_token")
-
-# --- Instantiate Schemas ---
-
+        exclude = ("password_hash", "cases", "approval_token", 
+                  "failed_login_attempts", "locked_until", "last_login_ip")
 
 class DocumentSchema(SQLAlchemyAutoSchema):
     """Schema for Document model OUTPUT"""
@@ -111,7 +136,7 @@ class RegistrationInputSchema(Schema):
     """Schema for VALIDATING user registration (POST /register)"""
     username = fields.Str(required=True, validate=validate.Length(min=3, error="Username must be at least 3 characters long."))
     email = fields.Email(required=True, error_messages={'required': 'Email is required.', 'invalid': 'Not a valid email address.'})
-    password = fields.Str(required=True, validate=validate.Length(min=8, error="Password must be at least 8 characters long."))
+    password = fields.Str(required=True, validate=validate_password_strength)
     # New field for firm with validation
     firm = fields.Str(
         required=True, 
@@ -129,6 +154,10 @@ class LoginInputSchema(Schema):
         # Standard Marshmallow option to handle extra fields
         unknown = EXCLUDE  # Ignore unknown fields
 
+class PasswordChangeSchema(Schema):
+    """Schema for validating password change requests"""
+    current_password = fields.Str(required=True, error_messages={'required': 'Current password is required.'})
+    new_password = fields.Str(required=True, validate=validate_password_strength)
 
 # --- Instantiate Schemas ---
 
@@ -148,8 +177,6 @@ documents_schema = DocumentSchema(many=True)
 case_create_input_schema = CaseCreateInputSchema()
 case_update_input_schema = CaseUpdateInputSchema()
 generate_document_input_schema = GenerateDocumentInputSchema()
-registration_input_schema = RegistrationInputSchema() # <<< Instantiate new input schema
-login_input_schema = LoginInputSchema() # <<< Instantiate new input schema
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
+registration_input_schema = RegistrationInputSchema()
+login_input_schema = LoginInputSchema()
+password_change_schema = PasswordChangeSchema()
