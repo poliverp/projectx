@@ -175,7 +175,7 @@ function CasePage() {
       </Card>
       
       {/* Main container with flex layout - starting below header */}
-      <div style={{ display: 'flex', gap: '24px', maxWidth: '1600px', margin: '0 auto', marginTop: '16px' }}>
+      <div style={{ display: 'flex', gap: '24px', maxWidth: '1600px', margin: '0 auto' }}>
         {/* Left column - Main content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Quick Action Buttons */}
@@ -187,7 +187,7 @@ function CasePage() {
           
           {/* Main Content Tabs */}
           <Card style={{ marginTop: '16px' }}>
-          <Tabs
+            <Tabs
               activeKey={activeTab}
               onChange={setActiveTab}
               size="large"
@@ -253,12 +253,12 @@ function CasePage() {
         <div style={{ 
           width: '400px',
           position: 'sticky',
-          top: '24px',
+          top: '0',
           alignSelf: 'flex-start',
-          maxHeight: 'calc(100vh - 48px)',
+          maxHeight: 'calc(100vh - 24px)',
           overflowY: 'auto'
         }}>
-          <Card style={{ borderRadius: '8px' }}>
+          <Card style={{ borderRadius: '8px', marginTop: '16px' }}>
             <CaseDetailsSidebar 
               caseDetails={caseDetails}
               onShowAllDetails={() => setIsAllDetailsModalOpen(true)}

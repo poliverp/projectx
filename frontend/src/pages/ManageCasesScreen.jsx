@@ -3,12 +3,11 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-// --- ADDED: Ant Design Imports ---
-import { Table, Button, Input, Space, Typography, Popconfirm, Alert, Spin } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-// --- END ADDED ---
+// --- Ant Design Imports ---
+import { Table, Button, Input, Space, Typography, Popconfirm, Alert, Card, Row, Col, Statistic } from 'antd';
+import { PlusOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Search } = Input;
 
 function ManageCasesScreen() {
@@ -71,7 +70,7 @@ function ManageCasesScreen() {
     }
   };
 
-  // --- ADDED: Define columns for AntD Table ---
+  // Define columns for AntD Table
   const columns = [
     {
       title: 'Display Name',
@@ -132,42 +131,61 @@ function ManageCasesScreen() {
       ),
     },
   ];
-  // --- END ADDED ---
 
   return (
     <div>
-      {/* Use AntD Typography Title */}
-      <Title level={2}>Cases</Title>
+      {/* Case Management Header Box */}
+      <Card style={{ marginBottom: '20px' }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={16}>
+            <Space direction="vertical" size={0}>
+              <Title level={2} style={{ margin: 0 }}>Case Management</Title>
+              <Text type="secondary">View and manage all your legal cases</Text>
+            </Space>
+          </Col>
+          <Col xs={24} md={8}>
+            <Row justify="end">
+              <Col>
+                <Statistic 
+                  title="Total Cases" 
+                  value={cases.length} 
+                  prefix={<FileTextOutlined />} 
+                />
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+      </Card>
 
-      {/* Use AntD Space, Button, Input.Search */}
+      {/* Action Bar */}
       <Space style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap' }}>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate('/cases/new')} // Navigate to create page
+          onClick={() => navigate('/cases/new')}
           disabled={loading}
         >
           Create New Case
         </Button>
         <Search
           placeholder="Filter cases..."
-          allowClear // Adds a clear button
-          onSearch={(value) => setSearchTerm(value)} // Can trigger search on Enter
-          onChange={(e) => setSearchTerm(e.target.value)} // Update search term as user types
+          allowClear
+          onSearch={(value) => setSearchTerm(value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           style={{ width: 300 }}
-          loading={loading && cases.length > 0} // Show loading indicator on search if desired
+          loading={loading && cases.length > 0}
         />
       </Space>
 
-      {/* Use AntD Alert for general errors */}
+      {/* Error Alert */}
       {error && <Alert message={error} type="error" closable onClose={() => setError(null)} style={{ marginBottom: '20px' }} />}
 
-      {/* Use AntD Table to display cases */}
+      {/* Case Table */}
       <Table
         columns={columns}
-        dataSource={filteredCases} // Use the memoized filtered data
-        loading={loading} // Use AntD Table's loading state
-        rowKey="id" // Specify the unique key for each row
+        dataSource={filteredCases}
+        loading={loading}
+        rowKey="id"
         pagination={{
           pageSize: 10,
           showSizeChanger: false,

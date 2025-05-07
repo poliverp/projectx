@@ -1,10 +1,10 @@
 import React from 'react';
-import { Card, Descriptions, Button, Space, Typography, Tag } from 'antd';
+import { Card, Descriptions, Button, Space, Typography } from 'antd';
 import { caseFieldConfig } from '../../../config/caseFieldConfig';
 import { formatDate } from '../../../utils/dateUtils';
-import { 
-  InfoCircleOutlined, 
-  BankOutlined, 
+import {
+  InfoCircleOutlined,
+  BankOutlined,
   TeamOutlined,
   FileTextOutlined,
   CalendarOutlined,
@@ -57,40 +57,74 @@ const fieldGroups = [
   },
 ];
 
+// Custom CSS to standardize label widths
+const customDescriptionsStyle = {
+  '.ant-descriptions-item-label': {
+    width: '140px',
+    minWidth: '140px',
+    display: 'inline-block',
+    verticalAlign: 'top',
+    paddingRight: '8px',
+    color: 'rgba(0, 0, 0, 0.45)',
+    fontWeight: 'normal',
+  },
+  '.ant-descriptions-item-content': {
+    display: 'inline-block',
+    verticalAlign: 'top',
+  }
+};
+
 function CaseDetailsSidebar({ caseDetails, onShowAllDetails }) {
   if (!caseDetails) return null;
-
+  
   // Helper to get field value
   const getFieldValue = (fieldName) => {
     const field = caseFieldConfig.find(f => f.name === fieldName);
     if (!field) return 'N/A';
-
+    
     let value;
     if (field.isDedicated) {
       value = caseDetails[fieldName];
     } else {
       value = caseDetails.case_details?.[fieldName];
     }
-
+    
     // Format dates
     if (fieldName.includes('date') && value) {
       return formatDate(value);
     }
-
+    
     return value || 'N/A';
   };
-
+  
   // Helper to get field config
   const getFieldConfig = (fieldName) => {
     return caseFieldConfig.find(f => f.name === fieldName);
   };
-
+  
   return (
-    <Space direction="vertical" style={{ width: '100%', padding: '16px' }} size="large">
-      <Title level={4}>Case Details</Title>
+    <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Title level={4} style={{ marginTop: 0, paddingTop: 0 }}>Case Details</Title>
+      
+      <style>{`
+        /* Custom CSS for consistent label widths */
+        .case-details-descriptions .ant-descriptions-item-label {
+          width: 140px;
+          min-width: 140px;
+          display: inline-block;
+          vertical-align: top;
+          padding-right: 8px;
+          color: rgba(0, 0, 0, 0.45);
+          font-weight: normal;
+        }
+        .case-details-descriptions .ant-descriptions-item-content {
+          display: inline-block;
+          vertical-align: top;
+        }
+      `}</style>
       
       {fieldGroups.map((group, groupIndex) => (
-        <Card 
+        <Card
           key={groupIndex}
           type="inner"
           size="small"
@@ -102,10 +136,13 @@ function CaseDetailsSidebar({ caseDetails, onShowAllDetails }) {
           }
           bordered={false}
         >
-          <Descriptions 
-            column={1} 
+          <Descriptions
+            className="case-details-descriptions"
+            column={1}
             size="small"
             colon={false}
+            labelStyle={{ width: '140px' }}
+            contentStyle={{ display: 'inline-block' }}
             items={group.fields
               .map(fieldName => {
                 const field = getFieldConfig(fieldName);
@@ -118,7 +155,7 @@ function CaseDetailsSidebar({ caseDetails, onShowAllDetails }) {
                   key: fieldName,
                   label: field.label,
                   children: (
-                    <span style={{ 
+                    <span style={{
                       color: field.isDedicated ? '#000' : '#666',
                       fontWeight: field.isDedicated ? 'normal' : '500'
                     }}>
@@ -131,7 +168,7 @@ function CaseDetailsSidebar({ caseDetails, onShowAllDetails }) {
           />
         </Card>
       ))}
-
+      
       <Button block type="dashed" onClick={onShowAllDetails} size="large">
         Show All Details
       </Button>
