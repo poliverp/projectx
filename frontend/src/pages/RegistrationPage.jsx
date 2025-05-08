@@ -129,9 +129,26 @@ function RegistrationPage() {
           label="Password"
           rules={[
             { required: true, message: 'Please input your Password!' },
-            { min: 8, message: 'Password must be at least 8 characters long.' }
+            { min: 8, message: 'Password must be at least 8 characters long.' },
+            {
+              pattern: /[A-Z]/,
+              message: 'Password must contain at least one uppercase letter.'
+            },
+            {
+              pattern: /[a-z]/,
+              message: 'Password must contain at least one lowercase letter.'
+            },
+            {
+              pattern: /\d/,
+              message: 'Password must contain at least one digit.'
+            },
+            {
+              pattern: /[!@#$%^&*(),.?":{}|<>]/,
+              message: 'Password must contain at least one special character.'
+            }
           ]}
           hasFeedback
+          extra="Password must be at least 8 characters and include uppercase, lowercase, numbers, and special characters."
         >
           <Input.Password />
         </Form.Item>

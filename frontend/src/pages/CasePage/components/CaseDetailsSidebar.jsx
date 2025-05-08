@@ -74,7 +74,7 @@ const customDescriptionsStyle = {
   }
 };
 
-function CaseDetailsSidebar({ caseDetails, onShowAllDetails }) {
+function CaseDetailsSidebar({ caseDetails, onShowAllDetails, hideTitle = false }) {
   if (!caseDetails) return null;
   
   // Helper to get field value
@@ -104,7 +104,7 @@ function CaseDetailsSidebar({ caseDetails, onShowAllDetails }) {
   
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Title level={4} style={{ marginTop: 0, paddingTop: 0 }}>Case Details</Title>
+      {!hideTitle && <Title level={4} style={{ marginTop: 0, paddingTop: 0 }}>Case Details</Title>}
       
       <style>{`
         /* Custom CSS for consistent label widths */

@@ -62,11 +62,11 @@ const UserProfileDropdown = ({ currentUser, logout, token }) => {
       }}>
         {AVATAR_COLORS.map((color) => (
           <Tooltip title={color} key={color}>
-            <Button 
+            <Button
               type="text"
-              style={{ 
-                width: '32px', 
-                height: '32px', 
+              style={{
+                width: '32px',
+                height: '32px',
                 backgroundColor: color,
                 border: avatarColor === color ? '2px solid #fff' : 'none',
                 boxShadow: avatarColor === color ? '0 0 0 2px #1677ff' : 'none'
@@ -85,8 +85,8 @@ const UserProfileDropdown = ({ currentUser, logout, token }) => {
       key: 'colorPicker',
       label: (
         <Popover 
-          content={colorPickerContent} 
-          title="Avatar Color" 
+          content={colorPickerContent}
+          title="Avatar Color"
           trigger="click"
           placement="left"
         >
@@ -102,8 +102,7 @@ const UserProfileDropdown = ({ currentUser, logout, token }) => {
   ];
 
   // Get display name for avatar button - just "User" instead of email
-  const displayName = currentUser?.name || "User";
-  
+  const displayName = currentUser?.name || currentUser?.username || "User";  
   // Add user info to menu items at the top
   const completeMenuItems = [
     {
@@ -126,18 +125,21 @@ const UserProfileDropdown = ({ currentUser, logout, token }) => {
 
   return (
     <Dropdown 
-      menu={{ items: completeMenuItems }} 
-      placement="bottomRight" 
+      menu={{ items: completeMenuItems }}
+      placement="bottomRight"
       trigger={['click']}
       arrow={{ pointAtCenter: true }}
     >
-      <Avatar 
-        style={{ 
-          backgroundColor: avatarColor,
-          cursor: 'pointer' 
-        }} 
-        icon={<UserOutlined />} 
-      />
+      <Space>
+        <span>{displayName}</span>
+        <Avatar 
+          style={{
+            backgroundColor: avatarColor,
+            cursor: 'pointer'
+          }}
+          icon={<UserOutlined />}
+        />
+      </Space>
     </Dropdown>
   );
 };
