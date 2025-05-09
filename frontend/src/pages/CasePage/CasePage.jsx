@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
-  Card, Space, Button, Tabs, Modal, Alert, Spin, Badge
+  Card, Space, Button, Tabs, Modal, Alert, Spin, Badge, Typography
 } from 'antd';
 import { 
   RightOutlined,
@@ -27,6 +27,7 @@ import './styles.css';
 import CaseCalendar from "./components/CaseCalendar";
 import './calendar.css';
 
+const { Title } = Typography;
 
 function CasePage() {
   const { caseId } = useParams();
@@ -42,7 +43,7 @@ function CasePage() {
 
   
   // Active tab state
-  const [activeTab, setActiveTab] = useState("suggestions");  
+  const [activeTab, setActiveTab] = useState("generate");  
   // Use our custom hook
   const {
     caseDetails,
@@ -253,16 +254,55 @@ function CasePage() {
         <div style={{ 
           width: '400px',
           position: 'sticky',
-          top: '0',
+          top: '16px',
           alignSelf: 'flex-start',
-          maxHeight: 'calc(100vh - 24px)',
-          overflowY: 'auto'
+          height: 'calc(100vh - 120px)',
+          marginTop: '16px',
+          marginBottom: '24px',
         }}>
-          <Card style={{ borderRadius: '8px', marginTop: '16px' }}>
-            <CaseDetailsSidebar 
-              caseDetails={caseDetails}
-              onShowAllDetails={() => setIsAllDetailsModalOpen(true)}
-            />
+          <Card 
+            style={{ 
+              height: '100%',
+              overflow: 'hidden',
+              borderRadius: '8px',
+            }}
+            bodyStyle={{
+              height: '100%',
+              padding: 0, // Remove padding from card body
+            }}
+          >
+            {/* Sticky header */}
+            <div style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              padding: '16px 16px 8px',
+              borderBottom: '1px solid #f0f0f0',
+              background: '#fff',
+              borderTopLeftRadius: '8px',
+              borderTopRightRadius: '8px',
+            }}>
+              <Title level={4} style={{ 
+                margin: 0, 
+                fontWeight: 600,
+                fontSize: '18px',
+              }}>
+                Case Details
+              </Title>
+            </div>
+            
+            {/* Scrollable content */}
+            <div style={{ 
+              height: 'calc(100% - 50px)', // Adjust for header height
+              overflowY: 'auto',
+              padding: '0 16px 16px',
+            }}>
+              <CaseDetailsSidebar 
+                caseDetails={caseDetails}
+                onShowAllDetails={() => setIsAllDetailsModalOpen(true)}
+                hideTitle={true} // Add this prop to hide the title in the component
+              />
+            </div>
           </Card>
         </div>
       </div>
