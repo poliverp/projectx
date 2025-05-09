@@ -1,0 +1,530 @@
+[
+  {
+    "id": 1,
+    "number": "1.1",
+    "category": "Identity of Persons",
+    "text": "State the name, ADDRESS, telephone number, and relationship to you of each PERSON who prepared or assisted in the preparation of the responses to these interrogatories. (Do not identify anyone who simply typed or reproduced the responses.)"
+  },
+  {
+    "id": 2,
+    "number": "2.1",
+    "category": "Background - Individual",
+    "text": "State:\n(a) your name;\n(b) every name you have used in the past;\nand (c) the dates you used each name."
+  },
+  {
+    "id": 3,
+    "number": "2.2",
+    "category": "Background - Individual",
+    "text": "State the date and place of your birth."
+  },
+  {
+    "id": 4,
+    "number": "2.3",
+    "category": "Background - Individual",
+    "text": "At the time of the INCIDENT, did you have a driver's license? If so, state:\n(a) the state or other issuing entity;\n(b) the license number and type;\n(c) the date of issuance;\nand (d) all restrictions."
+  },
+  {
+    "id": 5,
+    "number": "2.4",
+    "category": "Background - Individual",
+    "text": "At the time of the INCIDENT, did you have any other permit or license for the operation of a motor vehicle? If so, state:\n(a) the state or other issuing entity;\n(b) the license number and type;\n(c) the date of issuance;\nand (d) all restrictions."
+  },
+  {
+    "id": 6,
+    "number": "2.5",
+    "category": "Background - Individual",
+    "text": "State:\n(a) your present residence ADDRESS;\n(b) your residence ADDRESSES for the past five years;\nand (c) the dates you lived at each ADDRESS."
+  },
+  {
+    "id": 7,
+    "number": "2.6",
+    "category": "Background - Individual",
+    "text": "State:\n(a) the name, ADDRESS, and telephone number of your present employer or place of self-employment;\nand (b) the name, ADDRESS, dates of employment, job title, and nature of work for each employer or self-employment you have had from five years before the INCIDENT until today."
+  },
+  {
+    "id": 8,
+    "number": "2.7",
+    "category": "Background - Individual",
+    "text": "State:\n(a) the name and ADDRESS of each school or other academic or vocational institution you have attended, beginning with high school;\n(b) the dates you attended;\n(c) the highest grade level you have completed;\nand (d) the degrees received."
+  },
+  {
+    "id": 9,
+    "number": "2.8",
+    "category": "Background - Individual",
+    "text": "Have you ever been convicted of a felony? If so, for each conviction state:\n(a) the city and state where you were convicted;\n(b) the date of conviction;\n(c) the offense;\nand (d) the court and case number."
+  },
+  {
+    "id": 10,
+    "number": "2.9",
+    "category": "Background - Individual",
+    "text": "Can you speak English with ease? If not, what language and dialect do you normally use?"
+  },
+  {
+    "id": 11,
+    "number": "2.10",
+    "category": "Background - Individual",
+    "text": "Can you read and write English with ease? If not, what language and dialect do you normally use?"
+  },
+  {
+    "id": 12,
+    "number": "2.11",
+    "category": "Background - Individual",
+    "text": "At the time of the INCIDENT were you acting as an agent or employee for any PERSON? If so, state:\n(a) the name, ADDRESS, and telephone number of that PERSON;\nand (b) a description of your duties."
+  },
+  {
+    "id": 13,
+    "number": "2.12",
+    "category": "Background - Individual",
+    "text": "At the time of the INCIDENT did you or any other person have any physical, emotional, or mental disability or condition that may have contributed to the occurrence of the INCIDENT? If so, for each person state:\n(a) the name, ADDRESS, and telephone number;\n(b) the nature of the disability or condition;\nand (c) the manner in which the disability or condition contributed to the occurrence of the INCIDENT."
+  },
+  {
+    "id": 14,
+    "number": "2.13",
+    "category": "Background - Individual",
+    "text": "Within 24 hours before the INCIDENT did you or any person involved in the INCIDENT use or take any of the following substances: alcoholic beverage, marijuana, or other drug or medication of any kind (prescription or not)? If so, for each person state:\n(a) the name, ADDRESS, and telephone number;\n(b) the nature or description of each substance;\n(c) the quantity of each substance used or taken;\n(d) the date and time of day when each substance was used or taken;\n(e) the ADDRESS where each substance was used or taken;\n(f) the name, ADDRESS, and telephone number of each person who was present when each substance was used or taken;\nand (g) the name, ADDRESS, and telephone number of any HEALTH CARE PROVIDER who prescribed or furnished the substance and the condition for which it was prescribed or furnished."
+  },
+  {
+    "id": 15,
+    "number": "3.1",
+    "category": "Background - Business",
+    "text": "Are you a corporation? If so, state:\n(a) the name stated in the current articles of incorporation;\n(b) all other names used by the corporation during the past 10 years and the dates each was used;\n(c) the date and place of incorporation;\n(d) the ADDRESS of the principal place of business;\nand (e) whether you are qualified to do business in California."
+  },
+  {
+    "id": 16,
+    "number": "3.2",
+    "category": "Background - Business",
+    "text": "Are you a partnership? If so, state:\n(a) the current partnership name;\n(b) all other names used by the partnership during the past 10 years and the dates each was used;\n(c) whether you are a limited partnership and, if so, under the laws of what jurisdiction;\n(d) the name and ADDRESS of each general partner;\nand (e) the ADDRESS of the principal place of business."
+  },
+  {
+    "id": 17,
+    "number": "3.3",
+    "category": "Background - Business",
+    "text": "Are you a limited liability company? If so, state:\n(a) the name stated in the current articles of organization;\n(b) all other names used by the company during the past 10 years and the date each was used;\n(c) the date and place of filing of the articles of organization;\n(d) the ADDRESS of the principal place of business;\nand (e) whether you are qualified to do business in California."
+  },
+  {
+    "id": 18,
+    "number": "3.4",
+    "category": "Background - Business",
+    "text": "Are you a joint venture? If so, state:\n(a) the current joint venture name;\n(b) all other names used by the joint venture during the past 10 years and the dates each was used;\n(c) the name and ADDRESS of each joint venturer;\nand (d) the ADDRESS of the principal place of business."
+  },
+  {
+    "id": 19,
+    "number": "3.5",
+    "category": "Background - Business",
+    "text": "Are you an unincorporated association? If so, state:\n(a) the current unincorporated association name;\n(b) all other names used by the unincorporated association during the past 10 years and the dates each was used;\nand (c) the ADDRESS of the principal place of business."
+  },
+  {
+    "id": 20,
+    "number": "3.6",
+    "category": "Background - Business",
+    "text": "Have you done business under a fictitious name during the past 10 years? If so, for each fictitious name state:\n(a) the name;\n(b) the dates each was used;\n(c) the state and county of each fictitious name filing;\nand (d) the ADDRESS of the principal place of business."
+  },
+  {
+    "id": 21,
+    "number": "3.7",
+    "category": "Background - Business",
+    "text": "Within the past five years has any public entity registered or licensed your business? If so, for each license or registration:\n(a) identify the license or registration;\n(b) state the name of the public entity;\nand (c) state the dates of issuance and expiration."
+  },
+  {
+    "id": 22,
+    "number": "4.1",
+    "category": "Insurance",
+    "text": "At the time of the INCIDENT, was there in effect any policy of insurance through which you were or might be insured in any manner (for example, primary, pro-rata, or excess liability coverage or medical expense coverage) for the damages, claims, or actions that have arisen out of the INCIDENT? If so, for each policy state:\n(a) the kind of coverage;\n(b) the name and ADDRESS of the insurance company;\n(c) the name, ADDRESS, and telephone number of each named insured;\n(d) the policy number;\n(e) the limits of coverage for each type of coverage contained in the policy;\n(f) whether any reservation of rights or controversy or coverage dispute exists between you and the insurance company;\nand (g) the name, ADDRESS, and telephone number of the custodian of the policy."
+  },
+  {
+    "id": 23,
+    "number": "4.2",
+    "category": "Insurance",
+    "text": "Are you self-insured under any statute for the damages, claims, or actions that have arisen out of the INCIDENT? If so, specify the statute."
+  },
+  {
+    "id": 24,
+    "number": "6.1",
+    "category": "Injuries",
+    "text": "Do you attribute any physical, mental, or emotional injuries to the INCIDENT? (If your answer is 'no,' do not answer interrogatories 6.2 through 6.7)."
+  },
+  {
+    "id": 25,
+    "number": "6.2",
+    "category": "Injuries",
+    "text": "Identify each injury you attribute to the INCIDENT and the area of your body affected."
+  },
+  {
+    "id": 26,
+    "number": "6.3",
+    "category": "Injuries",
+    "text": "Do you still have any complaints that you attribute to the INCIDENT? If so, for each complaint state:\n(a) a description;\n(b) whether the complaint is subsiding, remaining the same, or becoming worse;\nand (c) the frequency and duration."
+  },
+  {
+    "id": 27,
+    "number": "6.4",
+    "category": "Injuries",
+    "text": "Did you receive any consultation or examination (except from expert witnesses covered by Code of Civil Procedure sections 2034.210-2034.310) or treatment from a HEALTH CARE PROVIDER for any injury you attribute to the INCIDENT? If so, for each HEALTH CARE PROVIDER state:\n(a) the name, ADDRESS, and telephone number;\n(b) the type of consultation, examination, or treatment provided;\n(c) the dates you received consultation, examination, or treatment;\nand (d) the charges to date."
+  },
+  {
+    "id": 28,
+    "number": "6.5",
+    "category": "Injuries",
+    "text": "Have you taken any medication, prescribed or not, as a result of injuries that you attribute to the INCIDENT? If so, for each medication state:\n(a) the name;\n(b) the PERSON who prescribed or furnished it;\n(c) the date it was prescribed or furnished;\n(d) the dates you began and stopped taking it;\nand (e) the cost to date."
+  },
+  {
+    "id": 29,
+    "number": "6.6",
+    "category": "Injuries",
+    "text": "Are there any other medical services necessitated by the injuries that you attribute to the INCIDENT that were not previously listed (for example, ambulance, nursing, prosthetics)? If so, for each service state:\n(a) the nature;\n(b) the date;\n(c) the cost;\nand (d) the name, ADDRESS, and telephone number of each provider."
+  },
+  {
+    "id": 30,
+    "number": "6.7",
+    "category": "Injuries",
+    "text": "Has any HEALTH CARE PROVIDER advised that you may require future or additional treatment for any injuries that you attribute to the INCIDENT? If so, for each injury state:\n(a) the name and ADDRESS of each HEALTH CARE PROVIDER;\n(b) the complaints for which the treatment was advised;\nand (c) the nature, duration, and estimated cost of the treatment."
+  },
+  {
+    "id": 31,
+    "number": "7.1",
+    "category": "Property Damage",
+    "text": "Do you attribute any loss of or damage to a vehicle or other property to the INCIDENT? If so, for each item of property:\n(a) describe the property:\n(b) describe the nature and location of the damage to the property;\n(c) state the amount of damage you are claiming for each item of property and how the amount was calculated;\nand (d) if the property was sold, state the name, ADDRESS, and telephone number of the seller, the date of sale, and the sale price."
+  },
+  {
+    "id": 32,
+    "number": "7.2",
+    "category": "Property Damage",
+    "text": "Has a written estimate or evaluation been made for any item of property referred to in your answer to the preceding interrogatory? If so, for each estimate or evaluation state:\n(a) the name, ADDRESS, and telephone number of the PERSON who prepared it and the date prepared;\n(b) the name, ADDRESS, and telephone number of each PERSON who has a copy of it;\nand (c) the amount of damage stated."
+  },
+  {
+    "id": 33,
+    "number": "7.3",
+    "category": "Property Damage",
+    "text": "Has any item of property referred to in your answer to interrogatory 7.1 been repaired? If so, for each item state:\n(a) the date repaired;\n(b) a description of the repair;\n(c) the repair cost;\n(d) the name, ADDRESS, and telephone number of the PERSON who repaired it;\nand (e) the name, ADDRESS, and telephone number of the PERSON who paid for the repair."
+  },
+  {
+    "id": 34,
+    "number": "8.1",
+    "category": "Income Loss",
+    "text": "Do you attribute any loss of income or earning capacity to the INCIDENT? (If your answer is 'no,' do not answer interrogatories 8.2 through 8.8)."
+  },
+  {
+    "id": 35,
+    "number": "8.2",
+    "category": "Income Loss",
+    "text": "State:\n(a) the nature of your work;\n(b) your job title at the time of the INCIDENT;\nand (c) the date your employment began."
+  },
+  {
+    "id": 36,
+    "number": "8.3",
+    "category": "Income Loss",
+    "text": "State the last date before the INCIDENT that you worked for compensation."
+  },
+  {
+    "id": 37,
+    "number": "8.4",
+    "category": "Income Loss",
+    "text": "State your monthly income at the time of the INCIDENT and how the amount was calculated."
+  },
+  {
+    "id": 38,
+    "number": "8.5",
+    "category": "Income Loss",
+    "text": "State the date you returned to work at each place of employment following the INCIDENT."
+  },
+  {
+    "id": 39,
+    "number": "8.6",
+    "category": "Income Loss",
+    "text": "State the dates you did not work and for which you lost income as a result of the INCIDENT."
+  },
+  {
+    "id": 40,
+    "number": "8.7",
+    "category": "Income Loss",
+    "text": "State the total income you have lost to date as a result of the INCIDENT and how the amount was calculated."
+  },
+  {
+    "id": 41,
+    "number": "8.8",
+    "category": "Income Loss",
+    "text": "Will you lose income in the future as a result of the INCIDENT? If so, state:\n(a) the facts on which you base this contention;\n(b) an estimate of the amount;\n(c) an estimate of how long you will be unable to work;\nand (d) how the claim for future income is calculated."
+  },
+  {
+    "id": 42,
+    "number": "9.1",
+    "category": "Other Damages",
+    "text": "Are there any other damages that you attribute to the INCIDENT? If so, for each item of damage state:\n(a) the nature;\n(b) the date it occurred;\n(c) the amount;\nand (d) the name, ADDRESS, and telephone number of each PERSON to whom an obligation was incurred."
+  },
+  {
+    "id": 43,
+    "number": "9.2",
+    "category": "Other Damages",
+    "text": "Do any DOCUMENTS support the existence or amount of any item of damages claimed in interrogatory 9.1? If so, describe each document and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT."
+  },
+  {
+    "id": 44,
+    "number": "10.1",
+    "category": "Medical History",
+    "text": "At any time before the INCIDENT did you have complaints or injuries that involved the same part of your body claimed to have been injured in the INCIDENT? If so, for each state:\n(a) a description of the complaint or injury:\n(b) the dates it began and ended;\nand (c) the name, ADDRESS, and telephone number of each HEALTH CARE PROVIDER whom you consulted or who examined or treated you."
+  },
+  {
+    "id": 45,
+    "number": "10.2",
+    "category": "Medical History",
+    "text": "List all physical, mental, and emotional disabilities you had immediately before the INCIDENT. (You may omit mental or emotional disabilities unless you attribute any mental or emotional injury to the INCIDENT.)"
+  },
+  {
+    "id": 46,
+    "number": "10.3",
+    "category": "Medical History",
+    "text": "At any time after the INCIDENT, did you sustain injuries of the kind for which you are now claiming damages? If so, for each incident giving rise to an injury state:\n(a) the date and the place it occurred;\n(b) the name, ADDRESS, and telephone number of any other PERSON involved;\n(c) the nature of any injuries you sustained;\n(d) the name, ADDRESS, and telephone number of each HEALTH CARE PROVIDER who you consulted or who examined or treated you;\nand (e) the nature of the treatment and its duration."
+  },
+  {
+    "id": 47,
+    "number": "11.1",
+    "category": "Other & Previous Claims",
+    "text": "Except for this action, in the past 10 years have you filed an action or made a written claim or demand for compensation for your personal injuries? If so, for each action, claim, or demand state:\n(a) the date, time, and place and location (closest street ADDRESS or intersection) of the INCIDENT giving rise to the action, claim, or demand;\n(b) the name, ADDRESS, and telephone number of each PERSON against whom the claim or demand was made or the action filed;\n(c) the court, names of the parties, and case number of any action filed;\n(d) the name, ADDRESS, and telephone number of any attorney representing you;\n(e) whether the claim or action has been resolved or is pending;\nand (f) a description of the injury."
+  },
+  {
+    "id": 48,
+    "number": "11.2",
+    "category": "Other & Previous Claims",
+    "text": "In the past 10 years have you made a written claim or demand for workers' compensation benefits? If so, for each claim or demand state:\n(a) the date, time, and place of the INCIDENT giving rise to the claim;\n(b) the name, ADDRESS, and telephone number of your employer at the time of the injury;\n(c) the name, ADDRESS, and telephone number of the workers' compensation insurer and the claim number;\n(d) the period of time during which you received workers' compensation benefits;\n(e) a description of the injury;\n(f) the name, ADDRESS, and telephone number of any HEALTH CARE PROVIDER who provided services;\nand (g) the case number at the Workers' Compensation Appeals Board."
+  },
+  {
+    "id": 49,
+    "number": "12.1",
+    "category": "Investigation - General",
+    "text": "State the name, ADDRESS, and telephone number of each individual:\n(a) who witnessed the INCIDENT or the events occurring immediately before or after the INCIDENT;\n(b) who made any statement at the scene of the INCIDENT;\n(c) who heard any statements made about the INCIDENT by any individual at the scene;\nand (d) who YOU OR ANYONE ACTING ON YOUR BEHALF claim has knowledge of the INCIDENT (except for expert witnesses covered by Code of Civil Procedure section 2034)."
+  },
+  {
+    "id": 50,
+    "number": "12.2",
+    "category": "Investigation - General",
+    "text": "Have YOU OR ANYONE ACTING ON YOUR BEHALF interviewed any individual concerning the INCIDENT? If so, for each individual state:\n(a) the name, ADDRESS, and telephone number of the individual interviewed;\n(b) the date of the interview;\nand (c) the name, ADDRESS, and telephone number of the PERSON who conducted the interview."
+  },
+  {
+    "id": 51,
+    "number": "12.3",
+    "category": "Investigation - General",
+    "text": "Have YOU OR ANYONE ACTING ON YOUR BEHALF obtained a written or recorded statement from any individual concerning the INCIDENT? If so, for each statement state:\n(a) the name, ADDRESS, and telephone number of the individual from whom the statement was obtained;\n(b) the name, ADDRESS, and telephone number of the individual who obtained the statement;\n(c) the date the statement was obtained;\nand (d) the name, ADDRESS, and telephone number of each PERSON who has the original statement or a copy."
+  },
+  {
+    "id": 52,
+    "number": "12.4",
+    "category": "Investigation - General",
+    "text": "Do YOU OR ANYONE ACTING ON YOUR BEHALF know of any photographs, films, or videotapes depicting any place, object, or individual concerning the INCIDENT or plaintiff's injuries? If so, state:\n(a) the number of photographs or feet of film or videotape;\n(b) the places, objects, or persons photographed, filmed, or videotaped;\n(c) the date the photographs, films, or videotapes were taken;\n(d) the name, ADDRESS, and telephone number of the individual taking the photographs, films, or videotapes;\nand (e) the name, ADDRESS, and telephone number of each PERSON who has the original or a copy of the photographs, films, or videotapes."
+  },
+  {
+    "id": 53,
+    "number": "12.5",
+    "category": "Investigation - General",
+    "text": "Do YOU OR ANYONE ACTING ON YOUR BEHALF know of any diagram, reproduction, or model of any place or thing (except for items developed by expert witnesses covered by Code of Civil Procedure sections 2034.210-2034.310) concerning the INCIDENT? If so, for each item state:\n(a) the type (i.e., diagram, reproduction, or model);\n(b) the subject matter;\nand (c) the name, ADDRESS, and telephone number of each PERSON who has it."
+  },
+  {
+    "id": 54,
+    "number": "12.6",
+    "category": "Investigation - General",
+    "text": "Was a report made by any PERSON concerning the INCIDENT? If so, state:\n(a) the name, title, identification number, and employer of the PERSON who made the report;\n(b) the date and type of report made;\n(c) the name, ADDRESS, and telephone number of the PERSON for whom the report was made;\nand (d) the name, ADDRESS, and telephone number of each PERSON who has the original or a copy of the report."
+  },
+  {
+    "id": 55,
+    "number": "12.7",
+    "category": "Investigation - General",
+    "text": "Have YOU OR ANYONE ACTING ON YOUR BEHALF inspected the scene of the INCIDENT? If so, for each inspection state:\n(a) the name, ADDRESS, and telephone number of the individual making the inspection (except for expert witnesses covered by Code of Civil Procedure sections 2034.210-2034.310);\nand (b) the date of the inspection."
+  },
+  {
+    "id": 56,
+    "number": "13.1",
+    "category": "Investigation - Surveillance",
+    "text": "Have YOU OR ANYONE ACTING ON YOUR BEHALF conducted surveillance of any individual involved in the INCIDENT or any party to this action? If so, for each surveillance state:\n(a) the name, ADDRESS, and telephone number of the individual or party;\n(b) the time, date, and place of the surveillance;\n(c) the name, ADDRESS, and telephone number of the individual who conducted the surveillance;\nand (d) the name, ADDRESS, and telephone number of each PERSON who has the original or a copy of any surveillance photograph, film, or videotape."
+  },
+  {
+    "id": 57,
+    "number": "13.2",
+    "category": "Investigation - Surveillance",
+    "text": "Has a written report been prepared on the surveillance? If so, for each written report state:\n(a) the title;\n(b) the date;\n(c) the name, ADDRESS, and telephone number of the individual who prepared the report;\nand (d) the name, ADDRESS, and telephone number of each PERSON who has the original or a copy."
+  },
+  {
+    "id": 58,
+    "number": "14.1",
+    "category": "Violations",
+    "text": "Do YOU OR ANYONE ACTING ON YOUR BEHALF contend that any PERSON involved in the INCIDENT violated any statute, ordinance, or regulation and that the violation was a legal (proximate) cause of the INCIDENT? If so, identify the name, ADDRESS, and telephone number of each PERSON and the statute, ordinance, or regulation that was violated."
+  },
+  {
+    "id": 59,
+    "number": "14.2",
+    "category": "Violations",
+    "text": "Was any PERSON cited or charged with a violation of any statute, ordinance, or regulation as a result of this INCIDENT? If so, for each PERSON state:\n(a) the name, ADDRESS, and telephone number of the PERSON;\n(b) the statute, ordinance, or regulation allegedly violated;\n(c) whether the PERSON entered a plea in response to the citation or charge and, if so, the plea entered;\nand (d) the name and ADDRESS of the court or administrative agency, names of the parties, and case number."
+  },
+  {
+    "id": 60,
+    "number": "15.1",
+    "category": "Denials & Defenses",
+    "text": "Identify each denial of a material allegation and each special or affirmative defense in your pleadings, and for each:\n(a) state all facts on which you base the denial or special or affirmative defense;\n(b) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of those facts;\nand (c) identify all DOCUMENTS and other tangible things that support your denial or special or affirmative defense, and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT."
+  },
+  {
+    "id": 61,
+    "number": "16.1",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that any PERSON, other than you or plaintiff, contributed to the occurrence of the INCIDENT or the injuries or damages claimed by plaintiff? If so, for each PERSON:\n(a) state the name, ADDRESS, and telephone number of the PERSON;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 62,
+    "number": "16.2",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that plaintiff was not injured in the INCIDENT? If so:\n(a) state all facts on which you base your contention;\n(b) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (c) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 63,
+    "number": "16.3",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that the injuries or the extent of the injuries claimed by plaintiff as disclosed in discovery proceedings thus far in this case were not caused by the INCIDENT? If so, for each injury:\n(a) identify it;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 64,
+    "number": "16.4",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that any of the services furnished by any HEALTH CARE PROVIDER claimed by plaintiff in discovery proceedings thus far in this case were not due to the INCIDENT? If so:\n(a) identify each service;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 65,
+    "number": "16.5",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that any of the costs of services furnished by any HEALTH CARE PROVIDER claimed as damages by plaintiff in discovery proceedings thus far in this case were not necessary or unreasonable? If so:\n(a) identify each cost;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 66,
+    "number": "16.6",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that any part of the loss of earnings or income claimed by plaintiff in discovery proceedings thus far in this case was unreasonable or was not caused by the INCIDENT? If so:\n(a) identify each part of the loss;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 67,
+    "number": "16.7",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that any of the property damage claimed by plaintiff in discovery Proceedings thus far in this case was not caused by the INCIDENT? If so:\n(a) identify each item of property damage;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 68,
+    "number": "16.8",
+    "category": "Defendant's Contentions",
+    "text": "Do you contend that any of the costs of repairing the property damage claimed by plaintiff in discovery proceedings thus far in this case were unreasonable? If so:\n(a) identify each cost item;\n(b) state all facts on which you base your contention;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of the facts;\nand (d) identify all DOCUMENTS and other tangible things that support your contention and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 69,
+    "number": "16.9",
+    "category": "Defendant's Contentions",
+    "text": "Do YOU OR ANYONE ACTING ON YOUR BEHALF have any DOCUMENT (for example, insurance bureau index reports) concerning claims for personal injuries made before or after the INCIDENT by a plaintiff in this case? If so, for each plaintiff state:\n(a) the source of each DOCUMENT;\n(b) the date each claim arose;\n(c) the nature of each claim;\nand (d) the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT."
+  },
+  {
+    "id": 70,
+    "number": "16.10",
+    "category": "Defendant's Contentions",
+    "text": "Do YOU OR ANYONE ACTING ON YOUR BEHALF have any DOCUMENT concerning the past or present physical, mental, or emotional condition of any plaintiff in this case from a HEALTH CARE PROVIDER not previously identified (except for expert witnesses covered by Code of Civil Procedure sections 2034.210-2034.310)? If so, for each plaintiff state:\n(a) the name, ADDRESS, and telephone number of each HEALTH CARE PROVIDER;\n(b) a description of each DOCUMENT;\nand (c) the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT."
+  },
+  {
+    "id": 71,
+    "number": "17.1",
+    "category": "Responses to Admissions",
+    "text": "Is your response to each request for admission served with these interrogatories an unqualified admission? If not, for each response that is not an unqualified admission:\n(a) state the number of the request;\n(b) state all facts on which you base your response;\n(c) state the names, ADDRESSES, and telephone numbers of all PERSONS who have knowledge of those facts;\nand (d) identify all DOCUMENTS and other tangible things that support your response and state the name, ADDRESS, and telephone number of the PERSON who has each DOCUMENT or thing."
+  },
+  {
+    "id": 72,
+    "number": "20.1",
+    "category": "Incident - Motor Vehicle",
+    "text": "State the date, time, and place of the INCIDENT (closest street ADDRESS or intersection)."
+  },
+  {
+    "id": 73,
+    "number": "20.2",
+    "category": "Incident - Motor Vehicle",
+    "text": "For each vehicle involved in the INCIDENT, state:\n(a) the year, make, model, and license number;\n(b) the name, ADDRESS, and telephone number of the driver;\n(c) the name, ADDRESS, and telephone number of each occupant other than the driver;\n(d) the name, ADDRESS, and telephone number of each registered owner;\n(e) the name, ADDRESS, and telephone number of each lessee;\n(f) the name, ADDRESS, and telephone number of each owner other than the registered owner or lien holder;\nand (g) the name of each owner who gave permission or consent to the driver to operate the vehicle."
+  },
+  {
+    "id": 74,
+    "number": "20.3",
+    "category": "Incident - Motor Vehicle",
+    "text": "State the ADDRESS and location where your trip began and the ADDRESS and location of your destination."
+  },
+  {
+    "id": 75,
+    "number": "20.4",
+    "category": "Incident - Motor Vehicle",
+    "text": "Describe the route that you followed from the beginning of your trip to the location of the INCIDENT, and state the location of each stop, other than routine traffic stops, during the trip leading up to the INCIDENT."
+  },
+  {
+    "id": 76,
+    "number": "20.5",
+    "category": "Incident - Motor Vehicle",
+    "text": "State the name of the street or roadway, the lane of travel, and the direction of travel of each vehicle involved in the INCIDENT for the 500 feet of travel before the INCIDENT."
+  },
+  {
+    "id": 77,
+    "number": "20.6",
+    "category": "Incident - Motor Vehicle",
+    "text": "Did the INCIDENT occur at an intersection? If so, describe all traffic control devices, signals, or signs at the intersection."
+  },
+  {
+    "id": 78,
+    "number": "20.7",
+    "category": "Incident - Motor Vehicle",
+    "text": "Was there a traffic signal facing you at the time of the INCIDENT? If so, state:\n(a) your location when you first saw it;\n(b) the color;\n(c) the number of seconds it had been that color;\nand (d) whether the color changed between the time you first saw it and the INCIDENT."
+  },
+  {
+    "id": 79,
+    "number": "20.8",
+    "category": "Incident - Motor Vehicle",
+    "text": "State how the INCIDENT occurred, giving the speed, direction, and location of each vehicle involved:\n(a) just before the INCIDENT;\n(b) at the time of the INCIDENT;\nand (c) just after the INCIDENT."
+  },
+  {
+    "id": 80,
+    "number": "20.9",
+    "category": "Incident - Motor Vehicle",
+    "text": "Do you have information that a malfunction or defect in a vehicle caused the INCIDENT? If so:\n(a) identify the vehicle;\n(b) identify each malfunction or defect;\n(c) state the name, ADDRESS, and telephone number of each PERSON who is a witness to or has information about each malfunction or defect;\nand (d) state the name, ADDRESS, and telephone number of each PERSON who has custody of each defective part."
+  },
+  {
+    "id": 81,
+    "number": "20.10",
+    "category": "Incident - Motor Vehicle",
+    "text": "Do you have information that any malfunction or defect in a vehicle contributed to the injuries sustained in the INCIDENT? If so:\n(a) identify the vehicle;\n(b) identify each malfunction or defect;\n(c) state the name, ADDRESS, and telephone number of each PERSON who is a witness to or has information about each malfunction or defect;\nand (d) state the name, ADDRESS, and telephone number of each PERSON who has custody of each defective part."
+  },
+  {
+    "id": 82,
+    "number": "20.11",
+    "category": "Incident - Motor Vehicle",
+    "text": "State the name, ADDRESS, and telephone number of each owner and each PERSON who has had possession since the INCIDENT of each vehicle involved in the INCIDENT."
+  },
+  {
+    "id": 83,
+    "number": "50.1",
+    "category": "Contract",
+    "text": "For each agreement alleged in the pleadings:\n(a) identify each DOCUMENT that is part of the agreement and for each state the name, ADDRESS, and telephone number of each PERSON who has the DOCUMENT;\n(b) state each part of the agreement not in writing, the name, ADDRESS, and telephone number of each PERSON agreeing to that provision, and the date that part of the agreement was made;\n(c) identify all DOCUMENTS that evidence any part of the agreement not in writing and for each state the name, ADDRESS, and telephone number of each PERSON who has the DOCUMENT;\n(d) identify all DOCUMENTS that are part of any modification to the agreement, and for each state the name, ADDRESS, and telephone number of each PERSON who has the DOCUMENT;\n(e) state each modification not in writing, the date, and the name, ADDRESS, and telephone number of each PERSON agreeing to the modification, and the date the modification was made;\n(f) identify all DOCUMENTS that evidence any modification of the agreement not in writing and for each state the name, ADDRESS, and telephone number of each PERSON who has the DOCUMENT."
+  },
+  {
+    "id": 84,
+    "number": "50.2",
+    "category": "Contract",
+    "text": "Was there a breach of any agreement alleged in the pleadings? If so, for each breach describe and give the date of every act or omission that you claim is the breach of the agreement."
+  },
+  {
+    "id": 85,
+    "number": "50.3",
+    "category": "Contract",
+    "text": "Was performance of any agreement alleged in the pleadings excused? If so, identify each agreement excused and state why performance was excused."
+  },
+  {
+    "id": 86,
+    "number": "50.4",
+    "category": "Contract",
+    "text": "Was any agreement alleged in the pleadings terminated by mutual agreement, release, accord and satisfaction, or novation? If so, identify each agreement terminated, the date of termination, and the basis of the termination."
+  },
+  {
+    "id": 87,
+    "number": "50.5",
+    "category": "Contract",
+    "text": "Is any agreement alleged in the pleadings unenforceable? If so, identify each unenforceable agreement and state why it is unenforceable."
+  },
+  {
+    "id": 88,
+    "number": "50.6",
+    "category": "Contract",
+    "text": "Is any agreement alleged in the pleadings ambiguous? If so, identify each ambiguous agreement and state why it is ambiguous."
+  }
+]

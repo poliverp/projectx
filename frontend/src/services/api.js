@@ -172,7 +172,21 @@ export const getAuthStatus = () => {
 };
 // --- END Authentication Functions ---
 
+// Get interrogatory questions
+export const getInterrogatoryQuestions = (language = 'english') => {
+  return apiClient.get(`/discovery/interrogatory-questions?language=${language}`);
+};
 
+// Generate interrogatory document
+export const generateInterrogatoryDocument = (caseId, selectedIds, language) => {
+  return apiClient.post(`/discovery/generate-interrogatory-document`, {
+    case_id: caseId,
+    selected_ids: selectedIds,
+    language
+  }, {
+    responseType: 'blob'
+  });
+};
 // Default export combining all functions
 const api = {
   getCases,
@@ -198,6 +212,8 @@ const api = {
   approveUser,
   getUserByUsername,
   // --- End Auth functions ---
+  getInterrogatoryQuestions,
+  generateInterrogatoryDocument,
 };
 
 export default api;

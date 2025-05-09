@@ -13,24 +13,25 @@ function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
   return (
     <Card size="small" className="case-actions-card" style={{ marginTop: '16px' }}>
       <Space wrap size="middle">
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           icon={<FolderOutlined />}
           onClick={onManageFiles}
         >
           Manage Files
         </Button>
+        
         <Button
           icon={<SearchOutlined />}
           onClick={onAnalyzeDocuments}
         >
           Analyze Documents
         </Button>
+        
         <Button
           icon={<FileAddOutlined />}
         >
-
-          <Link to={`/case/${caseId}/create-discovery-response`}>Discovery Response</Link>
+          <Link to={`/case/${caseId}/discovery`}>Discovery</Link>
         </Button>
       </Space>
     </Card>

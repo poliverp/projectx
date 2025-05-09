@@ -14,7 +14,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfilePage from './pages/ProfilePage';
-
+import DiscoveryLandingPage from './pages/DiscoveryLandingPage';
+import PropoundingDiscoveryPage from './pages/PropoundingDiscoveryPage';
 // Ant Design imports
 import { 
   Layout, 
@@ -56,6 +57,7 @@ import CreateDiscoveryPage2 from './pages/CreateDiscoveryPage2';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import UserProfileDropdown from './components/UserProfileDropdown';
+import { Navigate } from 'react-router-dom'; // If not already imported
 
 // Destructure AntD Layout components
 const { Header, Content, Footer, Sider } = Layout;
@@ -538,9 +540,15 @@ function AppContent() {
                 <Route path="/case/:caseId/files" element={<FilesPage />} />
                 <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
                 <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
-                <Route path="/case/:caseId/create-discovery-response" element={<CreateDiscoveryPage2 />} />
+                <Route 
+                    path="/case/:caseId/create-discovery-response" 
+                    element={<Navigate to={params => `/case/${params.caseId}/discovery`} replace />} 
+                  />                
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/profile" element={<ProfilePage />} />  {/* Add this line */}
+                <Route path="/case/:caseId/discovery" element={<DiscoveryLandingPage />} />
+                <Route path="/case/:caseId/propound-discovery" element={<PropoundingDiscoveryPage />} />
+                <Route path="/case/:caseId/respond-discovery" element={<CreateDiscoveryPage2 />} />
               </Route>
 
               {/* Not Found Route */}

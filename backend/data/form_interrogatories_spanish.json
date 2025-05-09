@@ -1,0 +1,530 @@
+[
+  {
+    "id": 1,
+    "number": "1.1",
+    "category": "Identidad de Personas",
+    "text": "Indique el nombre, DIRECCIÓN, número de teléfono y relación con usted de cada PERSONA que preparó o ayudó en la preparación de las respuestas a estos interrogatorios. (No identifique a nadie que simplemente haya mecanografiado o reproducido las respuestas.)"
+  },
+  {
+    "id": 2,
+    "number": "2.1",
+    "category": "Antecedentes - Persona Física",
+    "text": "Indique:\n(a) su nombre;\n(b) todos los nombres que haya usado en el pasado;\ny (c) las fechas en que usó cada nombre."
+  },
+  {
+    "id": 3,
+    "number": "2.2",
+    "category": "Antecedentes - Persona Física",
+    "text": "Indique la fecha y el lugar de su nacimiento."
+  },
+  {
+    "id": 4,
+    "number": "2.3",
+    "category": "Antecedentes - Persona Física",
+    "text": "¿En el momento del INCIDENTE, tenía usted una licencia de conducir? En caso afirmativo, indique:\n(a) el estado u otra entidad emisora;\n(b) el número y tipo de licencia;\n(c) la fecha de expedición;\ny (d) todas las restricciones."
+  },
+  {
+    "id": 5,
+    "number": "2.4",
+    "category": "Antecedentes - Persona Física",
+    "text": "¿En el momento del INCIDENTE, tenía usted algún otro permiso o licencia para la operación de un vehículo motorizado? En caso afirmativo, indique:\n(a) el estado u otra entidad emisora;\n(b) el número y tipo de licencia;\n(c) la fecha de expedición;\ny (d) todas las restricciones."
+  },
+  {
+    "id": 6,
+    "number": "2.5",
+    "category": "Antecedentes - Persona Física",
+    "text": "Indique:\n(a) su DIRECCIÓN de residencia actual;\n(b) sus DIRECCIONES de residencia durante los últimos cinco años;\ny (c) las fechas en que vivió en cada DIRECCIÓN."
+  },
+  {
+    "id": 7,
+    "number": "2.6",
+    "category": "Antecedentes - Persona Física",
+    "text": "Indique:\n(a) el nombre, DIRECCIÓN y número de teléfono de su empleador actual o lugar de trabajo por cuenta propia;\ny (b) el nombre, DIRECCIÓN, fechas de empleo, cargo y naturaleza del trabajo para cada empleador o trabajo por cuenta propia que haya tenido desde cinco años antes del INCIDENTE hasta hoy."
+  },
+  {
+    "id": 8,
+    "number": "2.7",
+    "category": "Antecedentes - Persona Física",
+    "text": "Indique:\n(a) el nombre y DIRECCIÓN de cada escuela u otra institución académica o vocacional a la que haya asistido, comenzando con la escuela secundaria;\n(b) las fechas en que asistió;\n(c) el nivel de grado más alto que haya completado;\ny (d) los títulos recibidos."
+  },
+  {
+    "id": 9,
+    "number": "2.8",
+    "category": "Antecedentes - Persona Física",
+    "text": "¿Ha sido condenado alguna vez por un delito grave (felonía)? En caso afirmativo, por cada condena indique:\n(a) la ciudad y el estado donde fue condenado;\n(b) la fecha de la condena;\n(c) el delito;\ny (d) el tribunal y el número de caso."
+  },
+  {
+    "id": 10,
+    "number": "2.9",
+    "category": "Antecedentes - Persona Física",
+    "text": "¿Puede hablar inglés con fluidez? En caso negativo, ¿qué idioma y dialecto usa normalmente?"
+  },
+  {
+    "id": 11,
+    "number": "2.10",
+    "category": "Antecedentes - Persona Física",
+    "text": "¿Puede leer y escribir en inglés con fluidez? En caso negativo, ¿qué idioma y dialecto usa normally?"
+  },
+  {
+    "id": 12,
+    "number": "2.11",
+    "category": "Antecedentes - Persona Física",
+    "text": "En el momento del INCIDENTE, ¿actuaba usted como agente o empleado de alguna PERSONA? En caso afirmativo, indique:\n(a) el nombre, DIRECCIÓN y número de teléfono de esa PERSONA;\ny (b) una descripción de sus funciones."
+  },
+  {
+    "id": 13,
+    "number": "2.12",
+    "category": "Antecedentes - Persona Física",
+    "text": "En el momento del INCIDENTE, ¿tenía usted o alguna otra persona alguna discapacidad o condición física, emocional o mental que pudiera haber contribuido a la ocurrencia del INCIDENTE? En caso afirmativo, por cada persona indique:\n(a) el nombre, DIRECCIÓN y número de teléfono;\n(b) la naturaleza de la discapacidad o condición;\ny (c) la manera en que la discapacidad o condición contribuyó a la ocurrencia del INCIDENTE."
+  },
+  {
+    "id": 14,
+    "number": "2.13",
+    "category": "Antecedentes - Persona Física",
+    "text": "Dentro de las 24 horas previas al INCIDENTE, ¿usted o alguna persona involucrada en el INCIDENTE usó o tomó alguna de las siguientes sustancias: bebidas alcohólicas, marihuana u otra droga o medicamento de cualquier tipo (con o sin receta)? En caso afirmativo, por cada persona indique:\n(a) el nombre, DIRECCIÓN y número de teléfono;\n(b) la naturaleza o descripción de cada sustancia;\n(c) la cantidad de cada sustancia usada o tomada;\n(d) la fecha y hora del día en que cada sustancia fue usada o tomada;\n(e) la DIRECCIÓN donde cada sustancia fue usada o tomada;\n(f) el nombre, DIRECCIÓN y número de teléfono de cada persona que estuvo presente cuando se usó o tomó cada sustancia;\ny (g) el nombre, DIRECCIÓN y número de teléfono de cualquier PROVEEDOR DE ATENCIÓN MÉDICA que prescribió o suministró la sustancia y la condición para la cual fue prescrita o suministrada."
+  },
+  {
+    "id": 15,
+    "number": "3.1",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "¿Es usted una sociedad anónima (corporación)? En caso afirmativo, indique:\n(a) el nombre que figura en los estatutos de constitución actuales;\n(b) todos los demás nombres utilizados por la sociedad durante los últimos 10 años y las fechas en que se utilizó cada uno;\n(c) la fecha y lugar de constitución;\n(d) la DIRECCIÓN del establecimiento principal;\ny (e) si está calificado para hacer negocios en California."
+  },
+  {
+    "id": 16,
+    "number": "3.2",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "¿Es usted una sociedad colectiva (partnership)? En caso afirmativo, indique:\n(a) el nombre actual de la sociedad;\n(b) todos los demás nombres utilizados por la sociedad durante los últimos 10 años y las fechas en que se utilizó cada uno;\n(c) si es usted una sociedad comanditaria (limited partnership) y, en caso afirmativo, bajo las leyes de qué jurisdicción;\n(d) el nombre y DIRECCIÓN de cada socio gestor (general partner);\ny (e) la DIRECCIÓN del establecimiento principal."
+  },
+  {
+    "id": 17,
+    "number": "3.3",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "¿Es usted una sociedad de responsabilidad limitada (limited liability company)? En caso afirmativo, indique:\n(a) el nombre que figura en los artículos de organización actuales;\n(b) todos los demás nombres utilizados por la compañía durante los últimos 10 años y la fecha en que se utilizó cada uno;\n(c) la fecha y lugar de presentación de los artículos de organización;\n(d) la DIRECCIÓN del establecimiento principal;\ny (e) si está calificado para hacer negocios en California."
+  },
+  {
+    "id": 18,
+    "number": "3.4",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "¿Es usted una empresa conjunta (joint venture)? En caso afirmativo, indique:\n(a) el nombre actual de la empresa conjunta;\n(b) todos los demás nombres utilizados por la empresa conjunta durante los últimos 10 años y las fechas en que se utilizó cada uno;\n(c) el nombre y DIRECCIÓN de cada participante en la empresa conjunta (joint venturer);\ny (d) la DIRECCIÓN del establecimiento principal."
+  },
+  {
+    "id": 19,
+    "number": "3.5",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "¿Es usted una asociación no constituida en sociedad (unincorporated association)? En caso afirmativo, indique:\n(a) el nombre actual de la asociación no constituida;\n(b) todos los demás nombres utilizados por la asociación no constituida durante los últimos 10 años y las fechas en que se utilizó cada uno;\ny (c) la DIRECCIÓN del establecimiento principal."
+  },
+  {
+    "id": 20,
+    "number": "3.6",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "¿Ha operado bajo un nombre ficticio durante los últimos 10 años? En caso afirmativo, por cada nombre ficticio indique:\n(a) el nombre;\n(b) las fechas en que se utilizó cada uno;\n(c) el estado y condado de cada registro de nombre ficticio;\ny (d) la DIRECCIÓN del establecimiento principal."
+  },
+  {
+    "id": 21,
+    "number": "3.7",
+    "category": "Antecedentes - Entidad Comercial",
+    "text": "En los últimos cinco años, ¿alguna entidad pública ha registrado o licenciado su negocio? En caso afirmativo, por cada licencia o registro:\n(a) identifique la licencia o registro;\n(b) indique el nombre de la entidad pública;\ny (c) indique las fechas de expedición y vencimiento."
+  },
+  {
+    "id": 22,
+    "number": "4.1",
+    "category": "Seguro",
+    "text": "En el momento del INCIDENTE, ¿existía alguna póliza de seguro vigente a través de la cual usted estuviera o pudiera estar asegurado de alguna manera (por ejemplo, cobertura de responsabilidad primaria, prorrateada o en exceso, o cobertura de gastos médicos) por los daños, reclamaciones o acciones que hayan surgido del INCIDENTE? En caso afirmativo, por cada póliza indique:\n(a) el tipo de cobertura;\n(b) el nombre y DIRECCIÓN de la compañía de seguros;\n(c) el nombre, DIRECCIÓN y número de teléfono de cada asegurado nombrado;\n(d) el número de póliza;\n(e) los límites de cobertura para cada tipo de cobertura contenida en la póliza;\n(f) si existe alguna reserva de derechos o controversia o disputa de cobertura entre usted y la compañía de seguros;\ny (g) el nombre, DIRECCIÓN y número de teléfono del custodio de la póliza."
+  },
+  {
+    "id": 23,
+    "number": "4.2",
+    "category": "Seguro",
+    "text": "¿Está usted autoasegurado bajo algún estatuto por los daños, reclamaciones o acciones que hayan surgido del INCIDENTE? En caso afirmativo, especifique el estatuto."
+  },
+  {
+    "id": 24,
+    "number": "6.1",
+    "category": "Lesiones",
+    "text": "¿Atribuye alguna lesión física, mental o emocional al INCIDENTE? (Si su respuesta es \"no\", no responda los interrogatorios 6.2 a 6.7)."
+  },
+  {
+    "id": 25,
+    "number": "6.2",
+    "category": "Lesiones",
+    "text": "Identifique cada lesión que atribuye al INCIDENTE y el área de su cuerpo afectada."
+  },
+  {
+    "id": 26,
+    "number": "6.3",
+    "category": "Lesiones",
+    "text": "¿Todavía tiene alguna dolencia que atribuya al INCIDENTE? En caso afirmativo, por cada dolencia indique:\n(a) una descripción;\n(b) si la dolencia está disminuyendo, permaneciendo igual o empeorando;\ny (c) la frecuencia y duración."
+  },
+  {
+    "id": 27,
+    "number": "6.4",
+    "category": "Lesiones",
+    "text": "¿Recibió alguna consulta o examen (excepto de testigos expertos cubiertos por las secciones 2034.210-2034.310 del Código de Procedimiento Civil) o tratamiento de un PROVEEDOR DE ATENCIÓN MÉDICA por alguna lesión que atribuya al INCIDENTE? En caso afirmativo, por cada PROVEEDOR DE ATENCIÓN MÉDICA indique:\n(a) el nombre, DIRECCIÓN y número de teléfono;\n(b) el tipo de consulta, examen o tratamiento proporcionado;\n(c) las fechas en que recibió la consulta, examen o tratamiento;\ny (d) los cargos hasta la fecha."
+  },
+  {
+    "id": 28,
+    "number": "6.5",
+    "category": "Lesiones",
+    "text": "¿Ha tomado algún medicamento, con o sin receta, como resultado de las lesiones que atribuye al INCIDENTE? En caso afirmativo, por cada medicamento indique:\n(a) el nombre;\n(b) la PERSONA que lo prescribió o suministró;\n(c) la fecha en que fue prescrito o suministrado;\n(d) las fechas en que comenzó y dejó de tomarlo;\ny (e) el costo hasta la fecha."
+  },
+  {
+    "id": 29,
+    "number": "6.6",
+    "category": "Lesiones",
+    "text": "¿Existen otros servicios médicos necesarios debido a las lesiones que usted atribuye al INCIDENTE que no se hayan enumerado anteriormente (por ejemplo, ambulancia, enfermería, prótesis)? En caso afirmativo, para cada servicio indique:\n(a) la naturaleza;\n(b) la fecha;\n(c) el costo;\ny (d) el nombre, DIRECCIÓN y número de teléfono de cada proveedor."
+  },
+  {
+    "id": 30,
+    "number": "6.7",
+    "category": "Lesiones",
+    "text": "¿Algún PROVEEDOR DE ATENCIÓN MÉDICA le ha informado que podría requerir tratamiento futuro o adicional para alguna lesión que usted atribuye al INCIDENTE? En caso afirmativo, para cada lesión indique:\n(a) el nombre y DIRECCIÓN de cada PROVEEDOR DE ATENCIÓN MÉDICA;\n(b) las dolencias para las cuales se recomendó el tratamiento;\ny (c) la naturaleza, duración y costo estimado del tratamiento."
+  },
+  {
+    "id": 31,
+    "number": "7.1",
+    "category": "Daños a Propiedad",
+    "text": "¿Atribuye alguna pérdida o daño a un vehículo u otra propiedad al INCIDENTE? En caso afirmativo, para cada bien:\n(a) describa el bien:\n(b) describa la naturaleza y ubicación del daño al bien;\n(c) indique la cantidad del daño que reclama por cada bien y cómo se calculó la cantidad;\ny (d) si el bien fue vendido, indique el nombre, DIRECCIÓN y número de teléfono del vendedor, la fecha de venta y el precio de venta."
+  },
+  {
+    "id": 32,
+    "number": "7.2",
+    "category": "Daños a Propiedad",
+    "text": "¿Se ha realizado una estimación o evaluación por escrito para algún bien mencionado en su respuesta al interrogatorio anterior? En caso afirmativo, para cada estimación o evaluación indique:\n(a) el nombre, DIRECCIÓN y número de teléfono de la PERSONA que lo preparó y la fecha de preparación;\n(b) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene una copia del mismo;\ny (c) la cantidad del daño indicada."
+  },
+  {
+    "id": 33,
+    "number": "7.3",
+    "category": "Daños a Propiedad",
+    "text": "¿Se ha reparado algún bien mencionado en su respuesta al interrogatorio 7.1? En caso afirmativo, para cada bien indique:\n(a) la fecha de reparación;\n(b) una descripción de la reparación;\n(c) el costo de la reparación;\n(d) el nombre, DIRECCIÓN y número de teléfono de la PERSONA que lo reparó;\ny (e) el nombre, DIRECCIÓN y número de teléfono de la PERSONA que pagó la reparación."
+  },
+  {
+    "id": 34,
+    "number": "8.1",
+    "category": "Pérdida de Ingresos",
+    "text": "¿Atribuye alguna pérdida de ingresos o capacidad de ganancia al INCIDENTE? (Si su respuesta es \"no\", no responda los interrogatorios 8.2 a 8.8)."
+  },
+  {
+    "id": 35,
+    "number": "8.2",
+    "category": "Pérdida de Ingresos",
+    "text": "Indique:\n(a) la naturaleza de su trabajo;\n(b) su cargo en el momento del INCIDENTE;\ny (c) la fecha en que comenzó su empleo."
+  },
+  {
+    "id": 36,
+    "number": "8.3",
+    "category": "Pérdida de Ingresos",
+    "text": "Indique la última fecha antes del INCIDENTE en que trabajó a cambio de una remuneración."
+  },
+  {
+    "id": 37,
+    "number": "8.4",
+    "category": "Pérdida de Ingresos",
+    "text": "Indique sus ingresos mensuales en el momento del INCIDENTE y cómo se calculó la cantidad."
+  },
+  {
+    "id": 38,
+    "number": "8.5",
+    "category": "Pérdida de Ingresos",
+    "text": "Indique la fecha en que regresó a trabajar en cada lugar de empleo después del INCIDENTE."
+  },
+  {
+    "id": 39,
+    "number": "8.6",
+    "category": "Pérdida de Ingresos",
+    "text": "Indique las fechas en que no trabajó y por las cuales perdió ingresos como resultado del INCIDENTE."
+  },
+  {
+    "id": 40,
+    "number": "8.7",
+    "category": "Pérdida de Ingresos",
+    "text": "Indique el total de ingresos que ha perdido hasta la fecha como resultado del INCIDENTE y cómo se calculó la cantidad."
+  },
+  {
+    "id": 41,
+    "number": "8.8",
+    "category": "Pérdida de Ingresos",
+    "text": "¿Perderá ingresos en el futuro como resultado del INCIDENTE? En caso afirmativo, indique:\n(a) los hechos en los que basa esta afirmación;\n(b) una estimación de la cantidad;\n(c) una estimación de cuánto tiempo no podrá trabajar;\ny (d) cómo se calcula la reclamación de ingresos futuros."
+  },
+  {
+    "id": 42,
+    "number": "9.1",
+    "category": "Otros Daños",
+    "text": "¿Existen otros daños que usted atribuya al INCIDENTE? En caso afirmativo, para cada rubro de daño indique:\n(a) la naturaleza;\n(b) la fecha en que ocurrió;\n(c) la cantidad;\ny (d) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA con quien se incurrió en una obligación."
+  },
+  {
+    "id": 43,
+    "number": "9.2",
+    "category": "Otros Daños",
+    "text": "¿Algún DOCUMENTO respalda la existencia o el monto de algún rubro de daños reclamado en el interrogatorio 9.1? En caso afirmativo, describa cada documento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO."
+  },
+  {
+    "id": 44,
+    "number": "10.1",
+    "category": "Historial Médico",
+    "text": "¿En algún momento antes del INCIDENTE tuvo dolencias o lesiones que involucraran la misma parte de su cuerpo que afirma haber sido lesionada en el INCIDENTE? En caso afirmativo, para cada una indique:\n(a) una descripción de la dolencia o lesión:\n(b) las fechas en que comenzó y terminó;\ny (c) el nombre, DIRECCIÓN y número de teléfono de cada PROVEEDOR DE ATENCIÓN MÉDICA a quien consultó o que lo examinó o trató."
+  },
+  {
+    "id": 45,
+    "number": "10.2",
+    "category": "Historial Médico",
+    "text": "Enumere todas las discapacidades físicas, mentales y emocionales que tenía inmediatamente antes del INCIDENTE. (Puede omitir las discapacidades mentales o emocionales a menos que atribuya alguna lesión mental o emocional al INCIDENTE)."
+  },
+  {
+    "id": 46,
+    "number": "10.3",
+    "category": "Historial Médico",
+    "text": "¿En algún momento después del INCIDENTE, sufrió lesiones del tipo por las que ahora reclama daños? En caso afirmativo, por cada incidente que dio lugar a una lesión indique:\n(a) la fecha y el lugar donde ocurrió;\n(b) el nombre, DIRECCIÓN y número de teléfono de cualquier otra PERSONA involucrada;\n(c) la naturaleza de las lesiones que sufrió;\n(d) el nombre, DIRECCIÓN y número de teléfono de cada PROVEEDOR DE ATENCIÓN MÉDICA a quien consultó o que lo examinó o trató;\ny (e) la naturaleza del tratamiento y su duración."
+  },
+  {
+    "id": 47,
+    "number": "11.1",
+    "category": "Otras Reclamaciones",
+    "text": "Excepto por esta acción, ¿en los últimos 10 años ha presentado una acción o realizado una reclamación o demanda por escrito para obtener una indemnización por sus lesiones personales? En caso afirmativo, para cada acción, reclamación o demanda indique:\n(a) la fecha, hora y lugar y ubicación (DIRECCIÓN o intersección de calles más cercana) del INCIDENTE que dio lugar a la acción, reclamación o demanda;\n(b) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA contra quien se realizó la reclamación o demanda o se presentó la acción;\n(c) el tribunal, los nombres de las partes y el número de caso de cualquier acción presentada;\n(d) el nombre, DIRECCIÓN y número de teléfono de cualquier abogado que lo represente;\n(e) si la reclamación o acción se ha resuelto o está pendiente;\ny (f) una descripción de la lesión."
+  },
+  {
+    "id": 48,
+    "number": "11.2",
+    "category": "Otras Reclamaciones",
+    "text": "¿En los últimos 10 años ha realizado una reclamación o demanda por escrito de beneficios de compensación para trabajadores? En caso afirmativo, para cada reclamación o demanda indique:\n(a) la fecha, hora y lugar del INCIDENTE que dio lugar a la reclamación;\n(b) el nombre, DIRECCIÓN y número de teléfono de su empleador en el momento de la lesión;\n(c) el nombre, DIRECCIÓN y número de teléfono de la aseguradora de compensación para trabajadores y el número de reclamación;\n(d) el período durante el cual recibió beneficios de compensación para trabajadores;\n(e) una descripción de la lesión;\n(f) el nombre, DIRECCIÓN y número de teléfono de cualquier PROVEEDOR DE ATENCIÓN MÉDICA que proporcionó servicios;\ny (g) el número de caso en la Junta de Apelaciones de Compensación para Trabajadores."
+  },
+  {
+    "id": 49,
+    "number": "12.1",
+    "category": "Investigación - General",
+    "text": "Indique el nombre, DIRECCIÓN y número de teléfono de cada individuo:\n(a) que presenció el INCIDENTE o los eventos que ocurrieron inmediatamente antes o después del INCIDENTE;\n(b) que hizo alguna declaración en el lugar del INCIDENTE;\n(c) que escuchó alguna declaración hecha sobre el INCIDENTE por cualquier individuo en el lugar;\ny (d) que USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE afirme que tiene conocimiento del INCIDENTE (excepto los testigos expertos cubiertos por la sección 2034 del Código de Procedimiento Civil)."
+  },
+  {
+    "id": 50,
+    "number": "12.2",
+    "category": "Investigación - General",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE ha entrevistado a algún individuo con respecto al INCIDENTE? En caso afirmativo, para cada individuo indique:\n(a) el nombre, DIRECCIÓN y número de teléfono del individuo entrevistado;\n(b) la fecha de la entrevista;\ny (c) el nombre, DIRECCIÓN y número de teléfono de la PERSONA que realizó la entrevista."
+  },
+  {
+    "id": 51,
+    "number": "12.3",
+    "category": "Investigación - General",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE ha obtenido una declaración escrita o grabada de algún individuo con respecto al INCIDENTE? En caso afirmativo, para cada declaración indique:\n(a) el nombre, DIRECCIÓN y número de teléfono del individuo de quien se obtuvo la declaración;\n(b) el nombre, DIRECCIÓN y número de teléfono del individuo que obtuvo la declaración;\n(c) la fecha en que se obtuvo la declaración;\ny (d) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene la declaración original o una copia."
+  },
+  {
+    "id": 52,
+    "number": "12.4",
+    "category": "Investigación - General",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE tiene conocimiento de alguna fotografía, película o video que represente algún lugar, objeto o individuo relacionado con el INCIDENTE o las lesiones del demandante? En caso afirmativo, indique:\n(a) el número de fotografías o pies de película o video;\n(b) los lugares, objetos o personas fotografiadas, filmadas o grabadas en video;\n(c) la fecha en que se tomaron las fotografías, películas o videos;\n(d) el nombre, DIRECCIÓN y número de teléfono del individuo que tomó las fotografías, películas o videos;\ny (e) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el original o una copia de las fotografías, películas o videos."
+  },
+  {
+    "id": 53,
+    "number": "12.5",
+    "category": "Investigación - General",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE tiene conocimiento de algún diagrama, reproducción o modelo de algún lugar o cosa (excepto los elementos desarrollados por testigos expertos cubiertos por las secciones 2034.210-2034.310 del Código de Procedimiento Civil) relacionado con el INCIDENTE? En caso afirmativo, para cada elemento indique:\n(a) el tipo (es decir, diagrama, reproducción o modelo);\n(b) el tema;\ny (c) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que lo tiene."
+  },
+  {
+    "id": 54,
+    "number": "12.6",
+    "category": "Investigación - General",
+    "text": "¿Alguna PERSONA elaboró un informe sobre el INCIDENTE? En caso afirmativo, indique:\n(a) el nombre, cargo, número de identificación y empleador de la PERSONA que elaboró el informe;\n(b) la fecha y el tipo de informe elaborado;\n(c) el nombre, DIRECCIÓN y número de teléfono de la PERSONA para quien se elaboró el informe;\ny (d) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el original o una copia del informe."
+  },
+  {
+    "id": 55,
+    "number": "12.7",
+    "category": "Investigación - General",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE ha inspeccionado el lugar del INCIDENTE? En caso afirmativo, para cada inspección indique:\n(a) el nombre, DIRECCIÓN y número de teléfono del individuo que realizó la inspección (excepto los testigos expertos cubiertos por las secciones 2034.210-2034.310 del Código de Procedimiento Civil);\ny (b) la fecha de la inspección."
+  },
+  {
+    "id": 56,
+    "number": "13.1",
+    "category": "Investigación - Vigilancia",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE ha realizado vigilancia de algún individuo involucrado en el INCIDENTE o alguna parte en esta acción? En caso afirmativo, para cada vigilancia indique:\n(a) el nombre, DIRECCIÓN y número de teléfono del individuo o parte;\n(b) la hora, fecha y lugar de la vigilancia;\n(c) el nombre, DIRECCIÓN y número de teléfono del individuo que realizó la vigilancia;\ny (d) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el original o una copia de cualquier fotografía, película o video de vigilancia."
+  },
+  {
+    "id": 57,
+    "number": "13.2",
+    "category": "Investigación - Vigilancia",
+    "text": "¿Se ha preparado un informe escrito sobre la vigilancia? En caso afirmativo, para cada informe escrito indique:\n(a) el título;\n(b) la fecha;\n(c) el nombre, DIRECCIÓN y número de teléfono del individuo que preparó el informe;\ny (d) el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el original o una copia."
+  },
+  {
+    "id": 58,
+    "number": "14.1",
+    "category": "Violaciones",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE sostiene que alguna PERSONA involucrada en el INCIDENTE violó algún estatuto, ordenanza o regulación y que la violación fue una causa legal (próxima) del INCIDENTE? En caso afirmativo, identifique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA y el estatuto, ordenanza o regulación que fue violado."
+  },
+  {
+    "id": 59,
+    "number": "14.2",
+    "category": "Violaciones",
+    "text": "¿Alguna PERSONA fue citada o acusada de una violación de algún estatuto, ordenanza o regulación como resultado de este INCIDENTE? En caso afirmativo, para cada PERSONA indique:\n(a) el nombre, DIRECCIÓN y número de teléfono de la PERSONA;\n(b) el estatuto, ordenanza o regulación presuntamente violado;\n(c) si la PERSONA presentó una declaración en respuesta a la citación o cargo y, en caso afirmativo, la declaración presentada;\ny (d) el nombre y DIRECCIÓN del tribunal o agencia administrativa, los nombres de las partes y el número de caso."
+  },
+  {
+    "id": 60,
+    "number": "15.1",
+    "category": "Negaciones y Defensas",
+    "text": "Identifique cada negación de una alegación material y cada defensa especial o afirmativa en sus alegatos, y para cada una:\n(a) indique todos los hechos en los que basa la negación o defensa especial o afirmativa;\n(b) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de esos hechos;\ny (c) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su negación o defensa especial o afirmativa, e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO."
+  },
+  {
+    "id": 61,
+    "number": "16.1",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que alguna PERSONA, que no sea usted o el demandante, contribuyó a la ocurrencia del INCIDENTE o a las lesiones o daños reclamados por el demandante? En caso afirmativo, para cada PERSONA:\n(a) indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 62,
+    "number": "16.2",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que el demandante no resultó lesionado en el INCIDENTE? En caso afirmativo:\n(a) indique todos los hechos en los que basa su argumento;\n(b) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (c) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 63,
+    "number": "16.3",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que las lesiones o el alcance de las lesiones reclamadas por el demandante, según se ha revelado en los procedimientos de descubrimiento hasta ahora en este caso, no fueron causadas por el INCIDENTE? En caso afirmativo, para cada lesión:\n(a) identifíquela;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 64,
+    "number": "16.4",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que alguno de los servicios prestados por cualquier PROVEEDOR DE ATENCIÓN MÉDICA reclamados por el demandante en los procedimientos de descubrimiento hasta ahora en este caso no se debieron al INCIDENTE? En caso afirmativo:\n(a) identifique cada servicio;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 65,
+    "number": "16.5",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que alguno de los costos de los servicios prestados por cualquier PROVEEDOR DE ATENCIÓN MÉDICA reclamados como daños por el demandante en los procedimientos de descubrimiento hasta ahora en este caso no fueron necesarios o fueron irrazonables? En caso afirmativo:\n(a) identifique cada costo;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 66,
+    "number": "16.6",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que alguna parte de la pérdida de ganancias o ingresos reclamada por el demandante en los procedimientos de descubrimiento hasta ahora en este caso fue irrazonable o no fue causada por el INCIDENTE? En caso afirmativo:\n(a) identifique cada parte de la pérdida;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 67,
+    "number": "16.7",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que alguno de los daños a la propiedad reclamados por el demandante en los procedimientos de descubrimiento hasta ahora en este caso no fue causado por el INCIDENTE? En caso afirmativo:\n(a) identifique cada elemento del daño a la propiedad;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 68,
+    "number": "16.8",
+    "category": "Argumentos del Demandado",
+    "text": "¿Sostiene usted que alguno de los costos de reparación del daño a la propiedad reclamado por el demandante en los procedimientos de descubrimiento hasta ahora en este caso fue irrazonable? En caso afirmativo:\n(a) identifique cada partida de costo;\n(b) indique todos los hechos en los que basa su argumento;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de los hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su argumento e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 69,
+    "number": "16.9",
+    "category": "Argumentos del Demandado",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE tiene algún DOCUMENTO (por ejemplo, informes de índices de oficinas de seguros) concerniente a reclamaciones por lesiones personales hechas antes o después del INCIDENTE por un demandante en este caso? En caso afirmativo, para cada demandante indique:\n(a) la fuente de cada DOCUMENTO;\n(b) la fecha en que surgió cada reclamación;\n(c) la naturaleza de cada reclamación;\ny (d) el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO."
+  },
+  {
+    "id": 70,
+    "number": "16.10",
+    "category": "Argumentos del Demandado",
+    "text": "¿USTED O CUALQUIERA QUE ACTÚE EN SU NOMBRE tiene algún DOCUMENTO concerniente a la condición física, mental o emocional pasada o presente de algún demandante en este caso proveniente de un PROVEEDOR DE ATENCIÓN MÉDICA no identificado previamente (excepto los testigos expertos cubiertos por las secciones 2034.210-2034.310 del Código de Procedimiento Civil)? En caso afirmativo, para cada demandante indique:\n(a) el nombre, DIRECCIÓN y número de teléfono de cada PROVEEDOR DE ATENCIÓN MÉDICA;\n(b) una descripción de cada DOCUMENTO;\ny (c) el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO."
+  },
+  {
+    "id": 71,
+    "number": "17.1",
+    "category": "Respuestas a Admisiones",
+    "text": "¿Es su respuesta a cada solicitud de admisión presentada con estos interrogatorios una admisión incondicional? Si no, para cada respuesta que no sea una admisión incondicional:\n(a) indique el número de la solicitud;\n(b) indique todos los hechos en los que basa su respuesta;\n(c) indique los nombres, DIRECCIONES y números de teléfono de todas las PERSONAS que tienen conocimiento de esos hechos;\ny (d) identifique todos los DOCUMENTOS y otras cosas tangibles que respalden su respuesta e indique el nombre, DIRECCIÓN y número de teléfono de la PERSONA que tiene cada DOCUMENTO o cosa."
+  },
+  {
+    "id": 72,
+    "number": "20.1",
+    "category": "Incidente - Vehículo",
+    "text": "Indique la fecha, hora y lugar del INCIDENTE (DIRECCIÓN o intersección de calles más cercana)."
+  },
+  {
+    "id": 73,
+    "number": "20.2",
+    "category": "Incidente - Vehículo",
+    "text": "Para cada vehículo involucrado en el INCIDENTE, indique:\n(a) el año, marca, modelo y número de matrícula;\n(b) el nombre, DIRECCIÓN y número de teléfono del conductor;\n(c) el nombre, DIRECCIÓN y número de teléfono de cada ocupante que no sea el conductor;\n(d) el nombre, DIRECCIÓN y número de teléfono de cada propietario registrado;\n(e) el nombre, DIRECCIÓN y número de teléfono de cada arrendatario;\n(f) el nombre, DIRECCIÓN y número de teléfono de cada propietario que no sea el propietario registrado o el titular del gravamen;\ny (g) el nombre de cada propietario que dio permiso o consentimiento al conductor para operar el vehículo."
+  },
+  {
+    "id": 74,
+    "number": "20.3",
+    "category": "Incidente - Vehículo",
+    "text": "Indique la DIRECCIÓN y ubicación donde comenzó su viaje y la DIRECCIÓN y ubicación de su destino."
+  },
+  {
+    "id": 75,
+    "number": "20.4",
+    "category": "Incidente - Vehículo",
+    "text": "Describa la ruta que siguió desde el inicio de su viaje hasta el lugar del INCIDENTE, e indique la ubicación de cada parada, que no sean paradas de tráfico rutinarias, durante el viaje previo al INCIDENTE."
+  },
+  {
+    "id": 76,
+    "number": "20.5",
+    "category": "Incidente - Vehículo",
+    "text": "Indique el nombre de la calle o carretera, el carril de circulación y la dirección de desplazamiento de cada vehículo involucrado en el INCIDENTE durante los 500 pies de recorrido antes del INCIDENTE."
+  },
+  {
+    "id": 77,
+    "number": "20.6",
+    "category": "Incidente - Vehículo",
+    "text": "¿Ocurrió el INCIDENTE en una intersección? En caso afirmativo, describa todos los dispositivos de control de tráfico, señales o letreros en la intersección."
+  },
+  {
+    "id": 78,
+    "number": "20.7",
+    "category": "Incidente - Vehículo",
+    "text": "¿Había una señal de tráfico frente a usted en el momento del INCIDENTE? En caso afirmativo, indique:\n(a) su ubicación cuando la vio por primera vez;\n(b) el color;\n(c) el número de segundos que había estado de ese color;\ny (d) si el color cambió entre el momento en que la vio por primera vez y el INCIDENTE."
+  },
+  {
+    "id": 79,
+    "number": "20.8",
+    "category": "Incidente - Vehículo",
+    "text": "Indique cómo ocurrió el INCIDENTE, proporcionando la velocidad, dirección y ubicación de cada vehículo involucrado:\n(a) justo antes del INCIDENTE;\n(b) en el momento del INCIDENTE;\ny (c) justo después del INCIDENTE."
+  },
+  {
+    "id": 80,
+    "number": "20.9",
+    "category": "Incidente - Vehículo",
+    "text": "¿Tiene información de que un mal funcionamiento o defecto en un vehículo causó el INCIDENTE? En caso afirmativo:\n(a) identifique el vehículo;\n(b) identifique cada mal funcionamiento o defecto;\n(c) indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que sea testigo o tenga información sobre cada mal funcionamiento o defecto;\ny (d) indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tenga la custodia de cada pieza defectuosa."
+  },
+  {
+    "id": 81,
+    "number": "20.10",
+    "category": "Incidente - Vehículo",
+    "text": "¿Tiene información de que algún mal funcionamiento o defecto en un vehículo contribuyó a las lesiones sufridas en el INCIDENTE? En caso afirmativo:\n(a) identifique el vehículo;\n(b) identifique cada mal funcionamiento o defecto;\n(c) indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que sea testigo o tenga información sobre cada mal funcionamiento o defecto;\ny (d) indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tenga la custodia de cada pieza defectuosa."
+  },
+  {
+    "id": 82,
+    "number": "20.11",
+    "category": "Incidente - Vehículo",
+    "text": "Indique el nombre, DIRECCIÓN y número de teléfono de cada propietario y cada PERSONA que haya tenido posesión desde el INCIDENTE de cada vehículo involucrado en el INCIDENTE."
+  },
+  {
+    "id": 83,
+    "number": "50.1",
+    "category": "Contrato",
+    "text": "Para cada acuerdo alegado en los escritos:\n(a) identifique cada DOCUMENTO que forma parte del acuerdo y para cada uno indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el DOCUMENTO;\n(b) indique cada parte del acuerdo que no conste por escrito, el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que aceptó esa disposición, y la fecha en que se hizo esa parte del acuerdo;\n(c) identifique todos los DOCUMENTOS que evidencien cualquier parte del acuerdo que no conste por escrito y para cada uno indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el DOCUMENTO;\n(d) identifique todos los DOCUMENTOS que forman parte de cualquier modificación al acuerdo, y para cada uno indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el DOCUMENTO;\n(e) indique cada modificación que no conste por escrito, la fecha, y el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que aceptó la modificación, y la fecha en que se hizo la modificación;\n(f) identifique todos los DOCUMENTOS que evidencien cualquier modificación del acuerdo que no conste por escrito y para cada uno indique el nombre, DIRECCIÓN y número de teléfono de cada PERSONA que tiene el DOCUMENTO."
+  },
+  {
+    "id": 84,
+    "number": "50.2",
+    "category": "Contrato",
+    "text": "¿Hubo un incumplimiento de algún acuerdo alegado en los escritos? En caso afirmativo, para cada incumplimiento describa y dé la fecha de cada acto u omisión que usted afirma que constituye el incumplimiento del acuerdo."
+  },
+  {
+    "id": 85,
+    "number": "50.3",
+    "category": "Contrato",
+    "text": "¿Se excusó el cumplimiento de algún acuerdo alegado en los escritos? En caso afirmativo, identifique cada acuerdo excusado e indique por qué se excusó el cumplimiento."
+  },
+  {
+    "id": 86,
+    "number": "50.4",
+    "category": "Contrato",
+    "text": "¿Algún acuerdo alegado en los escritos fue terminado por mutuo acuerdo, liberación, acuerdo y satisfacción, o novación? En caso afirmativo, identifique cada acuerdo terminado, la fecha de terminación y la base de la terminación."
+  },
+  {
+    "id": 87,
+    "number": "50.5",
+    "category": "Contrato",
+    "text": "¿Es algún acuerdo alegado en los escritos inexigible? En caso afirmativo, identifique cada acuerdo inexigible e indique por qué es inexigible."
+  },
+  {
+    "id": 88,
+    "number": "50.6",
+    "category": "Contrato",
+    "text": "¿Es algún acuerdo alegado en los escritos ambiguo? En caso afirmativo, identifique cada acuerdo ambiguo e indique por qué es ambiguo."
+  }
+]
