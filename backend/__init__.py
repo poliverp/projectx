@@ -1,4 +1,6 @@
-# backend/__init__.py
+# This file makes the 'backend' directory a Python package
+
+# Import necessary modules and packages
 import os
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
@@ -10,7 +12,7 @@ from backend.utils.file_encryption import file_encryptor
 from backend.utils.rate_limiter import limiter
 
 # Import extensions from our extensions module
-from .extensions import db, migrate, login_manager, cors, ma, csrf  # Add csrf here
+from .extensions import db, migrate, login_manager, cors, ma, csrf
 
 mail = Mail()
 
@@ -103,6 +105,7 @@ def create_app(config_class=Config):
     # Configure Flask-Login unauthorized handler for APIs
     @login_manager.unauthorized_handler
     def unauthorized():
+        from flask import request, jsonify
         # Return 401 Unauthorized for API requests instead of redirecting
         if request.blueprint and request.blueprint.startswith('api'):
              return jsonify(error="Login required"), 401
