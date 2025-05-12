@@ -2,13 +2,9 @@
 Parsers for different types of discovery documents.
 """
 import re
-import pdfplumber
+import fitz  # PyMuPDF
 from typing import List, Pattern, Dict, Any, Optional
 from .base import DiscoveryQuestion, BaseDiscoveryParser
-import pytesseract
-from pdf2image import convert_from_path
-import fitz  # PyMuPDF
-from PIL import Image, ImageEnhance, ImageFilter
 
 
 class GeneralDiscoveryParser:
@@ -18,6 +14,7 @@ class GeneralDiscoveryParser:
     def parse(cls, pdf_path: str, pattern: Pattern) -> List[DiscoveryQuestion]:
         """
         Generic PDF parser for discovery documents using the provided regex pattern.
+        Uses only PyMuPDF for text extraction.
         
         Args:
             pdf_path: Path to the PDF file
@@ -28,53 +25,52 @@ class GeneralDiscoveryParser:
         """
         questions = []
         
-        import sys
         # Open with PyMuPDF
-        doc = fitz.open(pdf_path)
-        # Deep debug: print number of pages
-        print(f"[DEBUG] PDF has {len(doc)} pages")
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            text = page.get_text()
-            print(f"[DEBUG] Page {page_num+1} PyMuPDF text (first 200 chars): {repr(text[:200]) if text else 'None'}")
-            # Now force OCR for comparison
-            images = convert_from_path(pdf_path, first_page=page_num+1, last_page=page_num+1)
-            if images:
-                img = images[0].convert('L').filter(ImageFilter.SHARPEN)
-                img = ImageEnhance.Contrast(img).enhance(2)
-                ocr_text = pytesseract.image_to_string(img, config='--psm 6')
-                print(f"[DEBUG] Page {page_num+1} OCR text (first 200 chars): {repr(ocr_text[:200]) if ocr_text else 'None'}")
-            else:
-                print(f"[DEBUG] Could not convert page {page_num+1} to image for OCR.")
-            if text and text.strip():
-                print(f"[DEBUG] PyMuPDF extracted text from page {page_num+1}:\n{text}\n{'-'*40}")
-            else:
-                print(f"[DEBUG] PyMuPDF found no text on page {page_num+1}, falling back to OCR...")
-            lines = text.split('\n')
-            for line_num, line in enumerate(lines):
-                print(f"[DEBUG] Checking line {line_num+1}: {line}")
-                match = pattern.match(line.strip())
-                if match:
-                    number = match.group(1)
-                    q_text = match.group(2)
-                    
-                    # Check for subparts
-                    subparts = re.findall(r"\([a-zA-Z]\)\s+([^\n]+)", q_text)
-                    if subparts:
-                        questions.append(
-                            DiscoveryQuestion(
-                                number=number, 
-                                text=q_text.split('(')[0].strip(), 
-                                subparts=subparts
+        try:
+            doc = fitz.open(pdf_path)
+            print(f"[DEBUG] PDF has {len(doc)} pages")
+            
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                text = page.get_text()
+                
+                if text and text.strip():
+                    print(f"[DEBUG] Processing text from page {page_num+1}")
+                else:
+                    print(f"[DEBUG] No text found on page {page_num+1}")
+                    continue
+                
+                # Process the extracted text line by line
+                lines = text.split('\n')
+                for line_num, line in enumerate(lines):
+                    match = pattern.match(line.strip())
+                    if match:
+                        number = match.group(1)
+                        q_text = match.group(2)
+                        
+                        # Check for subparts
+                        subparts = re.findall(r"\([a-zA-Z]\)\s+([^\n]+)", q_text)
+                        if subparts:
+                            questions.append(
+                                DiscoveryQuestion(
+                                    number=number, 
+                                    text=q_text.split('(')[0].strip(), 
+                                    subparts=subparts
+                                )
                             )
-                        )
-                    else:
-                        questions.append(
-                            DiscoveryQuestion(
-                                number=number, 
-                                text=q_text
+                        else:
+                            questions.append(
+                                DiscoveryQuestion(
+                                    number=number, 
+                                    text=q_text
+                                )
                             )
-                        )
+            
+            # Close the document
+            doc.close()
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to process PDF: {e}")
         
         return questions
 
