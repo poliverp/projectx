@@ -1,69 +1,85 @@
 """
-Base classes and shared functionality for discovery document handling.
+Base classes for discovery document processing.
 """
-from dataclasses import dataclass, field
-from typing import List, Dict, Protocol, Any, Optional
-import re
+from typing import List, Dict, Any, Optional
 
 
-@dataclass
 class DiscoveryQuestion:
     """
-    Represents a question/request from a discovery document.
-    Common structure for all discovery types.
+    Represents a single discovery question/request with optional subparts.
     """
-    number: str
-    text: str
-    subparts: List[str] = field(default_factory=list)
+    
+    def __init__(self, number: str, text: str, subparts: List[str] = None):
+        """
+        Initialize a discovery question.
+        
+        Args:
+            number: Question/request number (e.g., "1", "2.1")
+            text: Text of the question/request
+            subparts: Optional list of subpart texts
+        """
+        self.number = number
+        self.text = text
+        self.subparts = subparts or []
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert to dictionary for JSON serialization.
+        """
+        return {
+            'number': self.number,
+            'text': self.text,
+            'subparts': self.subparts
+        }
+    
+    def __str__(self) -> str:
+        """String representation for debugging."""
+        subparts_str = f" with {len(self.subparts)} subparts" if self.subparts else ""
+        return f"Question {self.number}{subparts_str}: {self.text[:50]}..."
 
 
-class BaseDiscoveryParser(Protocol):
+class BaseDiscoveryParser:
     """
-    Protocol defining the interface for all discovery parsers.
+    Base class for discovery document parsers.
     """
+    
     @staticmethod
     def parse(pdf_path: str) -> List[DiscoveryQuestion]:
         """
-        Parses a discovery document PDF into a list of DiscoveryQuestion objects.
+        Parse a PDF document and extract discovery questions.
         
         Args:
             pdf_path: Path to the PDF file
             
         Returns:
             List of parsed DiscoveryQuestion objects
+            
+        Raises:
+            NotImplementedError: This method should be implemented by subclasses
         """
-        ...
+        raise NotImplementedError("Subclasses must implement parse method")
 
 
-class BasePromptBuilder(Protocol):
+class BasePromptBuilder:
     """
-    Protocol defining the interface for all discovery prompt builders.
+    Base class for discovery prompt builders.
     """
+    
     @staticmethod
-    def build_prompt(questions: List[DiscoveryQuestion], case_details: Dict, 
-                     objection_sheet: str) -> str:
+    def build_prompt(questions: List[DiscoveryQuestion], case_details: Dict[str, Any], 
+                    objection_sheet: str) -> str:
         """
-        Builds an AI prompt for generating responses to discovery questions.
+        Build an AI prompt for responding to discovery requests.
         
         Args:
-            questions: List of discovery questions to respond to
+            questions: List of discovery questions
             case_details: Dictionary containing case information
             objection_sheet: Text content of objection master sheet
             
         Returns:
-            Formatted prompt string for the AI
+            Prompt string for AI
+            
+        Raises:
+            NotImplementedError: This method should be implemented by subclasses
         """
-        ...
-
-
-def format_bold_underline(text: str) -> str:
-    """
-    Helper function to format text with bold and underline markdown.
-    
-    Args:
-        text: Text to format
-        
-    Returns:
-        Formatted text with markdown bold and underline
-    """
-    return f"**__{text}__**"
+        raise NotImplementedError("Subclasses must implement build_prompt method")

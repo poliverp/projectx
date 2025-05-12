@@ -1,13 +1,16 @@
 """
 Service class for orchestrating discovery document processing.
+Enhanced to handle different document formats and improve debugging.
 """
 from typing import Dict, Any, List, Optional
 import os
 import io
+import json
 
 from .base import DiscoveryQuestion
 from .registry import get_discovery_type_info
 from backend.services.analysis_service import call_gemini_with_prompt, AnalysisServiceError
+from backend.schemas import case_schema
 
 
 class DiscoveryResponseService:
@@ -18,6 +21,7 @@ class DiscoveryResponseService:
     def respond(self, discovery_type: str, pdf_path: str, case_details: Dict, objection_sheet: str) -> Dict:
         """
         Parses the uploaded discovery PDF, builds the AI prompt, and returns parsed questions and prompt.
+        Enhanced with improved error handling and debugging.
         
         Args:
             discovery_type: Type of discovery (e.g., 'form_interrogatories')
@@ -32,36 +36,104 @@ class DiscoveryResponseService:
             ValueError: If discovery_type is not supported
         """
         # Get parser and prompt builder from registry
-        type_info = get_discovery_type_info(discovery_type)
-        parser = type_info['parser']
-        prompt_builder = type_info['prompt_builder']
-        
-        # Parse questions
-        questions = parser(pdf_path)
-        print("[DEBUG] Parsed questions:", questions)
-        
-        # Build prompt
-        prompt = prompt_builder(questions, case_details, objection_sheet)
-        print("[DEBUG] Prompt sent to Gemini:\n", prompt)
-        
-        # Call Gemini AI with the prompt
-        ai_response = None
-        ai_error = None
         try:
-            ai_response = call_gemini_with_prompt(prompt)
-        except AnalysisServiceError as e:
-            ai_error = str(e)
-        except Exception as e:
-            ai_error = f"Unexpected error: {e}"
+            type_info = get_discovery_type_info(discovery_type)
+            parser = type_info['parser']
+            prompt_builder = type_info['prompt_builder']
+            
+            print(f"[DEBUG] Using parser for {discovery_type}: {parser.__name__}")
+            
+            # Parse questions
+            if discovery_type == 'requests_for_production':
+                # Serialize the full case object
+                serialized_case = case_schema.dump(case_details) if case_details else {}
+                # Pass the full objection sheet as a list of lines (or as a string)
+                objections_list = [line.strip() for line in objection_sheet.split('\n') if line.strip()] if objection_sheet else []
+                questions = parser(pdf_path, case_data=serialized_case, objections_list=objections_list)
+            else:
+                questions = parser(pdf_path)
+            
+            # Verify we got questions
+            if not questions:
+                print(f"[ERROR] Parser returned no questions for {pdf_path}")
+                # Try to extract some text to help diagnose the issue
+                try:
+                    import fitz
+                    with fitz.open(pdf_path) as doc:
+                        sample_text = ""
+                        for page in doc:
+                            sample_text += page.get_text()[:500]
+                            if len(sample_text) >= 500:
+                                break
+                        print(f"[DEBUG] Sample text from PDF: {sample_text[:500]}")
+                except Exception as e:
+                    print(f"[ERROR] Failed to extract sample text: {e}")
+                
+                # Convert questions to list of dicts for JSON serialization
+                return {
+                    'questions': [],
+                    'prompt': "",
+                    'ai_response': None,
+                    'ai_error': f"Failed to parse any questions from the PDF. Check if document format is supported.",
+                    'discovery_type': discovery_type,
+                    'display_name': type_info['display_name']
+                }
+            
+            # Debug questions found
+            print(f"[DEBUG] Parsed {len(questions)} questions")
+            for i, q in enumerate(questions[:5]):  # Log first 5 for debugging
+                print(f"[DEBUG] Question {i+1}: #{q.number} - {q.text[:100]}")
+            
+            # Convert questions to list of dicts for JSON serialization
+            questions_list = [q.to_dict() for q in questions]
+            print(f"[DEBUG] Converted questions to dict format, count: {len(questions_list)}")
+            
+            # Build prompt
+            prompt = prompt_builder(questions, case_details, objection_sheet)
+            print(f"[DEBUG] Prompt built, length: {len(prompt)}")
+            
+            # Call Gemini AI with the prompt
+            ai_response = None
+            ai_error = None
+            
+            try:
+                if prompt:
+                    print(f"[DEBUG] Calling Gemini AI with prompt")
+                    ai_response = call_gemini_with_prompt(prompt)
+                    print(f"[DEBUG] AI response received, length: {len(ai_response) if ai_response else 0}")
+                else:
+                    ai_error = "Failed to generate prompt from parsed questions"
+            except AnalysisServiceError as e:
+                ai_error = str(e)
+                print(f"[ERROR] Analysis service error: {ai_error}")
+            except Exception as e:
+                ai_error = f"Unexpected error: {e}"
+                print(f"[ERROR] Unexpected error: {ai_error}")
+            
+            return {
+                'questions': questions_list,
+                'prompt': prompt,
+                'ai_response': ai_response,
+                'ai_error': ai_error,
+                'discovery_type': discovery_type,
+                'display_name': type_info['display_name']
+            }
         
-        return {
-            'questions': questions,
-            'prompt': prompt,
-            'ai_response': ai_response,
-            'ai_error': ai_error,
-            'discovery_type': discovery_type,
-            'display_name': type_info['display_name']
-        }
+        except Exception as e:
+            import traceback
+            error_message = f"Error in DiscoveryResponseService.respond: {str(e)}"
+            error_trace = traceback.format_exc()
+            print(f"[ERROR] {error_message}")
+            print(f"[ERROR] {error_trace}")
+            
+            return {
+                'questions': [],
+                'prompt': "",
+                'ai_response': None,
+                'ai_error': error_message,
+                'discovery_type': discovery_type,
+                'display_name': discovery_type.replace('_', ' ').title()
+            }
     
     def create_response_document(self, discovery_type: str, questions: List[DiscoveryQuestion], 
                                 responses: Dict, case_info: Dict) -> io.BytesIO:

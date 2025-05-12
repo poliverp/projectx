@@ -170,25 +170,60 @@ def update_case(case_id, update_data, user_id):
     Raises:
         CaseNotFoundError: If the case is not found.
         Forbidden: If the user does not own the case.
-        DuplicateCaseError: If update causes a unique constraint violation (e.g., display_name).
+        DuplicateCaseError: If update causes a unique constraint violation.
         CaseServiceError: For other database errors during update.
     """
-    # Fetch the case using the ownership-checking function (raises error if not found/owned)
+    # Fetch the case using the ownership-checking function
     target_case = get_case_by_id(case_id, user_id)
 
-    # --- Refactored: Get allowed fields from model ---
+    # Get allowed fields from model
     mapper = inspect(Case)
-    # Define fields that should NEVER be updated via this generic function
-    protected_fields = {'id', 'user_id', 'created_at'} # updated_at handled by onupdate
+    protected_fields = {'id', 'user_id', 'created_at'}
     allowed_fields = {col.key for col in mapper.columns if col.key not in protected_fields}
-    # --- End Refactored Part ---
+
+    # Get locked fields from case_details
+    locked_fields = []
+    if 'case_details' in update_data and isinstance(update_data['case_details'], dict):
+        locked_fields = update_data['case_details'].get('locked_fields', [])
+    elif hasattr(target_case, 'case_details') and isinstance(target_case.case_details, dict):
+        locked_fields = target_case.case_details.get('locked_fields', [])
 
     try:
-        updated = False # Flag to track if any changes were actually made
-        json_modified = False # Flag specifically for JSON field changes
+        updated = False
+        json_modified = False
 
+        # First handle case_details separately to preserve its structure
+        if 'case_details' in update_data:
+            current_details = target_case.case_details or {}
+            new_details = update_data['case_details']
+            
+            # Ensure new_details is a dict
+            if not isinstance(new_details, dict):
+                print(f"Warning: Non-dict value provided for case_details. Setting to empty dict.")
+                new_details = {}
+            
+            # Merge the new details with existing ones
+            merged_details = {**current_details, **new_details}
+            
+            # Always preserve locked_fields if they exist in new_details
+            if 'locked_fields' in new_details:
+                merged_details['locked_fields'] = new_details['locked_fields']
+            
+            # Update case_details if there are changes
+            if current_details != merged_details:
+                target_case.case_details = merged_details
+                json_modified = True
+                updated = True
+                print(f"Updated case_details for case {case_id}")
+
+        # Then handle dedicated fields
         for key, value in update_data.items():
-            if key in allowed_fields:
+            if key in allowed_fields and key != 'case_details':  # Skip case_details as we handled it above
+                # Skip if field is locked
+                if key in locked_fields:
+                    print(f"Field '{key}' is locked. Skipping update.")
+                    continue
+
                 current_value = getattr(target_case, key)
                 new_value = value
 
@@ -199,55 +234,35 @@ def update_case(case_id, update_data, user_id):
                     if not stripped_value and is_nullable:
                         new_value = None
                     elif not stripped_value and not is_nullable:
-                         # Should be caught by frontend validation ideally
-                         print(f"Warning: Attempted to set non-nullable field '{key}' to empty string for case {case_id}. Skipping update for this field.")
-                         continue # Skip this specific field update
+                        print(f"Warning: Attempted to set non-nullable field '{key}' to empty string. Skipping update.")
+                        continue
                     else:
-                         new_value = stripped_value
+                        new_value = stripped_value
 
-                # Special handling for JSON field to ensure deep changes are detected
-                if key == 'case_details':
-                    # Compare carefully, simple != might not catch nested changes
-                    # A basic check: if they are different types or not equal
-                    if type(current_value) != type(new_value) or current_value != new_value:
-                         # If new value is not a dict, maybe wrap it or handle error
-                         if not isinstance(new_value, dict) and new_value is not None:
-                              print(f"Warning: Non-dict value provided for case_details for case {case_id}. Setting to empty dict.")
-                              new_value = {} # Or raise error? Defaulting to empty dict.
-                         elif new_value is None:
-                              new_value = {} # Ensure it's at least an empty dict if nullable
-
-                         setattr(target_case, key, new_value)
-                         json_modified = True # Mark JSON potentially modified
-                         updated = True
-                         print(f"Updating field {key} for case {case_id}")
-                # Handle non-JSON fields
-                elif current_value != new_value:
+                # Update if value changed
+                if current_value != new_value:
                     setattr(target_case, key, new_value)
                     updated = True
-                    print(f"Updating field {key} for case {case_id}")
+                    print(f"Updated field {key} for case {case_id}")
 
         # Only commit if changes were made
         if updated:
-             # If the JSON field was potentially modified, flag it for SQLAlchemy
-             if json_modified:
-                  flag_modified(target_case, "case_details")
-
-             # SQLAlchemy automatically updates 'updated_at' if configured with onupdate
-             db.session.commit()
-             print(f"Case {case_id} updated successfully via service by user {user_id}.")
+            if json_modified:
+                flag_modified(target_case, "case_details")
+            db.session.commit()
+            print(f"Case {case_id} updated successfully via service by user {user_id}.")
         else:
-             print(f"No changes detected for case {case_id}. Skipping commit.")
+            print(f"No changes detected for case {case_id}. Skipping commit.")
 
-        return target_case # Return the potentially updated case object
+        return target_case
+
     except IntegrityError as e:
         db.session.rollback()
         print(f"IntegrityError updating case {case_id} by user {user_id}: {e}")
-        # Check if it's the display name unique constraint for this user
         if 'display_name' in str(e).lower() or ('case' in str(e).lower() and 'unique' in str(e).lower()):
-             raise DuplicateCaseError(f"Case display name '{update_data.get('display_name')}' might already exist for this user or globally.") from e
+            raise DuplicateCaseError(f"Case display name '{update_data.get('display_name')}' might already exist for this user or globally.") from e
         else:
-              raise CaseServiceError(f"Database integrity error updating case {case_id}") from e
+            raise CaseServiceError(f"Database integrity error updating case {case_id}") from e
     except Exception as e:
         db.session.rollback()
         print(f"Error updating case {case_id} by user {user_id} via service: {e}")

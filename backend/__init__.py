@@ -1,5 +1,5 @@
 # This file makes the 'backend' directory a Python package
-
+# backend/__init__.py
 # Import necessary modules and packages
 import os
 from flask import Flask, request, jsonify

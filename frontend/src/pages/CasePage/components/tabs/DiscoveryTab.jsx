@@ -1,3 +1,4 @@
+// frontend/src/pages/casepage/components/tabs/DiscoveryTab.jsx
 import React, { useState } from 'react';
 import {
   Card, 

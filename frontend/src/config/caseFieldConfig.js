@@ -67,17 +67,16 @@ export const caseFieldConfig = [
     isRequired: false,
     placeholder: 'Primary defendant name',
   },
-  // --- Fields expected inside case_details JSON blob ---
-  // Add fields here that your analysis *might* find and you want to manage,
-  // even if they don't have dedicated columns YET.
-   {
-    name: 'filing_date', // This key should match what your AI/analysis saves
+  {
+    name: 'filing_date',
     label: 'Filing Date',
-    type: 'date', // Add this property
-    isDedicated: false,
-    isEditable: false,
+    type: 'date',
+    isDedicated: true,
+    isEditable: true,
     showInList: false,
     showInitially: false,
+    isRequired: false,
+    placeholder: 'YYYY-MM-DD',
   },
   {
     name: 'jurisdiction',
@@ -100,18 +99,6 @@ export const caseFieldConfig = [
     isRequired: false,
     placeholder: 'e.g., LOS ANGELES COUNTY',
     displayTransform: value => value, // No transformation needed, already uppercase
-  },
-  {
-    name: 'filing_date',
-    label: 'Filing Date',
-    type: 'date', // Add this property
-    isDedicated: true,
-    isEditable: true,
-    showInList: false,
-    showInitially: false,
-    isRequired: false,
-    placeholder: 'YYYY-MM-DD', // Placeholder for date
-    // Note: Might need a DatePicker component in forms later
   },
   {
     name: 'trial_date',
@@ -274,7 +261,7 @@ export const caseFieldConfig = [
     showInList: true,
     showInitially: false,
   },
-   {
+  {
     name: 'last_analyzed_doc_id',
     label: 'Last Analyzed Doc ID',
     isDedicated: false, // Assuming this lives in case_details

@@ -4,9 +4,9 @@ Registry for discovery document types and their related functions.
 from .parsers import (
     parse_form_interrogatories,
     parse_special_interrogatories,
-    parse_requests_for_production,
     parse_requests_for_admission,
 )
+from .ai_parsers import ai_parse_requests_for_production
 from .prompt_builders import (
     build_form_interrogatories_prompt,
     build_special_interrogatories_prompt,
@@ -31,7 +31,7 @@ DISCOVERY_TYPE_REGISTRY = {
         'response_type': 'Response to Special Interrogatory No.'
     },
     'requests_for_production': {
-        'parser': parse_requests_for_production,
+        'parser': ai_parse_requests_for_production,
         'prompt_builder': build_requests_for_production_prompt,
         'display_name': 'Requests for Production',
         'request_type': 'Request for Production No.',

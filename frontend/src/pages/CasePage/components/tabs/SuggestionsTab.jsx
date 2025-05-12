@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { 
   FileTextOutlined, CheckCircleTwoTone, CloseOutlined, 
-  SearchOutlined, BulbOutlined
+  SearchOutlined, BulbOutlined, LockOutlined, UnlockOutlined
 } from '@ant-design/icons';
 import { useSuggestions } from '../../hooks/useSuggestions';
 import { formatDate, datesAreEqual } from '../../../../utils/dateUtils';
@@ -26,9 +26,12 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
     handleCheckboxChange,
     handleDismissLocally,
     handleApplyChanges,
-    handleClearSuggestions
+    handleClearSuggestions,
+    lockedFields,
+    toggleFieldLock
   } = useSuggestions(caseDetails, refreshCase);
   
+  // Early return after hooks are called
   if (!caseDetails) return null;
   
   const caseDetailsData = caseDetails.case_details || {};
@@ -61,9 +64,72 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
   // Filter the pending suggestions
   const filteredPendingSuggestions = Object.entries(pendingSuggestions).reduce((acc, [docKey, suggestions]) => {
     const validSuggestions = Object.entries(suggestions).reduce((validFields, [field, value]) => {
-      if (!shouldFilterValue(value) && !dismissedSuggestions[docKey]?.[field]) {
-        validFields[field] = value;
+      // Skip if value should be filtered or is dismissed
+      if (shouldFilterValue(value) || dismissedSuggestions[docKey]?.[field]) {
+        return validFields;
       }
+
+      // Skip if field is locked
+      if (lockedFields.includes(field)) {
+        console.log(`Skipping locked field ${field} from suggestions`);
+        return validFields;
+      }
+
+      // Check for redundancy with current case values
+      const currentValue = caseDetails?.[field] !== undefined
+        ? caseDetails[field]
+        : caseDetailsData?.[field];
+
+      if (currentValue !== undefined) {
+        // For date fields
+        if (isDateField(field)) {
+          if (datesAreEqual(currentValue, value)) {
+            console.log(`Filtering out redundant date suggestion for ${field}`);
+            return validFields;
+          }
+        }
+        // For string values
+        else if (typeof value === 'string' && typeof currentValue === 'string') {
+          const normalizedCurrent = currentValue.toLowerCase().trim()
+            .replace(/\s+/g, ' ')
+            .replace(/[.,]/g, '')
+            .replace(/\b(the|a|an)\b/gi, '');
+          const normalizedSuggested = value.toLowerCase().trim()
+            .replace(/\s+/g, ' ')
+            .replace(/[.,]/g, '')
+            .replace(/\b(the|a|an)\b/gi, '');
+
+          if (normalizedCurrent === normalizedSuggested) {
+            console.log(`Filtering out redundant string suggestion for ${field}`);
+            return validFields;
+          }
+
+          if (normalizedCurrent.includes(normalizedSuggested) || 
+              normalizedSuggested.includes(normalizedCurrent)) {
+            console.log(`Filtering out similar string suggestion for ${field}`);
+            return validFields;
+          }
+        }
+        // For other types
+        else {
+          try {
+            const normalizedCurrent = JSON.stringify(currentValue).toLowerCase();
+            const normalizedSuggested = JSON.stringify(value).toLowerCase();
+            if (normalizedCurrent === normalizedSuggested) {
+              console.log(`Filtering out redundant object suggestion for ${field}`);
+              return validFields;
+            }
+          } catch (e) {
+            if (value === currentValue) {
+              console.log(`Filtering out redundant value suggestion for ${field}`);
+              return validFields;
+            }
+          }
+        }
+      }
+
+      // If we get here, this is a valid suggestion
+      validFields[field] = value;
       return validFields;
     }, {});
     
@@ -189,6 +255,7 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                       ? caseDetails[field]
                       : caseDetailsData?.[field];
                     const currentValueExists = currentValue !== undefined;
+                    const isLocked = lockedFields.includes(field);
                     
                     return (
                       <List.Item key={field}>
@@ -206,27 +273,41 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                               style={{ paddingTop: '4px' }}
                               onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)}
                               checked={acceptedSuggestions[docKey]?.[field] !== undefined}
+                              disabled={isLocked}
                             />
-                            <Popconfirm
-                              title="Dismiss suggestion?"
-                              onConfirm={() => handleDismissLocally(docKey, field)}
-                              okText="Dismiss"
-                              cancelText="Cancel"
-                              placement="top"
-                            >
+                            <Space>
+                              <Popconfirm
+                                title="Dismiss suggestion?"
+                                onConfirm={() => handleDismissLocally(docKey, field)}
+                                okText="Dismiss"
+                                cancelText="Cancel"
+                                placement="top"
+                              >
+                                <Button
+                                  type="text"
+                                  danger
+                                  size="small"
+                                  icon={<CloseOutlined />}
+                                  style={{ padding: '0 4px' }}
+                                />
+                              </Popconfirm>
                               <Button
                                 type="text"
-                                danger
                                 size="small"
-                                icon={<CloseOutlined />}
-                                style={{ marginLeft: '8px', padding: '0 4px' }}
+                                icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+                                onClick={() => toggleFieldLock(field)}
+                                style={{ padding: '0 4px' }}
+                                title={isLocked ? "Unlock field" : "Lock field"}
                               />
-                            </Popconfirm>
+                            </Space>
                             
                             <div style={{ flexGrow: 1 }}>
-                              <Text strong>{formatFieldName(field)}</Text>
-                              <Divider type="vertical" />
-                              <Tag color="blue">Suggestion</Tag>
+                              <Space>
+                                <Text strong>{formatFieldName(field)}</Text>
+                                <Divider type="vertical" />
+                                <Tag color="blue">Suggestion</Tag>
+                                {isLocked && <Tag color="red">Locked</Tag>}
+                              </Space>
                               
                               <div style={{ marginTop: '8px' }}>
                                 <Text code style={{ 
@@ -235,9 +316,15 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                                   background: '#e6f7ff', 
                                   padding: '8px 12px', 
                                   borderRadius: '6px', 
-                                  border: '1px solid #91d5ff' 
+                                  border: '1px solid #91d5ff',
+                                  fontFamily: 'inherit',
+                                  fontSize: '14px',
+                                  lineHeight: '1.5'
                                 }}>
-                                  {isDateField(field) ? formatDate(suggestedValue) : JSON.stringify(suggestedValue, null, 2)}
+                                  {isDateField(field) ? formatDate(suggestedValue) : 
+                                    (typeof suggestedValue === 'string' ? 
+                                      suggestedValue : 
+                                      JSON.stringify(suggestedValue, null, 2))}
                                 </Text>
                               </div>
                               
@@ -251,9 +338,15 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                                     padding: '8px 12px', 
                                     marginTop: '4px',
                                     borderRadius: '6px', 
-                                    border: '1px solid #d9d9d9' 
+                                    border: '1px solid #d9d9d9',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5'
                                   }}>
-                                    {isDateField(field) ? formatDate(currentValue) : JSON.stringify(currentValue, null, 2)}
+                                    {isDateField(field) ? formatDate(currentValue) : 
+                                      (typeof currentValue === 'string' ? 
+                                        currentValue : 
+                                        JSON.stringify(currentValue, null, 2))}
                                   </Text>
                                 </div>
                               )}

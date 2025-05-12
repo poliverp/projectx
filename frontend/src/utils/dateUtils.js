@@ -16,7 +16,12 @@ export const formatDate = (dateString) => {
     if (isNaN(date.getTime())) return dateString;
     
     // Format as "Month Day, Year"
-    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const options = { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric',
+      timeZone: 'UTC' // Ensure consistent timezone handling
+    };
     return date.toLocaleDateString('en-US', options);
   } catch (error) {
     console.error('Error formatting date:', error);
@@ -34,18 +39,18 @@ export const datesAreEqual = (date1, date2) => {
   if (!date1 || !date2) return false;
   
   try {
+    // Parse dates and set to UTC midnight for comparison
     const d1 = new Date(date1);
     const d2 = new Date(date2);
     
     // Check if both dates are valid
     if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
     
-    // Compare year, month, and day only
-    return (
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate()
-    );
+    // Set both dates to UTC midnight for comparison
+    const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+    const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+    
+    return utc1 === utc2;
   } catch (error) {
     console.error('Error comparing dates:', error);
     return false;

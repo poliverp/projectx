@@ -370,54 +370,48 @@ function CasePage() {
     setIsFilesModalOpen(true);
   };
 
-  const handleSaveChanges = async (event) => {
-    event.preventDefault();
-    if (!caseDetails || editLoading) return;
-
-  const handleCloseFilesModal = () => {
-      setIsFilesModalOpen(false);
-      // IMPORTANT: Consider if refreshing case details is needed after closing
-      // For example, if the number of files is displayed somewhere on CasePage.
-      // If using the hook internally refreshes the list displayed *in the modal*,
-      // you might not need to refresh the *entire* CasePage here unless
-      // top-level data derived from documents needs updating.
-      // fetchCaseDetails(); // Uncomment if refresh needed
-  };
-
+  const handleSaveChanges = async (formData) => {
+    setEditLoading(true);
+    setEditError(null);
+    
     try {
-      const formValues = await form.validateFields();
-      console.log("Validated Form Values:", formValues);
-
-      const updatePayload = { ...formValues };
-
-      setEditLoading(true);
-      setEditError(null);
-
-      console.log("Attempting to save changes with payload:", updatePayload);
-
+      // Prepare the update payload
+      const updatePayload = {};
+      
+      // Process each field
+      caseFieldConfig.forEach(field => {
+        if (field.name in formData) {
+          if (field.isDedicated) {
+            updatePayload[field.name] = formData[field.name];
+          } else {
+            // For non-dedicated fields, update case_details
+            if (!updatePayload.case_details) {
+              updatePayload.case_details = { ...caseDetails.case_details };
+            }
+            updatePayload.case_details[field.name] = formData[field.name];
+          }
+        }
+      });
+      
+      console.log("Sending update payload:", updatePayload);
+      
+      // Send the update
       await api.updateCase(caseId, updatePayload);
-
-      console.log("Case updated successfully.");
+      
+      // Close the modal
       setIsEditModalOpen(false);
-      setEditLoading(false);
-      fetchCaseDetails();
-      toast.success("Case information updated");
-
-    } catch (errorInfo) {
-      if (errorInfo.errorFields) {
-        console.log('Form Validation Failed:', errorInfo);
-        setEditError("Please check the form for errors.");
-      } else {
-        console.error("Failed to save case changes:", errorInfo);
-        const apiError = errorInfo;
-        setEditError(`Failed to save changes: ${apiError.response?.data?.error || apiError.response?.data?.messages || apiError.message}`);
-        toast.error("Failed to save changes");
-      }
-      setEditLoading(false);
+      
+      // Refresh the case details
+      await fetchCaseDetails();
+      
+      // Show success message
+      toast.success("Case details updated successfully!");
+    } catch (err) {
+      console.error("Failed to update case:", err);
+      setEditError(err.message || "Failed to update case details");
+      toast.error("Failed to update case details");
     } finally {
-      if (editLoading) {
-        setEditLoading(false);
-      }
+      setEditLoading(false);
     }
   };
 
@@ -1126,83 +1120,14 @@ const handleDeleteCase = async () => {
       </div>
 
       {/* Edit Case Modal */}
-      <Modal
-        title="Edit Case Information"
-        open={isEditModalOpen}
-        onCancel={() => {
-          setIsEditModalOpen(false);
-          setEditLoading(false);
-          setEditError(null);
-        }}
-        confirmLoading={editLoading}
-        footer={[
-          <Button key="back" onClick={() => setIsEditModalOpen(false)} disabled={editLoading}>
-            Cancel
-          </Button>,
-          <Button key="submit" type="primary" loading={editLoading} onClick={handleSaveChanges}>
-            Save Changes
-          </Button>,
-        ]}
-        destroyOnClose
-        maskClosable={!editLoading}
-        width={700}
-      >
-        {editError && (
-          <Alert
-            message="Save Error"
-            description={editError}
-            type="error"
-            showIcon
-            closable
-            onClose={() => setEditError(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
-        
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSaveChanges}
-        >
-          <Row gutter={[16, 0]}>
-            {caseFieldConfig
-              .filter(field => field.isEditable === true)
-              .map(field => (
-                <Col xs={24} sm={field.span === 3 ? 24 : 12} md={field.span === 3 ? 24 : 12} key={field.name}>
-                  <Form.Item
-                    label={field.label}
-                    key={field.name}
-                    name={field.name}
-                    required={field.isRequired}
-                    rules={[
-                      {
-                        required: field.isRequired,
-                        message: `Please input ${field.label}!`
-                      }
-                    ]}
-                  >
-                    {field.type === 'textarea' ? (
-                      <TextArea
-                        name={field.name}
-                        disabled={editLoading}
-                        placeholder={field.placeholder}
-                        rows={4}
-                      />
-                    ) : (
-                      <Input
-                        name={field.name}
-                        disabled={editLoading}
-                        placeholder={field.placeholder}
-                        prefix={field.name.includes('date') ? <CalendarOutlined /> : null}
-                      />
-                    )}
-                  </Form.Item>
-                </Col>
-              ))
-            }
-          </Row>
-        </Form>
-      </Modal>
+      <EditCaseModal
+        isOpen={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        onSave={handleSaveChanges}
+        caseDetails={caseDetails}
+        loading={editLoading}
+        onSuccess={fetchCaseDetails}
+      />
 
       {/* All Details Modal */}
       <Modal

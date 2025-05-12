@@ -21,6 +21,7 @@ const apiClient = axios.create({
     // We will likely remove specific API key headers here later
     // if using session cookies for auth.
   },
+  timeout: 30000, // 30 second timeout
 });
 export const getPendingUsers = () => {
   return apiClient.get('/auth/admin/pending-users');
@@ -130,23 +131,48 @@ export const downloadWordDocument = async (caseId, data) => {
 };
 
 // --- Discovery Response Generation ---
-export const generateInterrogatoryResponses = async (caseId, file) => {
-    const formData = new FormData();
-    formData.append('file', file); // Key 'file' must match backend request.files['file']
+export const respondToDiscovery = async (caseId, formData) => {
+    const maxRetries = 2;
+    let retryCount = 0;
 
-    // Using axios directly for clarity with multipart/form-data:
-    try {
-        // The path assumes '/api' is in API_BASE_URL and '/discovery' is the blueprint prefix
-        const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/interrogatory-responses`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-             withCredentials: true, // <-- Also add here if this needs authentication later
-        });
-        return response; // Return the full response object
-    } catch (error) {
-        console.error("Generate Interrogatory Responses error details:", error.response || error.message);
-        throw error; // Re-throw to be caught by calling function
+    while (retryCount <= maxRetries) {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/respond`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                withCredentials: true,
+                timeout: 120000, // 2 minute timeout
+            });
+            return response;
+        } catch (error) {
+            console.error("Discovery response error:", error.response || error.message);
+            
+            // Handle timeout
+            if (error.code === 'ECONNABORTED') {
+                throw new Error('Request timed out after 2 minutes. The document might be too large or complex. Please try again or contact support.');
+            }
+
+            // Handle database connection errors
+            if (error.response?.data?.error?.includes('SSL connection has been closed') ||
+                error.response?.data?.error?.includes('database connection')) {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`Retrying request (${retryCount}/${maxRetries}) due to database connection error...`);
+                    // Wait for 1 second before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+                throw new Error('Database connection error. Please try again in a few moments.');
+            }
+
+            // Handle other errors
+            if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            }
+            
+            throw error;
+        }
     }
 };
 
@@ -203,17 +229,14 @@ const api = {
   getDocumentTypes,
   generateDocument,
   downloadWordDocument,
-  generateInterrogatoryResponses,
-  // --- Add Auth functions to default export ---
+  respondToDiscovery,
   register,
   login,
   logout,
   getAuthStatus,
-    // Admin functions
   getPendingUsers,
   approveUser,
   getUserByUsername,
-  // --- End Auth functions ---
   getInterrogatoryQuestions,
   generateInterrogatoryDocument,
 };

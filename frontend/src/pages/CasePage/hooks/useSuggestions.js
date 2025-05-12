@@ -1,15 +1,141 @@
 // src/pages/CasePage/hooks/useSuggestions.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { message } from 'antd';
 import api from '../../../services/api';
-import { caseFieldConfig } from '../../../config/caseFieldConfig';
 
 export function useSuggestions(caseDetails, refreshCase) {
+  // State for tracking locked fields - this is the source of truth for UI
+  const [lockedFields, setLockedFields] = useState([]);
+  
+  // State for tracking pending lock/unlock operations
+  const [pendingFieldLocks, setPendingFieldLocks] = useState({});
+  
+  // State for tracking suggestions acceptance
   const [acceptedSuggestions, setAcceptedSuggestions] = useState({});
   const [dismissedSuggestions, setDismissedSuggestions] = useState({});
+  
+  // Loading states
   const [isApplying, setIsApplying] = useState(false);
+  const [isLocking, setIsLocking] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  
+  // Success/error states
   const [applySuccess, setApplySuccess] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Initialize locked fields when case details change
+  useEffect(() => {
+    if (caseDetails?.case_details?.locked_fields) {
+      console.log('Setting locked fields from case details:', 
+        caseDetails.case_details.locked_fields);
+      setLockedFields(caseDetails.case_details.locked_fields || []);
+    } else {
+      console.log('No locked fields found in case details, resetting to empty array');
+      setLockedFields([]);
+    }
+    // Reset pending operations when case details change
+    setPendingFieldLocks({});
+  }, [caseDetails]);
+  
+  // Function to toggle field lock status with optimistic UI update
+  const toggleFieldLock = useCallback(async (fieldName) => {
+    if (!caseDetails) {
+      message.error('Cannot lock field: No case details available');
+      return;
+    }
+    
+    console.log(`Toggling lock for field: ${fieldName}`);
+    setIsLocking(true);
+    
+    // Check if field is currently locked
+    const isCurrentlyLocked = lockedFields.includes(fieldName);
+    console.log(`Field ${fieldName} is currently ${isCurrentlyLocked ? 'locked' : 'unlocked'}`);
+    
+    // Create new locked fields array for optimistic update
+    const newLockedFields = isCurrentlyLocked 
+      ? lockedFields.filter(f => f !== fieldName) 
+      : [...lockedFields, fieldName];
+    
+    // Update UI immediately (optimistic update)
+    setLockedFields(newLockedFields);
+    
+    // Track this field as having a pending operation
+    setPendingFieldLocks(prev => ({
+      ...prev,
+      [fieldName]: true
+    }));
+    
+    try {
+      // Get the current case details data
+      const currentDetails = caseDetails.case_details || {};
+      
+      // Create a deep copy for the update payload
+      const updatedDetails = JSON.parse(JSON.stringify(currentDetails));
+      
+      // Update the locked_fields array in the copy
+      updatedDetails.locked_fields = newLockedFields;
+      
+      console.log('Sending lock update payload:', { case_details: updatedDetails });
+      
+      // Make the API call to update the case
+      const response = await api.updateCase(caseDetails.id, {
+        case_details: updatedDetails
+      });
+      
+      console.log('Lock update response:', response);
+      
+      // Verify the response contains the updated locked fields
+      if (response?.case_details?.locked_fields) {
+        // Update local state with response data to ensure consistency
+        setLockedFields(response.case_details.locked_fields);
+        
+        message.success(`Field ${fieldName} ${isCurrentlyLocked ? 'unlocked' : 'locked'}`);
+        
+        // Remove from pending operations
+        setPendingFieldLocks(prev => {
+          const updated = { ...prev };
+          delete updated[fieldName];
+          return updated;
+        });
+        
+        // Optionally refresh the case data to ensure everything is in sync
+        if (refreshCase) {
+          await refreshCase();
+        }
+      } else {
+        throw new Error('Invalid response: missing locked_fields data');
+      }
+    } catch (err) {
+      console.error(`Error ${isCurrentlyLocked ? 'unlocking' : 'locking'} field ${fieldName}:`, err);
+      
+      // Revert the optimistic update on error
+      setLockedFields(isCurrentlyLocked 
+        ? [...lockedFields] // Keep it locked if it was locked
+        : lockedFields.filter(f => f !== fieldName) // Remove if it wasn't locked
+      );
+      
+      // Remove from pending operations
+      setPendingFieldLocks(prev => {
+        const updated = { ...prev };
+        delete updated[fieldName];
+        return updated;
+      });
+      
+      message.error(`Failed to ${isCurrentlyLocked ? 'unlock' : 'lock'} field: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsLocking(false);
+    }
+  }, [caseDetails, lockedFields, refreshCase]);
+  
+  // Function to check if a field is locked or has a pending lock operation
+  const isFieldLocked = useCallback((fieldName) => {
+    return lockedFields.includes(fieldName);
+  }, [lockedFields]);
+  
+  // Function to check if a field has a pending lock/unlock operation
+  const isFieldLockPending = useCallback((fieldName) => {
+    return pendingFieldLocks[fieldName] === true;
+  }, [pendingFieldLocks]);
   
   const handleCheckboxChange = useCallback((docKey, field, suggestedValue, isChecked) => {
     setAcceptedSuggestions(prev => {
@@ -50,97 +176,119 @@ export function useSuggestions(caseDetails, refreshCase) {
   }, []);
   
   const handleApplyChanges = useCallback(async () => {
-    
-    
     if (!caseDetails || Object.keys(acceptedSuggestions).length === 0 || isApplying) {
       return;
     }
     
-    
     setIsApplying(true);
     setApplySuccess(false);
+    setError(null);
     
-    // Build the update payload - this was missing before
-    const updatePayload = {};
-    const currentCaseDetailsData = caseDetails?.case_details ?? {};
-    const updatedDetails = JSON.parse(JSON.stringify(currentCaseDetailsData));
-    const processedDocKeys = new Set();
-    let caseDetailsChanged = false;
-
-    for (const docKey in acceptedSuggestions) {
-      if (!acceptedSuggestions[docKey] || Object.keys(acceptedSuggestions[docKey]).length === 0) {
-        continue;
-      }
-      processedDocKeys.add(docKey);
+    try {
+      // Build the update payload
+      const updatePayload = {};
+      const currentCaseDetailsData = caseDetails?.case_details ?? {};
+      const updatedDetails = JSON.parse(JSON.stringify(currentCaseDetailsData));
+      const processedDocKeys = new Set();
+      let caseDetailsChanged = false;
       
-      for (const field in acceptedSuggestions[docKey]) {
-        const acceptedValue = acceptedSuggestions[docKey][field];
+      // Helper function to truncate string values
+      const truncateValue = (value, maxLength = 200) => {
+        if (typeof value === 'string' && value.length > maxLength) {
+          console.warn(`Truncating value from ${value.length} to ${maxLength} characters`);
+          return value.substring(0, maxLength);
+        }
+        return value;
+      };
+
+      // Process each accepted suggestion
+      for (const [docKey, suggestions] of Object.entries(acceptedSuggestions)) {
+        processedDocKeys.add(docKey);
         
-        const dedicatedFields = caseFieldConfig
-          .filter(field => field.isDedicated === true)
-          .map(field => field.name);
+        for (const [field, acceptedValue] of Object.entries(suggestions)) {
+          // Skip if field is locked
+          if (isFieldLocked(field)) {
+            console.log(`Field ${field} is locked, skipping...`);
+            continue;
+          }
           
-        if (dedicatedFields.includes(field)) {
-          updatePayload[field] = acceptedValue;
-          console.log(`Applying to dedicated column: ${field} = ${JSON.stringify(acceptedValue)}`);
-        } else {
-          if (updatedDetails[field] !== acceptedValue) {
-            updatedDetails[field] = acceptedValue;
-            console.log(`Applying to case_details JSON (non-dedicated field): ${field} = ${JSON.stringify(acceptedValue)}`);
-            caseDetailsChanged = true;
+          // Determine if this is a dedicated field or case_details field
+          const fieldConfig = window.caseFieldConfig?.find(f => f.name === field);
+          if (!fieldConfig) {
+            console.warn(`No field configuration found for ${field}, skipping...`);
+            continue;
+          }
+          
+          const processedValue = truncateValue(acceptedValue);
+          
+          if (fieldConfig.isDedicated) {
+            updatePayload[field] = processedValue;
+          } else {
+            if (updatedDetails[field] !== processedValue) {
+              updatedDetails[field] = processedValue;
+              caseDetailsChanged = true;
+            }
           }
         }
       }
-    }
-
-    if (updatedDetails.pending_suggestions) {
-      for (const docKey of processedDocKeys) {
-        if (updatedDetails.pending_suggestions[docKey]) {
-          delete updatedDetails.pending_suggestions[docKey];
-          console.log(`Removed processed suggestions for ${docKey} from case_details`);
-          caseDetailsChanged = true;
+      
+      // Clear processed suggestions from case_details
+      if (updatedDetails.pending_suggestions) {
+        for (const docKey of processedDocKeys) {
+          if (updatedDetails.pending_suggestions[docKey]) {
+            delete updatedDetails.pending_suggestions[docKey];
+            caseDetailsChanged = true;
+          }
+        }
+        if (Object.keys(updatedDetails.pending_suggestions).length === 0) {
+          delete updatedDetails.pending_suggestions;
         }
       }
-      if (Object.keys(updatedDetails.pending_suggestions).length === 0) {
-        delete updatedDetails.pending_suggestions;
+      
+      // Include locked_fields in the update
+      updatedDetails.locked_fields = lockedFields;
+      caseDetailsChanged = true;
+      
+      if (caseDetailsChanged) {
+        updatePayload.case_details = updatedDetails;
       }
-    }
-
-    if (caseDetailsChanged) {
-      updatePayload.case_details = updatedDetails;
-    }
-    
-    // If no changes to apply, just exit
-    if (Object.keys(updatePayload).length === 0) {
-      console.log("No effective changes detected to apply.");
-      setIsApplying(false);
-      setAcceptedSuggestions({});
-      return;
-    }
-    
-    try {
+      
+      // If no changes to apply, just exit
+      if (Object.keys(updatePayload).length === 0) {
+        setAcceptedSuggestions({});
+        setIsApplying(false);
+        return;
+      }
+      
       console.log("Sending update payload:", updatePayload);
       
-      // Use caseDetails.id to ensure we have the right ID
-      await api.updateCase(caseDetails.id, updatePayload);
+      // Make the API call
+      const response = await api.updateCase(caseDetails.id, updatePayload);
+      
       setApplySuccess(true);
       message.success("Changes applied successfully!");
       
       // Clear the accepted suggestions
       setAcceptedSuggestions({});
       
-      // Ensure we're refreshing the case data
+      // Refresh the case data
       if (refreshCase) {
-        console.log("Refreshing case data after update");
-        refreshCase();
+        await refreshCase();
       }
     } catch (err) {
-      console.error("Failed to apply changes:", err);
-      message.error(`Failed to apply changes: ${err.message}`);
+      console.error("Error applying changes:", err);
+      
+      if (err.code === 'ECONNABORTED') {
+        setError("Request timed out. Please try again.");
+        message.error("Request timed out. Please try again.");
+      } else {
+        setError(err.response?.data?.error || err.message || "Failed to apply changes");
+        message.error(err.response?.data?.error || err.message || "Failed to apply changes");
+      }
     } finally {
       setIsApplying(false);
     }
-  }, [caseDetails, acceptedSuggestions, isApplying, refreshCase]);
+  }, [caseDetails, acceptedSuggestions, isApplying, refreshCase, lockedFields, isFieldLocked]);
   
   const handleClearSuggestions = useCallback(async () => {
     if (!caseDetails || isClearing || isApplying) return;
@@ -170,6 +318,14 @@ export function useSuggestions(caseDetails, refreshCase) {
   }, [caseDetails, isClearing, isApplying, refreshCase]);
   
   return {
+    // Core lock functionality
+    lockedFields,
+    toggleFieldLock,
+    isFieldLocked,
+    isFieldLockPending,
+    isLocking,
+    
+    // Suggestion handling
     acceptedSuggestions,
     dismissedSuggestions,
     isApplying,

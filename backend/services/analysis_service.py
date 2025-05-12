@@ -196,10 +196,19 @@ def trigger_analysis_and_update(document_id):
 
             # Check if analysis_result_json is a dictionary
             if isinstance(analysis_result_json, dict):
+                # Get locked fields from case details
+                locked_fields = current_details.get('locked_fields', [])
+                print(f"Found locked fields: {locked_fields}")
 
                 # Prepare the suggestion data: create a copy and remove our metadata
                 suggestion_data = analysis_result_json.copy()
                 suggestion_data.pop('analysis_metadata', None) # Remove metadata key if it exists
+
+                # Filter out locked fields from suggestions
+                for field in locked_fields:
+                    if field in suggestion_data:
+                        print(f"Removing locked field {field} from suggestions")
+                        del suggestion_data[field]
 
                 # Ensure 'pending_suggestions' key exists
                 if 'pending_suggestions' not in current_details:
@@ -244,3 +253,30 @@ def trigger_analysis_and_update(document_id):
     except Exception as e:
         print(f"Error during analysis orchestration for doc {document_id}: {e}")
         raise AnalysisServiceError(f"Analysis failed for document {document_id}") from e
+
+def analyze_discovery_with_gemini(prompt):
+    """
+    Calls Gemini with the provided prompt (for discovery extraction/response) and returns the parsed JSON.
+    """
+    api_key = current_app.config.get("AI_API_KEY")
+    if not api_key:
+        raise AnalysisServiceError("AI API Key is not configured.")
+
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-04-17')
+        json_output_config = GenerationConfig(response_mime_type="application/json", temperature=0.1)
+        print(f"--- [Discovery Gemini] Prompt Start (first 500 chars): {prompt[:500]}...")
+        response = model.generate_content(prompt, generation_config=json_output_config)
+        response_text = response.text
+        print(f"--- [Discovery Gemini] Raw Response Text (first 500 chars): {response_text[:500]}... ---")
+        parsed_json = json.loads(response_text)
+        return parsed_json
+    except json.JSONDecodeError as e:
+        print(f"ERROR: Failed to parse JSON response from Gemini: {e}")
+        print(f"Gemini Raw Text was: {response_text}")
+        raise AnalysisServiceError("Failed to parse analysis result from AI.") from e
+    except Exception as e:
+        print(f"ERROR: Discovery AI API call failed unexpectedly.")
+        traceback.print_exc()
+        raise AnalysisServiceError("Discovery analysis failed due to an API error.") from e

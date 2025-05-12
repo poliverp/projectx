@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { message } from 'antd';
 import api from '../../../services/api';
+import { datesAreEqual } from '../../../utils/dateUtils';
 
 export function useCaseDetails(caseId) {
   const [caseDetails, setCaseDetails] = useState(null);
@@ -61,24 +62,38 @@ export function useCaseDetails(caseId) {
           if (currentValue !== undefined) {
             // For date fields
             if (isDateField(field)) {
-              // Simple date comparison - just compare string representations
-              const strippedCurrent = String(currentValue).split('T')[0].split(' ')[0];
-              const strippedSuggested = String(value).split('T')[0].split(' ')[0];
-              
-              if (strippedCurrent === strippedSuggested) return; // Skip if dates match
+              // Use the imported datesAreEqual function for proper date comparison
+              if (datesAreEqual(currentValue, value)) {
+                console.log(`Skipping redundant date suggestion for ${field}:`, { currentValue, value });
+                return; // Skip if dates match
+              }
             } 
             // For string values
             else if (typeof value === 'string' && typeof currentValue === 'string') {
-              if (value.toLowerCase() === currentValue.toLowerCase()) return; // Skip if strings match
+              // Normalize strings for comparison
+              const normalizedCurrent = currentValue.toLowerCase().trim();
+              const normalizedSuggested = value.toLowerCase().trim();
+              if (normalizedCurrent === normalizedSuggested) {
+                console.log(`Skipping redundant string suggestion for ${field}:`, { currentValue, value });
+                return; // Skip if strings match
+              }
             }
             // For other types
             else {
               try {
-                // Try JSON comparison
-                if (JSON.stringify(value) === JSON.stringify(currentValue)) return;
+                // Try JSON comparison with normalized values
+                const normalizedCurrent = JSON.stringify(currentValue).toLowerCase();
+                const normalizedSuggested = JSON.stringify(value).toLowerCase();
+                if (normalizedCurrent === normalizedSuggested) {
+                  console.log(`Skipping redundant object suggestion for ${field}:`, { currentValue, value });
+                  return;
+                }
               } catch (e) {
                 // Fallback to direct comparison
-                if (value === currentValue) return;
+                if (value === currentValue) {
+                  console.log(`Skipping redundant value suggestion for ${field}:`, { currentValue, value });
+                  return;
+                }
               }
             }
           }
