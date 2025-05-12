@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Define the base URL for your API - **MAKE SURE PORT MATCHES YOUR BACKEND (5000 or 5001)**
-const API_BASE_URL = 'http://localhost:5000'; // Adjust port if needed!
+// Use relative URL so Vite proxy works in all environments
+const API_BASE_URL = '/api';
 // You might need your API key if the backend endpoint requires it (check your setup)
 // const API_KEY = 'AIzaSyDeW...';
 
@@ -17,7 +17,7 @@ function CaseList() {
     setLoading(true);
     setError(null); // Clear previous errors
 
-    axios.get(`${API_BASE_URL}/api/cases`, {
+    axios.get(`${API_BASE_URL}/cases`, {
        // Add headers if your GET endpoint requires the API key
        // headers: { 'x-api-key': API_KEY }
     })

@@ -28,6 +28,7 @@ function DocumentAnalysisPage() {
     const [loadingAnalysis, setLoadingAnalysis] = useState(false); // Loading state for analysis action
     const [error, setError] = useState(null);
     const [analysisResult, setAnalysisResult] = useState(null); // Stores the JSON/text result
+    const [caseDisplayName, setCaseDisplayName] = useState('');
 
     // Fetch documents for selection
     useEffect(() => {
@@ -51,6 +52,17 @@ function DocumentAnalysisPage() {
             }
         };
         fetchDocuments();
+    }, [caseId]);
+
+    // Fetch case display name
+    useEffect(() => {
+        api.getCase(caseId)
+            .then(response => {
+                setCaseDisplayName(response.data?.display_name || `Case ${caseId}`);
+            })
+            .catch(err => {
+                setCaseDisplayName(`Case ${caseId}`);
+            });
     }, [caseId]);
 
     // Handle Analysis Trigger
@@ -86,12 +98,12 @@ function DocumentAnalysisPage() {
     return (
         <Space direction="vertical" style={{ width: '100%', padding: '20px' }} size="large">
              {/* Page Title and Back Button */}
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <Title level={2} style={{ margin: 0 }}>Document Analysis for Case {caseId}</Title>
-                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/case/${caseId}`)}>
-                    Back to Case
-                 </Button>
-            </div>
+             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+                 <Title level={2} style={{ margin: 0 }}>
+                   Document Analysis for:
+                   <span style={{ fontSize: '1.05em', fontWeight: 500, color: '#7A4D3B', background: 'rgba(122,77,59,0.07)', borderRadius: '6px', padding: '2px 10px', marginLeft: 6, fontStyle: 'italic', letterSpacing: '0.5px', verticalAlign: 'middle', display: 'inline-block' }}>{caseDisplayName}</span>
+                 </Title>
+             </div>
 
              {/* Display General Errors */}
              {error && (

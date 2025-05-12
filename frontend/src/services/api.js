@@ -7,7 +7,9 @@ import axios from 'axios';
 // Assume this key is for authenticating requests *to your own backend*,
 // and your backend then uses its *own* secure keys for 3rd party services.
 // Configure this to point to where your backend server will run
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || '/api';
+
+console.log("API_BASE_URL:", API_BASE_URL);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -50,7 +52,7 @@ export const uploadDocument = async (caseId, file, options = {}) => {
 
   try {
     // Use axios directly for multipart/form-data to ensure correct headers
-    const response = await axios.post(`${API_BASE_URL}/cases/${caseId}/documents`, formData, {
+    const response = await axios.post(`/api/cases/${caseId}/documents`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

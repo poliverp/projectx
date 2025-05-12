@@ -9,6 +9,10 @@ import {
   FileDoneOutlined
 } from '@ant-design/icons';
 
+// Define the brown theme colors
+const BROWN_COLOR = '#8B4513';
+const BROWN_HOVER = '#A0522D';
+
 function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
   return (
     <Card size="small" className="case-actions-card" style={{ marginTop: '16px' }}>
@@ -17,21 +21,59 @@ function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
           type="primary"
           icon={<FolderOutlined />}
           onClick={onManageFiles}
+          style={{
+            backgroundColor: BROWN_COLOR,
+            borderColor: BROWN_COLOR,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = BROWN_HOVER;
+            e.currentTarget.style.borderColor = BROWN_HOVER;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = BROWN_COLOR;
+            e.currentTarget.style.borderColor = BROWN_COLOR;
+          }}
         >
           Manage Files
         </Button>
         
         <Button
+          type="primary"
           icon={<SearchOutlined />}
           onClick={onAnalyzeDocuments}
+          style={{
+            backgroundColor: BROWN_COLOR,
+            borderColor: BROWN_COLOR,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = BROWN_HOVER;
+            e.currentTarget.style.borderColor = BROWN_HOVER;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = BROWN_COLOR;
+            e.currentTarget.style.borderColor = BROWN_COLOR;
+          }}
         >
           Analyze Documents
         </Button>
         
         <Button
+          type="primary"
           icon={<FileAddOutlined />}
+          style={{
+            backgroundColor: BROWN_COLOR,
+            borderColor: BROWN_COLOR,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = BROWN_HOVER;
+            e.currentTarget.style.borderColor = BROWN_HOVER;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = BROWN_COLOR;
+            e.currentTarget.style.borderColor = BROWN_COLOR;
+          }}
         >
-          <Link to={`/case/${caseId}/discovery`}>Discovery</Link>
+          <Link to={`/case/${caseId}/discovery`} style={{ color: '#fff' }}>Discovery</Link>
         </Button>
       </Space>
     </Card>

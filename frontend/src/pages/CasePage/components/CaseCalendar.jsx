@@ -175,7 +175,8 @@ function CaseCalendar({ caseDetails }) {
           <CalendarOutlined /> Case Timeline
         </span>
       }
-      style={{ width: '100%', marginTop: '16px' }}
+      className="case-calendar-card"
+      style={{ marginTop: '16px' }}
     >
       {events.length > 0 ? (
         <>

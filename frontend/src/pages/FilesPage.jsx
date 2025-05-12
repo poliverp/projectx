@@ -149,7 +149,9 @@ function FilesPage() {
         <Space direction="vertical" style={{ width: '100%', padding: '20px' }} size="large">
              {/* Page Title and Back Button */}
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <Title level={2} style={{ margin: 0 }}>Manage Documents for: <Text strong>{caseDisplayName || `Case ${caseId}`}</Text></Title>
+                 <Title level={2} style={{ margin: 0 }}>
+                   Manage Documents for: <span style={{ fontSize: '1.05em', fontWeight: 500, color: '#7A4D3B', background: 'rgba(122,77,59,0.07)', borderRadius: '6px', padding: '2px 10px', marginLeft: 6, fontStyle: 'italic', letterSpacing: '0.5px', verticalAlign: 'middle', display: 'inline-block' }}>{caseDisplayName || `Case ${caseId}`}</span>
+                 </Title>
                  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/case/${caseId}`)}>
                     Back to Case
                  </Button>

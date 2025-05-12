@@ -117,6 +117,14 @@ def get_all_cases_for_user(user_id):
 
 # MODIFIED: Added ownership check (Keep this logic)
 def get_case_by_id(case_id, user_id):
+    print(f"DEBUG: Attempting to get case {case_id} for user {user_id}")
+    case = Case.query.get_or_404(case_id)
+    print(f"DEBUG: Found case {case_id}, owned by user {case.user_id}")
+    
+    # Check if this user owns the case
+    if case.user_id != user_id:
+        print(f"DEBUG: Permission denied - user {user_id} does not own case {case_id} (owned by {case.user_id})")
+        raise Forbidden("You don't have permission to access this case.")
     """
     Fetches a single case by its ID, ensuring ownership.
     Args:

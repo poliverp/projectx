@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
-import { toast } from 'react-toastify';
-import { Form, Input, Button, Checkbox, Alert, Typography } from 'antd';
+import { Form, Input, Button, Checkbox, Alert, Typography, Spin } from 'antd';
+import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
@@ -12,9 +11,8 @@ console.log("LOGIN PAGE COMPONENT LOADED");
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, currentUser, pendingApproval, setPendingApproval } = useAuth();
+  const { login, currentUser, pendingApproval, setPendingApproval, isLoading: authLoading, authError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [form] = Form.useForm();
 
   // Redirect if already logged in
@@ -26,44 +24,15 @@ function LoginPage() {
   }, [currentUser, navigate]);
 
   const handleLogin = async (values) => {
-    // 'values' contains { username: '...', password: '...', remember: true/false }
-    const { username, password, remember } = values;
-
     setIsLoading(true);
-    setError(null); // Clear previous errors
-
     try {
-      // Use the API directly instead of context.login
-      const response = await api.login({ username, password, remember });
-      
-      if (response.data && response.data.user) {
-        // Update context with user data
-        login(response.data.user);
-        toast.success(`Welcome back, ${response.data.user.username}!`);
-        // Let the useEffect handle navigation
-      } else {
-        const errorMsg = 'Login succeeded but no user data received.';
-        setError(errorMsg);
-        toast.warn(errorMsg);
-      }
-    } catch (err) {
-      console.error('Login failed:', err);
-      
-      // Handle pending approval error specifically
-      if (err.response?.status === 403 && 
-          err.response?.data?.error === "Account pending approval") {
-        setPendingApproval(true);
-        setError("Your account is pending admin approval. You'll receive an email once approved.");
-      } else {
-        const errorMsg = err.response?.data?.error || 'Login failed. Please check credentials.';
-        setError(errorMsg);
-      }
+      await login(values);
+      // No need to show notification or set error here; AuthContext handles it
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Render nothing while redirecting
   if (currentUser) {
     return <div>Redirecting...</div>;
   }
@@ -82,74 +51,141 @@ function LoginPage() {
             You will receive an email notification when your account has been approved.
           </Paragraph>
         </div>
-        <Button type="primary" onClick={() => navigate('/')}>
-          Return to Login
-        </Button>
+        <Button type="primary" onClick={() => navigate('/')}>Return to Login</Button>
       </div>
     );
   }
 
   // Optional: Define layout for Form Items
   const formItemLayout = {
-    labelCol: { xs: { span: 24 }, sm: { span: 6 } },
-    wrapperCol: { xs: { span: 24 }, sm: { span: 16 } },
+    labelCol: { xs: { span: 24 }, sm: { span: 24 } },
+    wrapperCol: { xs: { span: 24 }, sm: { span: 24 } },
   };
   const tailFormItemLayout = {
-    wrapperCol: { xs: { span: 24, offset: 0 }, sm: { span: 16, offset: 6 } },
+    wrapperCol: { xs: { span: 24, offset: 0 }, sm: { span: 24, offset: 0 } },
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '40px auto', padding: '30px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#fff' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Login</h2>
-
-      <Form
-        {...formItemLayout}
-        form={form}
-        name="login"
-        onFinish={handleLogin}
-        initialValues={{ remember: false }}
-        scrollToFirstError
+    <div
+      style={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 420,
+          background: '#fff',
+          borderRadius: 16,
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.12)',
+          padding: '40px 32px 32px 32px',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
       >
-        {error && (
-          <Form.Item wrapperCol={{ ...tailFormItemLayout.wrapperCol }} style={{ marginBottom: 16 }}>
-            <Alert message={error} type="error" showIcon closable onClose={() => setError(null)} />
+        {/* Logo/Icon */}
+        <div style={{ marginBottom: 16 }}>
+          <LoginOutlined style={{ fontSize: 40, color: '#1890ff', background: '#e6f7ff', borderRadius: '50%', padding: 10, boxShadow: '0 2px 8px #e6f7ff' }} />
+        </div>
+        <Title level={2} style={{ textAlign: 'center', marginBottom: 8, fontWeight: 700, letterSpacing: 1 }}>Welcome Back</Title>
+        <Paragraph style={{ textAlign: 'center', color: '#888', marginBottom: 24, fontSize: 16 }}>
+          Sign in to your ClerkLegal account
+        </Paragraph>
+
+        <Form
+          {...formItemLayout}
+          form={form}
+          name="login"
+          onFinish={handleLogin}
+          initialValues={{ remember: false }}
+          scrollToFirstError
+          disabled={authLoading || isLoading}
+          style={{ width: '100%', textAlign: 'center', filter: (authLoading || isLoading) ? 'blur(0.5px)' : 'none', pointerEvents: (authLoading || isLoading) ? 'none' : 'auto' }}
+        >
+          {authError && (
+            <Form.Item style={{ marginBottom: 16 }}>
+              <Alert message={authError} type="error" showIcon closable />
+            </Form.Item>
+          )}
+
+          <Form.Item
+            name="username"
+            rules={[{ required: true, message: 'Please input your Username!' }]}
+          >
+            <Input
+              prefix={<UserOutlined style={{ color: '#bfbfbf' }} />}
+              placeholder="Username"
+              size="large"
+              style={{ borderRadius: 8, textAlign: 'center' }}
+              disabled={authLoading || isLoading}
+            />
           </Form.Item>
+
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: 'Please input your Password!' }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
+              placeholder="Password"
+              size="large"
+              style={{ borderRadius: 8, textAlign: 'center' }}
+              disabled={authLoading || isLoading}
+            />
+          </Form.Item>
+
+          <Form.Item name="remember" valuePropName="checked" style={{ textAlign: 'left', marginBottom: 0 }}>
+            <Checkbox disabled={authLoading || isLoading}>Remember Me</Checkbox>
+          </Form.Item>
+
+          <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isLoading || authLoading}
+              block
+              size="large"
+              style={{ borderRadius: 8, fontWeight: 600, fontSize: 16, letterSpacing: 1 }}
+              disabled={isLoading || authLoading}
+            >
+              {(isLoading || authLoading) ? 'Logging In...' : 'Login'}
+            </Button>
+          </Form.Item>
+        </Form>
+
+        <div style={{ textAlign: 'center', marginTop: 24, width: '100%' }}>
+          <span style={{ color: '#888', fontSize: 15 }}>
+            Don't have an account?{' '}
+            <Link to="/register" style={{ color: '#1890ff', fontWeight: 500 }}>
+              Register here
+            </Link>
+          </span>
+        </div>
+
+        {(authLoading || isLoading) && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255,255,255,0.6)',
+            zIndex: 10
+          }}>
+            <Spin size="large" />
+          </div>
         )}
-
-        <Form.Item
-          name="username"
-          label="Username"
-          rules={[{ required: true, message: 'Please input your Username!' }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="password"
-          label="Password"
-          rules={[{ required: true, message: 'Please input your Password!' }]}
-        >
-          <Input.Password />
-        </Form.Item>
-
-        <Form.Item
-          name="remember"
-          valuePropName="checked"
-          {...tailFormItemLayout}
-        >
-          <Checkbox>Remember Me</Checkbox>
-        </Form.Item>
-
-        <Form.Item {...tailFormItemLayout}>
-          <Button type="primary" htmlType="submit" loading={isLoading} block>
-            {isLoading ? 'Logging In...' : 'Login'}
-          </Button>
-        </Form.Item>
-      </Form>
-
-      <p style={{ marginTop: '20px', textAlign: 'center' }}>
-        Don't have an account? <Link to="/register">Register here</Link>
-      </p>
+      </div>
     </div>
   );
 }

@@ -10,11 +10,13 @@
 }
 
 .compact-calendar .ant-picker-calendar .ant-picker-panel {
-  min-height: auto;
+  height: 350px !important;
+  min-height: 350px !important;
 }
 
 .compact-calendar .ant-picker-calendar .ant-picker-content {
-  height: auto;
+  height: 280px !important;
+  min-height: 280px !important;
 }
 
 /* Make the date cells a bit more compact */
@@ -46,6 +48,8 @@
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #f0f0f0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 /* Style list items */
@@ -66,4 +70,23 @@
 /* Hide week numbers if needed */
 .ant-picker-week-number-cell {
   display: none;
+}
+
+/* Set fixed height for the calendar card */
+.case-calendar-card {
+  height: 700px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.case-calendar-card .ant-card-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.compact-calendar {
+  flex: 0 0 auto;
 }

@@ -43,6 +43,9 @@ import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   SearchOutlined,
+  FileAddOutlined,
+  FileSearchOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons';
 
 // Import Pages
@@ -152,74 +155,6 @@ const Logo = ({ collapsed }) => (
   </div>
 );
 
-// Path to breadcrumb mapping
-const pathToBreadcrumb = {
-  'manage-cases': 'My Cases',
-  'cases/new': 'New Case',
-  'case': 'Case Details',
-  'files': 'Files',
-  'analyze': 'Analysis',
-  'create-doc': 'Create Document',
-  'create-discovery-response': 'Discovery Response',
-};
-
-// Breadcrumb component
-const PageBreadcrumb = () => {
-  const location = useLocation();
-  const pathSnippets = location.pathname.split('/').filter(i => i);
-
-    // ---### START REPLACEMENT ###---
-  // Build breadcrumb items dynamically
-  const breadcrumbItems = pathSnippets
-    .map((snippet, index) => {
-      const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
-      const isLast = index === pathSnippets.length - 1;
-
-      // --- Logic Modification ---
-      // 1. Skip the 'case' path segment entirely
-      if (snippet === 'case' && index === 0) { // Check if it's the first segment after root
-          return null; // Don't create a breadcrumb item for '/case'
-      }
-
-      // 2. Handle the Case ID segment (now the second segment, index 1, if '/case' was skipped)
-      // Or more robustly, check if the previous segment was 'case'
-      const isCaseIdSegment = index > 0 && pathSnippets[index - 1] === 'case';
-
-      let displayName;
-      if (isCaseIdSegment && isLast) {
-          // For now, just display the Case ID itself as the last item
-          // TODO: Fetch display_name later if needed
-          displayName = `Case ${snippet}`; // Display "Case [ID]"
-      } else {
-          // Use mapping for other known segments or format the snippet
-          displayName = pathToBreadcrumb[snippet] || (snippet.charAt(0).toUpperCase() + snippet.slice(1));
-      }
-
-      // --- End Logic Modification ---
-
-      return {
-        // Only make it a link if it's NOT the last item
-        title: isLast ? displayName : <Link to={url}>{displayName}</Link>,
-        // Optional: Add key if needed for React list rendering
-        // key: url,
-      };
-    })
-    .filter(item => item !== null); // Remove any null items created by skipping '/case'
-  // ---### END REPLACEMENT ###---
-
-  // Always add Home at the beginning
-  breadcrumbItems.unshift({
-    title: <Link to="/manage-cases"><HomeOutlined /></Link>,
-  });
-
-  return (
-    <Breadcrumb 
-      items={breadcrumbItems}
-      style={{ marginBottom: '16px' }}
-    />
-  );
-};
-
 // Main App component
 function AppContent() {
   const { currentUser, logout } = useAuth();
@@ -294,10 +229,6 @@ function AppContent() {
     selectedKeys = ['/'];
   }
 
-  // Check if user is on a page that should show breadcrumbs
-  const showBreadcrumbs = currentUser && location.pathname !== '/' && 
-                          location.pathname !== '/login' && location.pathname !== '/register';
-
   // Determine if we're looking at a specific case
   const isCasePage = location.pathname.match(/^\/case\/[^\/]+/);
 
@@ -370,7 +301,7 @@ function AppContent() {
                 items={[
                   {
                     key: location.pathname.split('/').slice(0, 3).join('/'),
-                    icon: <FileOutlined />,
+                    icon: <AppstoreOutlined />,
                     label: 'Overview'
                   },
                   {
@@ -385,12 +316,12 @@ function AppContent() {
                   },
                   {
                     key: `${location.pathname.split('/').slice(0, 3).join('/')}/create-doc`,
-                    icon: <FileOutlined />,
+                    icon: <FileAddOutlined />,
                     label: 'Create Doc'
                   },
                   {
-                    key: `${location.pathname.split('/').slice(0, 3).join('/')}/create-discovery-response`,
-                    icon: <FileOutlined />,
+                    key: `${location.pathname.split('/').slice(0, 3).join('/')}/discovery`,
+                    icon: <FileSearchOutlined />,
                     label: 'Discovery'
                   }
                 ]}
@@ -411,8 +342,11 @@ function AppContent() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: '#fff',
-          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
+          background: 'rgba(255,255,255,0.55)', // More translucent
+          backdropFilter: 'blur(12px)', // Frosted glass effect
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1.5px solid rgba(200,200,200,0.25)', // Subtle border
+          boxShadow: '0 2px 12px 0 rgba(31, 38, 135, 0.07)',
           position: 'sticky',
           top: 0,
           zIndex: 1,
@@ -427,23 +361,27 @@ function AppContent() {
                 <Link to="/" style={{ textDecoration: 'none' }}>
                   <Space>
                     <div style={{ 
-                      width: '32px', 
-                      height: '32px', 
-                      borderRadius: '4px',
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
                       background: 'linear-gradient(135deg, #7A4D3B 0%, #A0522D 100%)',
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
                       color: '#fff',
-                      fontWeight: 'bold'
+                      fontWeight: 800,
+                      fontSize: '20px',
+                      fontFamily: 'Segoe UI, Arial, sans-serif',
+                      boxShadow: '0 2px 8px rgba(122,77,59,0.10)',
                     }}>
                       CL
                     </div>
                     <span style={{ 
-                      color: '#7A4D3B', 
-                      fontWeight: 'bold', 
-                      fontSize: '18px',
-                      letterSpacing: '0.5px'
+                      color: '#7A4D3B',
+                      fontWeight: 700,
+                      fontSize: '20px',
+                      fontFamily: 'Segoe UI, Arial, sans-serif',
+                      marginLeft: 8,
                     }}>
                       ClerkLegal
                     </span>
@@ -458,8 +396,10 @@ function AppContent() {
                 level={4} 
                 style={{ 
                   margin: 0, 
-                  fontWeight: '600',
-                  color: token.colorTextBase
+                  fontWeight: 500,
+                  color: token.colorTextBase,
+                  letterSpacing: '1.5px',
+                  textShadow: '0 2px 8px rgba(122,77,59,0.10)',
                 }}
               >
                 {/* Dynamic title based on location */}
@@ -511,11 +451,8 @@ function AppContent() {
         <Content style={{ 
           padding: '24px',
           minHeight: '280px',
-          backgroundColor: token.colorBgBase,
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         }}>
-          {/* Show breadcrumbs for logged in users on nested pages */}
-          {showBreadcrumbs && <PageBreadcrumb />}
-          
           {/* Main content card container */}
           <Card 
             bordered={false}

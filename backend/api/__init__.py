@@ -13,4 +13,6 @@ bp = Blueprint('api', __name__, url_prefix='/api')
 from . import cases
 from . import documents
 from . import generation # <-- ADD THIS LINE
+from . import discovery
+from . import auth
 

@@ -147,11 +147,25 @@ def analyze_text_with_gemini(text_content):
         raise AnalysisServiceError("Analysis failed due to an API error.") from e
         # -------------------------
 
+def call_gemini_with_prompt(prompt):
+    """
+    Calls Gemini with the provided prompt as-is and returns the response text.
+    """
+    api_key = current_app.config.get("AI_API_KEY")
+    if not api_key:
+        raise AnalysisServiceError("AI API Key is not configured.")
 
-
-
-# --- backend/services/analysis_service.py ---
-# ... (imports and other functions remain the same) ...
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-04-17')
+        generation_config = GenerationConfig(
+            response_mime_type="text/plain",
+            temperature=0.2
+        )
+        response = model.generate_content(prompt, generation_config=generation_config)
+        return response.text
+    except Exception as e:
+        raise AnalysisServiceError(f"AI call failed: {e}")
 
 def trigger_analysis_and_update(document_id):
     """

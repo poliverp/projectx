@@ -26,6 +26,7 @@ import CaseDetailsSidebar from './components/CaseDetailsSidebar';
 import './styles.css';
 import CaseCalendar from "./components/CaseCalendar";
 import './calendar.css';
+import DiscoveryTab from './components/tabs/DiscoveryTab';
 
 const { Title } = Typography;
 
@@ -187,11 +188,12 @@ function CasePage() {
           />
           
           {/* Main Content Tabs */}
-          <Card style={{ marginTop: '16px' }}>
+          <Card style={{ marginTop: '16px', height: '500px', overflow: 'auto' }}>
             <Tabs
               activeKey={activeTab}
               onChange={setActiveTab}
               size="large"
+              style={{ height: '100%' }}
               items={[
                 {
                   label: (
@@ -202,7 +204,9 @@ function CasePage() {
                   ),
                   key: "generate",
                   children: (
-                    <DocumentGenerationTab caseId={caseId} />
+                    <div style={{ height: 'calc(100% - 54px)', overflowY: 'auto' }}>
+                      <DocumentGenerationTab caseId={caseId} />
+                    </div>
                   )
                 },
                 {
@@ -217,13 +221,29 @@ function CasePage() {
                   ),
                   key: "suggestions",
                   children: (
-                    <SuggestionsTab
-                      caseDetails={caseDetails}
-                      refreshCase={fetchCaseDetails}
-                      caseId={caseId}
-                      autoExpand={autoExpandSuggestions}
-                      onAnalyzeDocuments={handleOpenAnalysisModal} 
-                    />
+                    <div style={{ height: 'calc(100% - 54px)', overflowY: 'auto' }}>
+                      <SuggestionsTab
+                        caseDetails={caseDetails}
+                        refreshCase={fetchCaseDetails}
+                        caseId={caseId}
+                        autoExpand={autoExpandSuggestions}
+                        onAnalyzeDocuments={handleOpenAnalysisModal} 
+                      />
+                    </div>
+                  )
+                },
+                {
+                  label: (
+                    <span>
+                      <InfoCircleOutlined />
+                      Discovery Response
+                    </span>
+                  ),
+                  key: "discovery",
+                  children: (
+                    <div style={{ height: 'calc(100% - 54px)', overflowY: 'auto' }}>
+                      <DiscoveryTab caseId={caseId} userId={caseDetails?.user_id} />
+                    </div>
                   )
                 },
               ]}

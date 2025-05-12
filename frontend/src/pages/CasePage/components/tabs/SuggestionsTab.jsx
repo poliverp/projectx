@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { 
   FileTextOutlined, CheckCircleTwoTone, CloseOutlined, 
-  SearchOutlined 
+  SearchOutlined, BulbOutlined
 } from '@ant-design/icons';
 import { useSuggestions } from '../../hooks/useSuggestions';
 import { formatDate, datesAreEqual } from '../../../../utils/dateUtils';
@@ -43,17 +43,12 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
       .replace(/\b\w/g, char => char.toUpperCase());
   };
   
-  // Helper function to check if a value should be filtered out (null, zero, or empty string)
+  // Helper function to check if a value should be filtered out
   const shouldFilterValue = (value) => {
-    // Check for null/undefined
     if (value === null || value === undefined) return true;
-    // Check for empty strings, zeros
     if (value === 0 || value === "0" || value === "") return true;
-    // Check for empty arrays
     if (Array.isArray(value) && value.length === 0) return true;
-    // Check for empty objects
     if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) return true;
-    // Check for strings that only contain whitespace
     if (typeof value === 'string' && value.trim() === '') return true;
     return false;
   };
@@ -63,9 +58,8 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
     return fieldName.includes('date');
   };
   
-  // Filter the pending suggestions to remove documents with no valid suggestions
+  // Filter the pending suggestions
   const filteredPendingSuggestions = Object.entries(pendingSuggestions).reduce((acc, [docKey, suggestions]) => {
-    // Filter out null, zero, and empty values from this document's suggestions
     const validSuggestions = Object.entries(suggestions).reduce((validFields, [field, value]) => {
       if (!shouldFilterValue(value) && !dismissedSuggestions[docKey]?.[field]) {
         validFields[field] = value;
@@ -73,44 +67,42 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
       return validFields;
     }, {});
     
-    // Only include this document if it has at least one valid suggestion
     if (Object.keys(validSuggestions).length > 0) {
       acc[docKey] = validSuggestions;
     }
     return acc;
   }, {});
   
-  // Determine if we have pending suggestions after filtering
   const hasSuggestions = Object.keys(filteredPendingSuggestions).length > 0;
   
-  // Auto-expand effect - use useRef to ensure it only runs once per autoExpand=true
+  // Auto-expand effect
   useEffect(() => {
     if (autoExpand && hasSuggestions && !processedAutoExpand.current) {
-      // Get the first document key
       const suggestionsKeys = Object.keys(filteredPendingSuggestions);
       if (suggestionsKeys.length > 0) {
-        const firstDocKey = suggestionsKeys[0];
-        setActiveCollapseKeys([firstDocKey]);
+        setActiveCollapseKeys([suggestionsKeys[0]]);
         processedAutoExpand.current = true;
       }
     }
     
-    // Reset the ref when autoExpand changes back to false
     if (!autoExpand) {
       processedAutoExpand.current = false;
     }
   }, [autoExpand, hasSuggestions]);
   
-  // Handle Collapse change
   const handleCollapseChange = (key) => {
     setActiveCollapseKeys(Array.isArray(key) ? key : [key]);
   };
   
   return (
-    <Space direction="vertical" style={{ width: '100%' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title="AI Analysis Suggestions" 
-        type="inner"
+        title={
+          <Space>
+            <BulbOutlined />
+            AI Analysis Suggestions
+          </Space>
+        }
         extra={
           <Space>
             {hasSuggestions && (
@@ -145,14 +137,29 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
             </Button>
           </Space>
         }
+        style={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden'
+        }}
+        bodyStyle={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '0'
+        }}
       >
         {hasSuggestions ? (
           <Collapse 
             accordion
             expandIconPosition="end"
-            bordered={false}
             activeKey={activeCollapseKeys}
             onChange={handleCollapseChange}
+            style={{ 
+              background: 'transparent',
+              border: 'none'
+            }}
           >
             {Object.entries(filteredPendingSuggestions).map(([docKey, suggestions]) => (
               <Collapse.Panel 
@@ -163,79 +170,36 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                   </Space>
                 } 
                 key={docKey}
+                style={{
+                  marginBottom: '8px',
+                  background: '#fff',
+                  borderRadius: '8px',
+                  border: '1px solid #f0f0f0'
+                }}
               >
                 <List
                   itemLayout="vertical"
                   dataSource={Object.entries(suggestions)}
                   renderItem={([field, suggestedValue]) => {
-                    // Skip rendering if value should be filtered or is dismissed
                     if (shouldFilterValue(suggestedValue) || dismissedSuggestions[docKey]?.[field]) {
                       return null;
                     }
                     
-                    // Get the current value for comparison
-                    let currentValue = caseDetails?.[field] !== undefined
-                                      ? caseDetails[field]
-                                      : caseDetailsData?.[field];
+                    const currentValue = caseDetails?.[field] !== undefined
+                      ? caseDetails[field]
+                      : caseDetailsData?.[field];
                     const currentValueExists = currentValue !== undefined;
-                    
-                    // Filter out redundant suggestions
-                    let isRedundant = false;
-                    if (currentValueExists) {
-                      if (isDateField(field)) {
-                        // Simple date comparison that ignores time portion
-                        const stripTimeFromDate = (dateValue) => {
-                          if (!dateValue) return null;
-                          
-                          let dateString;
-                          // Handle string dates
-                          if (typeof dateValue === 'string') {
-                            // Just take the date portion if it's a string with a date format
-                            dateString = dateValue.split('T')[0].split(' ')[0];
-                            return dateString;
-                          }
-                          
-                          // Handle Date objects
-                          if (dateValue instanceof Date) {
-                            // Get just YYYY-MM-DD without timezone conversion
-                            const year = dateValue.getFullYear();
-                            const month = String(dateValue.getMonth() + 1).padStart(2, '0');
-                            const day = String(dateValue.getDate()).padStart(2, '0');
-                            return `${year}-${month}-${day}`;
-                          }
-                          
-                          return String(dateValue);
-                        };
-                        
-                        const strippedCurrent = stripTimeFromDate(currentValue);
-                        const strippedSuggested = stripTimeFromDate(suggestedValue);
-                        
-                        isRedundant = strippedCurrent === strippedSuggested;
-                      } else if (typeof suggestedValue === 'string' && typeof currentValue === 'string') {
-                        // Case-insensitive string comparison for string fields
-                        isRedundant = suggestedValue.toLowerCase() === currentValue.toLowerCase();
-                      } else {
-                        // For objects and other types, try JSON comparison first
-                        try {
-                          isRedundant = JSON.stringify(suggestedValue) === JSON.stringify(currentValue);
-                        } catch (e) { 
-                          // Fallback to direct comparison if JSON fails
-                          isRedundant = suggestedValue === currentValue; 
-                        }
-                      }
-                    }
-                    
-                    // Skip redundant values
-                    if (isRedundant) { 
-                      return null; 
-                    }
                     
                     return (
                       <List.Item key={field}>
                         <Card
                           size="small"
                           bordered={false}
-                          style={{ background: '#f9f9f9', marginBottom: '8px' }}
+                          style={{ 
+                            background: '#fafafa',
+                            marginBottom: '8px',
+                            borderRadius: '6px'
+                          }}
                         >
                           <Space align="start" style={{ width: '100%' }}>
                             <Checkbox
@@ -260,7 +224,7 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                             </Popconfirm>
                             
                             <div style={{ flexGrow: 1 }}>
-                              <Text strong>{formatFieldName(field)}:</Text>
+                              <Text strong>{formatFieldName(field)}</Text>
                               <Divider type="vertical" />
                               <Tag color="blue">Suggestion</Tag>
                               
@@ -269,31 +233,28 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                                   whiteSpace: 'pre-wrap', 
                                   display: 'block', 
                                   background: '#e6f7ff', 
-                                  padding: '4px 8px', 
-                                  borderRadius: '4px', 
+                                  padding: '8px 12px', 
+                                  borderRadius: '6px', 
                                   border: '1px solid #91d5ff' 
                                 }}>
                                   {isDateField(field) ? formatDate(suggestedValue) : JSON.stringify(suggestedValue, null, 2)}
                                 </Text>
                               </div>
                               
-                              {currentValueExists ? (
+                              {currentValueExists && (
                                 <div style={{ marginTop: '8px' }}>
                                   <Text type="secondary">Current Value:</Text>
                                   <Text code type="secondary" style={{ 
                                     whiteSpace: 'pre-wrap', 
                                     display: 'block', 
-                                    background: '#fafafa', 
-                                    padding: '4px 8px', 
-                                    borderRadius: '4px', 
+                                    background: '#f5f5f5', 
+                                    padding: '8px 12px', 
+                                    marginTop: '4px',
+                                    borderRadius: '6px', 
                                     border: '1px solid #d9d9d9' 
                                   }}>
                                     {isDateField(field) ? formatDate(currentValue) : JSON.stringify(currentValue, null, 2)}
                                   </Text>
-                                </div>
-                              ) : (
-                                <div style={{ marginTop: '8px' }}>
-                                  <Text type="secondary">Current: Not Set</Text>
                                 </div>
                               )}
                             </div>
@@ -307,23 +268,34 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
             ))}
           </Collapse>
         ) : (
-          <Empty 
-            image={Empty.PRESENTED_IMAGE_SIMPLE} 
-            description={
-              <Space direction="vertical" align="center">
-                <Text>No pending suggestions found</Text>
-                {lastAnalyzedDocId && (
-                  <Text type="secondary">Last analyzed document ID: {lastAnalyzedDocId}</Text>
-                )}
-                <Button type="primary" icon={<SearchOutlined />} onClick={onAnalyzeDocuments}>
-                  Analyze Documents
-                </Button>
-              </Space>
-            }
-          />
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 24px',
+            height: '100%',
+            background: '#fafafa',
+            borderRadius: '8px'
+          }}>
+            <Empty 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+              description={
+                <Space direction="vertical" align="center" size="large">
+                  <Text>No pending suggestions found</Text>
+                  {lastAnalyzedDocId && (
+                    <Text type="secondary">Last analyzed document ID: {lastAnalyzedDocId}</Text>
+                  )}
+                  <Button type="primary" icon={<SearchOutlined />} onClick={onAnalyzeDocuments}>
+                    Analyze Documents
+                  </Button>
+                </Space>
+              }
+            />
+          </div>
         )}
       </Card>
-    </Space>
+    </div>
   );
 }
 

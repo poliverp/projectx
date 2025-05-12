@@ -34,14 +34,27 @@ def create_app(config_class=Config):
     print(f"--- [INIT] Loaded config from object: {config_class.__name__} ---")
     
     # --- Initialize Flask Extensions ---
-    # --- ADDED: Configure Session Cookie for Production/Cross-Site ---
-    app.config['SESSION_COOKIE_SECURE'] = True  # Send cookie only over HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent client-side JS access
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None' # Allow sending with cross-site requests (Required for cross-origin credentialed requests)
-    # --- END ADDED ---
-    # In backend/__init__.py
+    # --- Bulletproof Session Cookie & CORS Config for Dev/Prod ---
+    import socket
+    is_dev = (
+        app.config.get('FLASK_ENV') == 'development' or
+        os.environ.get('FLASK_ENV') == 'development' or
+        os.environ.get('RENDER') is None  # Not on Render
+    )
+    if is_dev:
+        app.config['SESSION_COOKIE_SECURE'] = False  # Allow cookies over HTTP in dev
+        app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Lax is safest for dev, works with most browsers
+        dev_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+        cors.init_app(app, resources={r"/api/*": {"origins": dev_origins}}, supports_credentials=True)
+    else:
+        app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookies over HTTPS in prod
+        app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Required for cross-site cookies with HTTPS
+        frontend_url = app.config.get('FRONTEND_URL', 'https://your-production-frontend.com')
+        cors.init_app(app, resources={r"/api/*": {"origins": frontend_url}}, supports_credentials=True)
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
     app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+    # --- END Bulletproof Config ---
     # --- Security Headers ---
     @app.after_request
     def add_security_headers(response):
@@ -69,9 +82,12 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config['FRONTEND_URL']}}, supports_credentials=True)
     ma.init_app(app)
+    
+    # Disable CSRF protection for development
+    app.config['WTF_CSRF_ENABLED'] = False  # DEVELOPMENT ONLY: Remove this in production
     csrf.init_app(app)
+    
     file_encryptor.init_app(app)
     limiter.init_app(app)
 
@@ -108,22 +124,14 @@ def create_app(config_class=Config):
 
     # --- Register Blueprints ---
     try:
-        # Assumes 'bp' is defined in backend/api/__init__.py and covers cases etc.
+        # Assumes 'bp' is defined in backend/api/__init__.py and covers all API endpoints, including auth
         from .api import bp as api_blueprint
-        # Assumes 'discovery_bp' is defined in backend/api/discovery.py
-        from .api.discovery import discovery_bp
-        # Assumes 'auth_bp' is defined in backend/api/auth.py
-        from .api.auth import auth_bp
 
         # Register the blueprints
-        app.register_blueprint(api_blueprint, url_prefix='/api')
-        app.register_blueprint(discovery_bp, url_prefix='/api/discovery')
-        app.register_blueprint(auth_bp, url_prefix='/api/auth')
-        
+        app.register_blueprint(api_blueprint)
+
         # Exempt API routes from CSRF
         csrf.exempt(api_blueprint)
-        csrf.exempt(discovery_bp)
-        csrf.exempt(auth_bp)
 
         print("--- Blueprints Registered Successfully ---")
 

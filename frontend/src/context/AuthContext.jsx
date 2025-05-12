@@ -48,33 +48,42 @@ export const AuthProvider = ({ children }) => {
     setPendingApproval(false);
     
     try {
-
       console.log("Login credentials:", {
         ...credentials, 
         password: "***" // Don't log actual password
       });
 
       const response = await api.login(credentials);
-      
       console.log("Login server response:", response.data);
 
       if (response.data && response.data.user) {
-        console.log("Setting current user state:", response.data.user);
-        setCurrentUser(response.data.user);
-        return { success: true };
+        // Wait a short moment to ensure the cookie is set
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Now check auth status to refresh user state with the session cookie
+        try {
+          const statusResponse = await api.getAuthStatus();
+          if (statusResponse.data && statusResponse.data.user) {
+            setCurrentUser(statusResponse.data.user);
+            return { success: true };
+          } else {
+            throw new Error('Auth status response missing user data');
+          }
+        } catch (statusError) {
+          setAuthError('Login succeeded but failed to fetch user session. Please try again.');
+          toast.error('Login succeeded but failed to fetch user session. Please try again.');
+          return { success: false, message: 'Login succeeded but failed to fetch user session.' };
+        }
       } else {
         throw new Error('Login response missing user data');
       }
     } catch (error) {
       console.error('Login error:', error);
-      
       // Handle pending approval error specifically
       if (error.response && error.response.status === 403 && error.response.data.error === "Account pending approval") {
         setPendingApproval(true);
         setAuthError("Your account is pending approval. You'll receive an email when approved.");
         return { success: false, pendingApproval: true, message: error.response.data.message };
       }
-      
       const errorMessage = error.response?.data?.error || 'Login failed. Please try again.';
       setAuthError(errorMessage);
       toast.error(errorMessage);

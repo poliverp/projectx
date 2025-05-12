@@ -9,4 +9,4 @@ if __name__ == '__main__':
     # or executing directly: python backend/app.py
     # Gunicorn uses the factory directly via the entry point specified.
     print("Running Flask development server...")
-    app.run(debug=True) # Use debug=True only for local development
+    app.run(debug=True, host="localhost", port=5050)

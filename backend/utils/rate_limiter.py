@@ -32,7 +32,7 @@ def on_rate_limit_exceeded(request_limit):
 # Create limiter instance
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=[],  # Unlimited for debugging
     storage_uri="memory://",  # Use in-memory storage
     strategy="fixed-window",  # Fixed time window strategy
 )

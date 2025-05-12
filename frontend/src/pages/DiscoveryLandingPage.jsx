@@ -47,16 +47,11 @@ function DiscoveryLandingPage() {
     return (
         <Space direction="vertical" style={{ width: '100%', padding: '20px' }} size="large">
             {/* Page Header */}
-            <Row justify="space-between" align="middle">
+            <Row justify="start" align="middle" style={{ marginBottom: 24 }}>
                 <Col>
-                    <Title level={2}>
-                        Discovery Tools for {loadingCase ? <Spin size="small" /> : <Text strong>{caseDisplayName}</Text>}
+                    <Title level={2} style={{ margin: 0 }}>
+                        Discovery Tools for: <span style={{ fontSize: '1.05em', fontWeight: 500, color: '#7A4D3B', background: 'rgba(122,77,59,0.07)', borderRadius: '6px', padding: '2px 10px', marginLeft: 6, fontStyle: 'italic', letterSpacing: '0.5px', verticalAlign: 'middle', display: 'inline-block' }}>{loadingCase ? <Spin size="small" /> : caseDisplayName}</span>
                     </Title>
-                </Col>
-                <Col>
-                    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/case/${caseId}`)}>
-                        Back to Case
-                    </Button>
                 </Col>
             </Row>
 
@@ -74,7 +69,8 @@ function DiscoveryLandingPage() {
                 <Col xs={24} md={12}>
                     <Card 
                         hoverable
-                        style={{ height: '100%' }}
+                        style={{ height: '100%', cursor: 'pointer' }}
+                        onClick={() => navigate(`/case/${caseId}/propound-discovery`)}
                         cover={
                             <div style={{ 
                                 background: '#f5f5f5', 
@@ -97,7 +93,7 @@ function DiscoveryLandingPage() {
                             <Button 
                                 type="primary" 
                                 block
-                                onClick={() => navigate(`/case/${caseId}/propound-discovery`)}
+                                onClick={e => { e.stopPropagation(); navigate(`/case/${caseId}/propound-discovery`); }}
                             >
                                 Create Discovery Documents
                             </Button>
@@ -109,7 +105,8 @@ function DiscoveryLandingPage() {
                 <Col xs={24} md={12}>
                     <Card 
                         hoverable
-                        style={{ height: '100%' }}
+                        style={{ height: '100%', cursor: 'pointer' }}
+                        onClick={() => navigate(`/case/${caseId}/respond-discovery`)}
                         cover={
                             <div style={{ 
                                 background: '#f5f5f5', 
@@ -132,7 +129,7 @@ function DiscoveryLandingPage() {
                             <Button 
                                 type="primary" 
                                 block
-                                onClick={() => navigate(`/case/${caseId}/respond-discovery`)}
+                                onClick={e => { e.stopPropagation(); navigate(`/case/${caseId}/respond-discovery`); }}
                             >
                                 Create Discovery Responses
                             </Button>

@@ -1,5 +1,5 @@
 # backend/api/auth.py
-from flask import Blueprint, request, jsonify, current_app, url_for
+from flask import request, jsonify, current_app, url_for
 from backend.models import User
 from backend.extensions import db
 from sqlalchemy.exc import IntegrityError
@@ -11,6 +11,12 @@ from functools import wraps
 from datetime import datetime, timedelta
 import logging
 from backend.utils.rate_limiter import limiter
+from . import bp
+from . import cases
+from . import documents
+from . import generation
+from . import discovery
+from . import auth
 
 # Setup security logger
 security_logger = logging.getLogger('security')
@@ -20,9 +26,6 @@ if not security_logger.handlers:
     handler.setFormatter(formatter)
     security_logger.setLevel(logging.INFO)
     security_logger.addHandler(handler)
-
-# Create blueprint instance
-auth_bp = Blueprint('auth', __name__)
 
 def admin_required(f):
     @wraps(f)
@@ -39,7 +42,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@auth_bp.route('/register', methods=['POST'])
+@bp.route('/auth/register', methods=['POST'])
 @limiter.limit("3 per minute, 10 per hour")  # Add this line
 def register():
     """Handles user registration with input validation and output serialization."""
@@ -111,7 +114,7 @@ def register():
         security_logger.error(f"Error during registration for {username}: {e}")
         return jsonify({"error": "An unexpected error occurred during registration"}), 500
 
-@auth_bp.route('/login', methods=['POST'])
+@bp.route('/auth/login', methods=['POST'])
 @limiter.limit("5 per minute, 20 per hour")  # Add this line
 def login():
     """Handles user login with robust error handling and security controls."""
@@ -213,7 +216,7 @@ def login():
         "user": user_data
     }), 200
 
-@auth_bp.route('/logout', methods=['POST'])
+@bp.route('/auth/logout', methods=['POST'])
 @login_required
 def logout():
     """Handles user logout."""
@@ -223,7 +226,7 @@ def logout():
     security_logger.info(f"User {username} logged out from IP {client_ip}")
     return jsonify({"message": "Logout successful"}), 200
 
-@auth_bp.route('/change-password', methods=['POST'])
+@bp.route('/auth/change-password', methods=['POST'])
 @login_required
 @limiter.limit("5 per minute, 10 per hour")  # Add this line
 def change_password():
@@ -259,7 +262,7 @@ def change_password():
     security_logger.info(f"Password changed successfully for user {current_user.username}")
     return jsonify({"message": "Password changed successfully"}), 200
 
-@auth_bp.route('/status')
+@bp.route('/auth/status')
 @login_required
 def status():
     """Returns information about the currently logged-in user."""
@@ -268,7 +271,7 @@ def status():
         "user": user_data
     }), 200
 
-@auth_bp.route('/approve/<token>', methods=['GET'])
+@bp.route('/auth/approve/<token>', methods=['GET'])
 def approve_user(token):
     """Approve a user account using a token (no login required)"""
     # Find user by approval token
@@ -294,7 +297,7 @@ def approve_user(token):
         "user": user_schema.dump(user)
     }), 200
 
-@auth_bp.route('/admin/pending-users', methods=['GET'])
+@bp.route('/auth/admin/pending-users', methods=['GET'])
 @login_required
 @admin_required
 def get_pending_users():
@@ -306,7 +309,7 @@ def get_pending_users():
         "count": len(pending_users)
     }), 200
 
-@auth_bp.route('/admin/approve/<int:user_id>', methods=['POST'])
+@bp.route('/auth/admin/approve/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
 def admin_approve_user(user_id):
