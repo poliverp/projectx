@@ -204,31 +204,60 @@ def build_requests_for_production_prompt(questions: List[DiscoveryQuestion],
         case_details, "Requests for Production of Documents"
     )
     
-    instructions = GeneralPromptBuilder.build_prompt_instructions(objection_sheet)
-    
-    # Additional RFP-specific instructions
+    # Instead of using the general instructions, create specific RFP instructions
     rfp_instructions = """
-    For Requests for Production specifically:
-    1. Indicate whether documents will be produced or if there are no responsive documents
-    2. If objecting, clearly state whether the objection is to all or part of the request
-    3. For each request where documents will be produced, specify "Defendant will produce responsive, non-privileged documents"
+    INSTRUCTIONS:
+    For each Request for Production document, please follow these specific formatting guidelines:
+    
+    1. Format each request and response in this exact structure:
+       
+       **REQUEST FOR PRODUCTION NO. X:**
+       [Include the full request text here, indented on first line if possible]
+       
+       **RESPONSE TO REQUEST FOR PRODUCTION NO. X:**
+       Objection. [Include each applicable objection from the objection list as its own full sentence, exactly as written in the list]
+       
+       Subject to and without waiving the foregoing objections, Plaintiff responds as follows:
+    
+    2. Important requirements:
+       - ALWAYS start each response with "Objection." followed by the specific objections
+       - Use the EXACT wording from the objection list provided below - do not combine or paraphrase objections
+       - If no objections apply, write "No objections found."
+       - ALWAYS end each response with: "Subject to and without waiving the foregoing objections, Plaintiff responds as follows:"
+       - Do NOT add any substantive response after this closing phrase - that will be added by the user
+    
+    3. Responding party is always the Plaintiff in these responses
     """
     
-    formatted_questions = GeneralPromptBuilder.format_questions(
-        questions, "REQUEST FOR PRODUCTION NO."
-    )
+    # Include the ENTIRE objection sheet instead of truncating it
+    # This ensures all objections are available to the AI
+    objection_guidance = """
+    OBJECTION LIST (Use these exact objections as written - do not modify or combine them):
+    
+    """ + objection_sheet
+    
+    formatted_questions = ""
+    for question in questions:
+        formatted_questions += f"**REQUEST FOR PRODUCTION NO. {question.number}:**\n"
+        formatted_questions += f"            {question.text}\n\n"
     
     return f"""
     {header}
     
-    {instructions}
-    
     {rfp_instructions}
+    
+    {objection_guidance}
+    
+    DISCOVERY REQUESTS TO RESPOND TO:
     
     {formatted_questions}
     
-    For each request for production above, please draft a complete response including any appropriate objections.
-    Start each response with "RESPONSE TO REQUEST FOR PRODUCTION NO. X:" and then provide the full response.
+    Remember: 
+    1. For each request above, provide a response that starts with "**RESPONSE TO REQUEST FOR PRODUCTION NO. X:**"
+    2. Always start with "Objection." followed by applicable objections from the list as full sentences
+    3. Always end with "Subject to and without waiving the foregoing objections, Plaintiff responds as follows:"
+    4. Use the EXACT wording from the objection list - do not combine or summarize objections
+    5. Format exactly as shown in the instructions
     """
 
 

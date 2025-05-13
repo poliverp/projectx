@@ -96,7 +96,8 @@ RESPONSE TO REQUEST FOR PRODUCTION NO.X:
                 for req_key, req_text in q.items():
                     if req_key.startswith("REQUEST FOR PRODUCTION NO."):
                         number = req_key.split("NO.")[1].split(":")[0].strip()
-                        text = req_text
+                        # Normalize text by replacing multiple spaces and newlines with a single space
+                        text = ' '.join(req_text.split())
                         response_key = f"RESPONSE TO REQUEST FOR PRODUCTION NO.{number}"
                         response = q.get(response_key, "")
                         dq = DiscoveryQuestion(number=number, text=text, subparts=[])

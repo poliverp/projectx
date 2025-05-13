@@ -3,7 +3,7 @@ import axios from 'axios';
 // !!! --- SECURITY WARNING --- !!!
 // DO NOT embed real secret API keys in frontend code.
 // This key should ideally be used ONLY by your backend server.
-// This is included here ONLY because you specifically requested it as an example.
+// This is here ONLY because you specifically requested it as an example.
 // Assume this key is for authenticating requests *to your own backend*,
 // and your backend then uses its *own* secure keys for 3rd party services.
 // Configure this to point to where your backend server will run
@@ -132,48 +132,83 @@ export const downloadWordDocument = async (caseId, data) => {
 
 // --- Discovery Response Generation ---
 export const respondToDiscovery = async (caseId, formData) => {
-    const maxRetries = 2;
-    let retryCount = 0;
+  const maxRetries = 2;
+  let retryCount = 0;
 
-    while (retryCount <= maxRetries) {
-        try {
-            const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/respond`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-                withCredentials: true,
-                timeout: 120000, // 2 minute timeout
-            });
-            return response;
-        } catch (error) {
-            console.error("Discovery response error:", error.response || error.message);
-            
-            // Handle timeout
-            if (error.code === 'ECONNABORTED') {
-                throw new Error('Request timed out after 2 minutes. The document might be too large or complex. Please try again or contact support.');
-            }
+  while (retryCount <= maxRetries) {
+      try {
+          console.log(`API: Requesting discovery response for case ${caseId}`);
+          const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/respond`, formData, {
+              headers: {
+                  'Content-Type': 'multipart/form-data',
+              },
+              withCredentials: true,
+              timeout: 120000, // 2 minute timeout
+              responseType: 'blob', // Tell axios to expect binary file data
+          });
+          
+          // --- Handle the file download using Blob ---
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
 
-            // Handle database connection errors
-            if (error.response?.data?.error?.includes('SSL connection has been closed') ||
-                error.response?.data?.error?.includes('database connection')) {
-                if (retryCount < maxRetries) {
-                    retryCount++;
-                    console.log(`Retrying request (${retryCount}/${maxRetries}) due to database connection error...`);
-                    // Wait for 1 second before retrying
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    continue;
-                }
-                throw new Error('Database connection error. Please try again in a few moments.');
-            }
+          let filename = `RFP_Responses_Case_${caseId}.docx`; // Default
+          const disposition = response.headers['content-disposition'];
+          if (disposition && disposition.includes('attachment')) {
+              const filenameMatch = disposition.match(/filename="?(.+)"?/);
+              if (filenameMatch && filenameMatch.length === 2)
+                  filename = filenameMatch[1];
+          }
+          link.setAttribute('download', filename);
 
-            // Handle other errors
-            if (error.response?.data?.error) {
-                throw new Error(error.response.data.error);
-            }
-            
-            throw error;
-        }
-    }
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          console.log("API: Discovery document download successfully initiated.");
+          return { success: true };
+          
+      } catch (error) {
+          console.error("Discovery response error:", error.response || error.message);
+          
+          // Handle timeout
+          if (error.code === 'ECONNABORTED') {
+              throw new Error('Request timed out after 2 minutes. The document might be too large or complex. Please try again or contact support.');
+          }
+
+          // Handle database connection errors
+          if (error.response?.data?.error?.includes('SSL connection has been closed') ||
+              error.response?.data?.error?.includes('database connection')) {
+              if (retryCount < maxRetries) {
+                  retryCount++;
+                  console.log(`Retrying request (${retryCount}/${maxRetries}) due to database connection error...`);
+                  // Wait for 1 second before retrying
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  continue;
+              }
+              throw new Error('Database connection error. Please try again in a few moments.');
+          }
+
+          // Special handling for error responses that might be JSON
+          if (error.response?.data instanceof Blob && error.response.data.type === "application/json") {
+              try {
+                  const errorJson = JSON.parse(await error.response.data.text());
+                  throw new Error(errorJson.error || 'Failed to process discovery document');
+              } catch (parseError) {
+                  console.error("Failed to parse error blob:", parseError);
+                  throw new Error('Failed to process discovery document and could not parse error details.');
+              }
+          }
+
+          // Handle other errors
+          if (error.response?.data?.error) {
+              throw new Error(error.response.data.error);
+          }
+          
+          throw error;
+      }
+  }
 };
 
 // --- NEW: Authentication Functions ---
