@@ -20,6 +20,7 @@ import {
   FileTextOutlined 
 } from '@ant-design/icons';
 import api from '../services/api';
+import DiscoverySelectionStep from '../components/DiscoverySelectionStep';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -40,18 +41,20 @@ function CreateDiscoveryPage() {
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
+  const [parseResult, setParseResult] = useState(null);
+  const [currentFormData, setCurrentFormData] = useState(null);
+  const [showSelectionStep, setShowSelectionStep] = useState(false);
 
   // Handle discovery type change
   const handleTypeChange = (value) => {
     setDiscoveryType(value);
   };
 
-  // Custom upload request handler
+  // Custom upload request handler - MODIFIED for 2-step process
   const customUploadRequest = async ({ file, onSuccess, onError }) => {
     setLoading(true);
     setError(null);
-    setResult(null);
+    setParseResult(null);
     
     const formData = new FormData();
     formData.append('document', file);
@@ -60,8 +63,11 @@ function CreateDiscoveryPage() {
     try {
       console.log(`Processing ${discoveryType} document: ${file.name}`);
       
-      const response = await api.respondToDiscovery(caseId, formData);
-      setResult(response.data);
+      // Step 1: Parse the document to get questions
+      const response = await api.parseDiscoveryDocument(caseId, formData);
+      setParseResult(response);
+      setCurrentFormData(formData);
+      setShowSelectionStep(true);
       message.success('Document parsed successfully');
       onSuccess();
     } catch (err) {
@@ -91,11 +97,30 @@ function CreateDiscoveryPage() {
     }
   };
 
+  // Handle selection submission
+  const handleSelectionSubmit = async (data) => {
+    try {
+      await api.generateDiscoveryDocument(caseId, data);
+      // Return to upload step after successful download
+      handleReset();
+    } catch (err) {
+      // Error handling is done in the DiscoverySelectionStep component
+      throw err;
+    }
+  };
+
   // Reset function
   const handleReset = () => {
     setFileList([]);
     setError(null);
-    setResult(null);
+    setParseResult(null);
+    setShowSelectionStep(false);
+    setCurrentFormData(null);
+  };
+
+  // Go back from selection step to upload step
+  const handleBack = () => {
+    setShowSelectionStep(false);
   };
 
   // Configure upload component
@@ -111,7 +136,7 @@ function CreateDiscoveryPage() {
     },
     onRemove: () => {
       setFileList([]);
-      setResult(null);
+      setParseResult(null);
     },
     accept: ".pdf",
     showUploadList: {
@@ -127,6 +152,21 @@ function CreateDiscoveryPage() {
     }
   };
 
+  // Render the selection step if active
+  if (showSelectionStep && parseResult) {
+    return (
+      <DiscoverySelectionStep
+        questions={parseResult.questions || []}
+        sessionKey={parseResult.session_key}
+        discoveryType={parseResult.discovery_type}
+        onBack={handleBack}
+        onSubmit={handleSelectionSubmit}
+        caseId={caseId}
+      />
+    );
+  }
+
+  // Otherwise render the upload step
   return (
     <div className="discovery-container" style={{ padding: '24px' }}>
       <Spin spinning={loading} tip="Analyzing document with AI...">
@@ -153,17 +193,15 @@ function CreateDiscoveryPage() {
               </Paragraph>
             </div>
             
-            {!result && (
-              <Dragger {...uploadProps} disabled={loading}>
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">Click or drag PDF file to this area to upload</p>
-                <p className="ant-upload-hint">
-                  Upload the discovery document to generate AI-assisted responses
-                </p>
-              </Dragger>
-            )}
+            <Dragger {...uploadProps} disabled={loading}>
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">Click or drag PDF file to this area to upload</p>
+              <p className="ant-upload-hint">
+                Upload the discovery document to generate AI-assisted responses
+              </p>
+            </Dragger>
             
             {error && (
               <Alert
@@ -176,72 +214,6 @@ function CreateDiscoveryPage() {
               />
             )}
           </Card>
-          
-          {result && (
-            <Card 
-              title={
-                <Space>
-                  <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                  <span>Document Parsed Successfully</span>
-                </Space>
-              } 
-              bordered={false}
-              extra={
-                <Button onClick={handleReset}>Process Another Document</Button>
-              }
-            >
-              <Collapse defaultActiveKey={['1']}>
-                <Panel 
-                  header={`Parsed Questions (${result.questions?.length || 0})`}
-                  key="1"
-                >
-                  {result.questions && result.questions.length > 0 ? (
-                    <div style={{ maxHeight: 300, overflow: 'auto' }}>
-                      {result.questions.map((q, index) => (
-                        <Card 
-                          key={index} 
-                          size="small" 
-                          title={`${DISCOVERY_TYPES.find(t => t.value === discoveryType)?.label} ${q.number}`}
-                          style={{ marginBottom: 8 }}
-                        >
-                          <Text>{q.text}</Text>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <Text type="secondary">No questions found in the document.</Text>
-                  )}
-                </Panel>
-                
-                {result.ai_response && (
-                  <Panel 
-                    header="AI-Generated Responses" 
-                    key="2"
-                  >
-                    <div style={{ maxHeight: 300, overflow: 'auto' }}>
-                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {result.ai_response}
-                      </pre>
-                    </div>
-                  </Panel>
-                )}
-                
-                {result.ai_error && (
-                  <Panel 
-                    header="AI Generation Error" 
-                    key="3"
-                  >
-                    <Alert
-                      message="Error Generating Responses"
-                      description={result.ai_error}
-                      type="error"
-                      showIcon
-                    />
-                  </Panel>
-                )}
-              </Collapse>
-            </Card>
-          )}
         </Space>
       </Spin>
     </div>

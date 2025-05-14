@@ -131,6 +131,117 @@ export const downloadWordDocument = async (caseId, data) => {
 };
 
 // --- Discovery Response Generation ---
+// Step 1: Parse discovery document and get questions
+export const parseDiscoveryDocument = async (caseId, formData) => {
+    const maxRetries = 2;
+    let retryCount = 0;
+
+    while (retryCount <= maxRetries) {
+        try {
+            console.log(`API: Parsing discovery document for case ${caseId}`);
+            const response = await axios.post(
+                `${API_BASE_URL}/discovery/cases/${caseId}/parse`, 
+                formData, 
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    withCredentials: true,
+                    timeout: 120000, // 2 minute timeout
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error("Discovery parse error:", error.response || error.message);
+            
+            // Handle timeout
+            if (error.code === 'ECONNABORTED') {
+                throw new Error('Request timed out after 2 minutes. The document might be too large or complex. Please try again or contact support.');
+            }
+
+            // Handle database connection errors
+            if (error.response?.data?.error?.includes('SSL connection has been closed') ||
+                error.response?.data?.error?.includes('database connection')) {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`Retrying request (${retryCount}/${maxRetries}) due to database connection error...`);
+                    // Wait for 1 second before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+                throw new Error('Database connection error. Please try again in a few moments.');
+            }
+
+            // Handle other errors
+            if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            }
+            
+            throw error;
+        }
+    }
+};
+
+// Step 2: Generate document with selections
+export const generateDiscoveryDocument = async (caseId, data) => {
+    try {
+        console.log(`API: Generating discovery document for case ${caseId}`);
+        const response = await axios.post(
+            `${API_BASE_URL}/discovery/cases/${caseId}/generate-document`,
+            data,
+            {
+                responseType: 'blob', // Tell axios to expect binary file data
+                withCredentials: true,
+                timeout: 60000, // 1 minute timeout
+            }
+        );
+        
+        // Handle the file download using Blob
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+
+        let filename = `RFP_Responses_Case_${caseId}.docx`; // Default
+        const disposition = response.headers['content-disposition'];
+        if (disposition && disposition.includes('attachment')) {
+            const filenameMatch = disposition.match(/filename="?(.+)"?/);
+            if (filenameMatch && filenameMatch.length === 2)
+                filename = filenameMatch[1];
+        }
+        link.setAttribute('download', filename);
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        console.log("API: Discovery document download successfully initiated.");
+        return { success: true };
+        
+    } catch (error) {
+        console.error("Document generation error:", error.response || error.message);
+        
+        // Special handling for error responses that might be JSON
+        if (error.response?.data instanceof Blob && error.response.data.type === "application/json") {
+            try {
+                const errorJson = JSON.parse(await error.response.data.text());
+                throw new Error(errorJson.error || 'Failed to generate discovery document');
+            } catch (parseError) {
+                console.error("Failed to parse error blob:", parseError);
+                throw new Error('Failed to generate discovery document and could not parse error details.');
+            }
+        }
+
+        // Handle other errors
+        if (error.response?.data?.error) {
+            throw new Error(error.response.data.error);
+        }
+        
+        throw error;
+    }
+};
+
+// Keep the original respondToDiscovery for compatibility, modified to use new two-step process
 export const respondToDiscovery = async (caseId, formData) => {
   const maxRetries = 2;
   let retryCount = 0;
@@ -265,6 +376,8 @@ const api = {
   generateDocument,
   downloadWordDocument,
   respondToDiscovery,
+  parseDiscoveryDocument,
+  generateDiscoveryDocument,
   register,
   login,
   logout,
