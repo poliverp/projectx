@@ -64,16 +64,16 @@ function DocumentAnalysisModal({ caseId, onComplete, switchToSuggestionsTab }) {
   return (
     <Spin spinning={loadingDocs} tip="Loading documents...">
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
-        {error && (
-          <Alert
-            message="Error"
-            description={error}
-            type="error"
-            showIcon
-            closable
-            onClose={() => setError(null)}
-          />
-        )}
+      {error && (
+        <Alert
+          message="Error"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          onClose={clearError}
+        />
+      )}
         
         <Paragraph>Select a document associated with this case to perform analysis. The AI will extract key case details.</Paragraph>
         

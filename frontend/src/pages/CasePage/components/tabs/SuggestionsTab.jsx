@@ -310,25 +310,30 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                               </Space>
                               
                               <div style={{ marginTop: '8px' }}>
-                                <Text code style={{ 
+                                <div style={{ 
                                   whiteSpace: 'pre-wrap', 
                                   display: 'block', 
-                                  background: '#e6f7ff', 
-                                  padding: '8px 12px', 
-                                  borderRadius: '6px', 
-                                  border: '1px solid #91d5ff',
-                                  fontFamily: 'inherit',
+                                  background: '#f0f8ff', 
+                                  padding: '12px 16px', 
+                                  borderRadius: '8px', 
+                                  border: '1px solid #d9e8ff',
                                   fontSize: '14px',
-                                  lineHeight: '1.5'
+                                  lineHeight: '1.6',
+                                  color: '#444',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                 }}>
                                   {isDateField(field) ? formatDate(suggestedValue) : 
                                     (typeof suggestedValue === 'string' ? 
                                       suggestedValue : 
                                       JSON.stringify(suggestedValue, null, 2))}
-                                </Text>
+                                </div>
                               </div>
                               
-                              {currentValueExists && (
+                              {currentValueExists && 
+                              currentValue !== null && 
+                              currentValue !== undefined && 
+                              currentValue !== '' && 
+                              !(typeof currentValue === 'object' && Object.keys(currentValue).length === 0) && (
                                 <div style={{ marginTop: '8px' }}>
                                   <Text type="secondary">Current Value:</Text>
                                   <Text code type="secondary" style={{ 
@@ -349,7 +354,8 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
                                         JSON.stringify(currentValue, null, 2))}
                                   </Text>
                                 </div>
-                              )}
+                              )
+                            }
                             </div>
                           </Space>
                         </Card>

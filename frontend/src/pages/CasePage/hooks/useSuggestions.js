@@ -84,26 +84,31 @@ export function useSuggestions(caseDetails, refreshCase) {
       
       console.log('Lock update response:', response);
       
-      // Verify the response contains the updated locked fields
-      if (response?.case_details?.locked_fields) {
-        // Update local state with response data to ensure consistency
-        setLockedFields(response.case_details.locked_fields);
-        
+      // FIXED: Check response structure more carefully
+      if (response?.data?.case_details?.locked_fields) {
+        // Response has the expected structure
+        setLockedFields(response.data.case_details.locked_fields);
         message.success(`Field ${fieldName} ${isCurrentlyLocked ? 'unlocked' : 'locked'}`);
-        
-        // Remove from pending operations
-        setPendingFieldLocks(prev => {
-          const updated = { ...prev };
-          delete updated[fieldName];
-          return updated;
-        });
-        
-        // Optionally refresh the case data to ensure everything is in sync
-        if (refreshCase) {
-          await refreshCase();
-        }
+      } else if (response?.data) {
+        // Response has data but not the expected structure, so trust our optimistic update
+        console.log('Response did not contain locked_fields data, using optimistic update');
+        message.success(`Field ${fieldName} ${isCurrentlyLocked ? 'unlocked' : 'locked'}`);
+        // DON'T revert the optimistic update since the API call succeeded
       } else {
-        throw new Error('Invalid response: missing locked_fields data');
+        // Response has no data at all, something went wrong
+        throw new Error('Invalid response format');
+      }
+      
+      // Remove from pending operations
+      setPendingFieldLocks(prev => {
+        const updated = { ...prev };
+        delete updated[fieldName];
+        return updated;
+      });
+      
+      // Optionally refresh the case data to ensure everything is in sync
+      if (refreshCase) {
+        await refreshCase();
       }
     } catch (err) {
       console.error(`Error ${isCurrentlyLocked ? 'unlocking' : 'locking'} field ${fieldName}:`, err);
