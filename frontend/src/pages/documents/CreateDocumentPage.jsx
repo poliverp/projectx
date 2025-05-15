@@ -1,7 +1,7 @@
 // src/pages/CreateDocumentPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import api from '../services/api';
+import api from '../../services/api';
 import {
     Typography,
     Card,
@@ -16,7 +16,7 @@ import {
     Col
 } from 'antd';
 import { RobotOutlined, FileWordOutlined, DownloadOutlined, ArrowLeftOutlined, CopyOutlined } from '@ant-design/icons'; // Import icons
-import DocumentGenerationTab from './CasePage/components/tabs/DocumentGenerationTab';
+import DocumentGenerationTab from '../../pages/CasePage/components/tabs/DocumentGenerationTab';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;

@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useSuggestions } from '../../hooks/useSuggestions';
 import { formatDate, datesAreEqual } from '../../../../utils/dateUtils';
+import { useParams } from 'react-router-dom';
 
 const { Text } = Typography;
 
@@ -46,6 +47,15 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
       .replace(/\b\w/g, char => char.toUpperCase());
   };
   
+  // Helper function to get document name from docKey
+  const getDocumentName = (docKey) => {
+    if (!caseDetails?.documents) return docKey;
+    // Extract the numeric ID from docKey (e.g., "doc_34" -> 34)
+    const docId = parseInt(docKey.split('_')[1]);
+    const doc = caseDetails.documents.find(d => d.id === docId);
+    return doc ? doc.file_name : docKey;
+  };
+  
   // Helper function to check if a value should be filtered out
   const shouldFilterValue = (value) => {
     if (value === null || value === undefined) return true;
@@ -66,12 +76,6 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
     const validSuggestions = Object.entries(suggestions).reduce((validFields, [field, value]) => {
       // Skip if value should be filtered or is dismissed
       if (shouldFilterValue(value) || dismissedSuggestions[docKey]?.[field]) {
-        return validFields;
-      }
-
-      // Skip if field is locked
-      if (lockedFields.includes(field)) {
-        console.log(`Skipping locked field ${field} from suggestions`);
         return validFields;
       }
 
@@ -163,46 +167,6 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title={
-          <Space>
-            <BulbOutlined />
-            AI Analysis Suggestions
-          </Space>
-        }
-        extra={
-          <Space>
-            {hasSuggestions && (
-              <Popconfirm
-                title="Clear all suggestions?"
-                description="Are you sure? This cannot be undone."
-                onConfirm={handleClearSuggestions}
-                okText="Yes, Clear All"
-                cancelText="No"
-                okButtonProps={{ danger: true }}
-                disabled={isApplying || isClearing}
-              >
-                <Button
-                  danger
-                  size="small"
-                  loading={isClearing}
-                  disabled={isApplying || isClearing}
-                >
-                  Clear All Suggestions
-                </Button>
-              </Popconfirm>
-            )}
-            <Button
-              type="primary"
-              size="small"
-              onClick={handleApplyChanges}
-              loading={isApplying}
-              disabled={Object.keys(acceptedSuggestions).length === 0 || isApplying || isClearing}
-              icon={applySuccess ? <CheckCircleTwoTone twoToneColor="#52c41a" /> : null}
-            >
-              {isApplying ? 'Applying...' : (applySuccess ? 'Applied!' : 'Apply Selected')}
-            </Button>
-          </Space>
-        }
         style={{ 
           flex: 1,
           display: 'flex',
@@ -212,160 +176,216 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
         }}
         bodyStyle={{
           flex: 1,
-          overflow: 'auto',
-          padding: '0'
+          overflow: 'hidden',
+          padding: '0',
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
         {hasSuggestions ? (
-          <Collapse 
-            accordion
-            expandIconPosition="end"
-            activeKey={activeCollapseKeys}
-            onChange={handleCollapseChange}
-            style={{ 
-              background: 'transparent',
-              border: 'none'
-            }}
-          >
-            {Object.entries(filteredPendingSuggestions).map(([docKey, suggestions]) => (
-              <Collapse.Panel 
-                header={
-                  <Space>
-                    <FileTextOutlined />
-                    <span>Suggestions from Document: {docKey}</span>
-                  </Space>
-                } 
-                key={docKey}
-                style={{
-                  marginBottom: '8px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  border: '1px solid #f0f0f0'
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+            <div style={{ 
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              background: '#fff',
+              padding: '16px',
+              borderBottom: '1px solid #f0f0f0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Space>
+                <BulbOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                <Text strong style={{ fontSize: '16px' }}>AI Analysis Suggestions</Text>
+              </Space>
+              <Space>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={handleApplyChanges}
+                  loading={isApplying}
+                  disabled={Object.keys(acceptedSuggestions).length === 0 || isApplying || isClearing}
+                  icon={applySuccess ? <CheckCircleTwoTone twoToneColor="#52c41a" /> : null}
+                >
+                  {isApplying ? 'Applying...' : (applySuccess ? 'Applied!' : 'Apply Selected')}
+                </Button>
+                <Popconfirm
+                  title="Clear all suggestions?"
+                  description="Are you sure? This cannot be undone."
+                  onConfirm={handleClearSuggestions}
+                  okText="Yes, Clear All"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                  disabled={isApplying || isClearing}
+                >
+                  <Button
+                    danger
+                    size="small"
+                    loading={isClearing}
+                    disabled={isApplying || isClearing}
+                  >
+                    Clear All Suggestions
+                  </Button>
+                </Popconfirm>
+              </Space>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+              <Collapse 
+                accordion
+                expandIconPosition="end"
+                activeKey={activeCollapseKeys}
+                onChange={handleCollapseChange}
+                style={{ 
+                  background: 'transparent',
+                  border: 'none'
                 }}
               >
-                <List
-                  itemLayout="vertical"
-                  dataSource={Object.entries(suggestions)}
-                  renderItem={([field, suggestedValue]) => {
-                    if (shouldFilterValue(suggestedValue) || dismissedSuggestions[docKey]?.[field]) {
-                      return null;
-                    }
-                    
-                    const currentValue = caseDetails?.[field] !== undefined
-                      ? caseDetails[field]
-                      : caseDetailsData?.[field];
-                    const currentValueExists = currentValue !== undefined;
-                    const isLocked = lockedFields.includes(field);
-                    
-                    return (
-                      <List.Item key={field}>
-                        <Card
-                          size="small"
-                          bordered={false}
-                          style={{ 
-                            background: '#fafafa',
-                            marginBottom: '8px',
-                            borderRadius: '6px'
-                          }}
-                        >
-                          <Space align="start" style={{ width: '100%' }}>
-                            <Checkbox
-                              style={{ paddingTop: '4px' }}
-                              onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked)}
-                              checked={acceptedSuggestions[docKey]?.[field] !== undefined}
-                              disabled={isLocked}
-                            />
-                            <Space>
-                              <Popconfirm
-                                title="Dismiss suggestion?"
-                                onConfirm={() => handleDismissLocally(docKey, field)}
-                                okText="Dismiss"
-                                cancelText="Cancel"
-                                placement="top"
-                              >
-                                <Button
-                                  type="text"
-                                  danger
-                                  size="small"
-                                  icon={<CloseOutlined />}
-                                  style={{ padding: '0 4px' }}
-                                />
-                              </Popconfirm>
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
-                                onClick={() => toggleFieldLock(field)}
-                                style={{ padding: '0 4px' }}
-                                title={isLocked ? "Unlock field" : "Lock field"}
-                              />
-                            </Space>
-                            
-                            <div style={{ flexGrow: 1 }}>
-                              <Space>
-                                <Text strong>{formatFieldName(field)}</Text>
-                                <Divider type="vertical" />
-                                <Tag color="blue">Suggestion</Tag>
-                                {isLocked && <Tag color="red">Locked</Tag>}
+                {Object.entries(filteredPendingSuggestions).map(([docKey, suggestions]) => (
+                  <Collapse.Panel 
+                    header={
+                      <Space>
+                        <FileTextOutlined />
+                        <span>{getDocumentName(docKey)}</span>
+                        <Tag color="blue">{Object.keys(suggestions).length} suggestions</Tag>
+                      </Space>
+                    } 
+                    key={docKey}
+                    style={{
+                      marginBottom: '8px',
+                      background: '#fff',
+                      borderRadius: '8px',
+                      border: '1px solid #f0f0f0'
+                    }}
+                  >
+                    <List
+                      itemLayout="vertical"
+                      dataSource={Object.entries(suggestions)}
+                      renderItem={([field, suggestedValue]) => {
+                        if (shouldFilterValue(suggestedValue) || dismissedSuggestions[docKey]?.[field]) {
+                          return null;
+                        }
+                        
+                        const currentValue = caseDetails?.[field] !== undefined
+                          ? caseDetails[field]
+                          : caseDetailsData?.[field];
+                        const currentValueExists = currentValue !== undefined;
+                        const isLocked = lockedFields.includes(field);
+                        
+                        return (
+                          <List.Item key={field}>
+                            <Card
+                              size="small"
+                              bordered={false}
+                              style={{ 
+                                background: '#fafafa',
+                                marginBottom: '8px',
+                                borderRadius: '6px'
+                              }}
+                            >
+                              <Space align="start" style={{ width: '100%' }}>
+                                <Checkbox
+                                  onChange={(e) => handleCheckboxChange(docKey, field, suggestedValue, e.target.checked, true)}
+                                  checked={acceptedSuggestions[docKey]?.[field]?.applyAndLock}
+                                  disabled={isLocked}
+                                >
+                                  <LockOutlined style={{ color: '#1890ff' }} />
+                                </Checkbox>
+                                <div style={{ flexGrow: 1 }}>
+                                  <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                    <Space>
+                                      <Text strong>{formatFieldName(field)}</Text>
+                                      <Divider type="vertical" />
+                                      <Tag color="blue">Suggestion</Tag>
+                                      {isLocked && <Tag color="red">Locked</Tag>}
+                                    </Space>
+                                    <Space>
+                                      <Popconfirm
+                                        title="Dismiss suggestion?"
+                                        onConfirm={() => handleDismissLocally(docKey, field)}
+                                        okText="Dismiss"
+                                        cancelText="Cancel"
+                                        placement="top"
+                                      >
+                                        <Button
+                                          type="text"
+                                          size="small"
+                                          style={{ 
+                                            padding: '0 4px',
+                                            color: '#8c8c8c',
+                                            fontSize: '12px',
+                                            border: '1px solid #d9d9d9',
+                                            borderRadius: '4px',
+                                            height: '24px'
+                                          }}
+                                        >
+                                          <Space size={4}>
+                                            <CloseOutlined style={{ fontSize: '12px' }} />
+                                            <span>Ignore</span>
+                                          </Space>
+                                        </Button>
+                                      </Popconfirm>
+                                    </Space>
+                                  </Space>
+                                  
+                                  <div style={{ marginTop: '8px' }}>
+                                    <div style={{ 
+                                      whiteSpace: 'pre-wrap', 
+                                      display: 'block', 
+                                      background: '#f0f8ff', 
+                                      padding: '12px 16px', 
+                                      borderRadius: '8px', 
+                                      border: '1px solid #d9e8ff',
+                                      fontSize: '14px',
+                                      lineHeight: '1.6',
+                                      color: '#444',
+                                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                    }}>
+                                      {isDateField(field) ? formatDate(suggestedValue) : 
+                                        (typeof suggestedValue === 'string' ? 
+                                          suggestedValue : 
+                                          JSON.stringify(suggestedValue, null, 2))}
+                                    </div>
+                                  </div>
+                                  
+                                  {currentValueExists && 
+                                  currentValue !== null && 
+                                  currentValue !== undefined && 
+                                  currentValue !== '' && 
+                                  !(typeof currentValue === 'object' && Object.keys(currentValue).length === 0) && (
+                                    <div style={{ marginTop: '8px' }}>
+                                      <Text type="secondary">Current Value:</Text>
+                                      <Text code type="secondary" style={{ 
+                                        whiteSpace: 'pre-wrap', 
+                                        display: 'block', 
+                                        background: '#f5f5f5', 
+                                        padding: '8px 12px', 
+                                        marginTop: '4px',
+                                        borderRadius: '6px', 
+                                        border: '1px solid #d9d9d9',
+                                        fontFamily: 'inherit',
+                                        fontSize: '14px',
+                                        lineHeight: '1.5'
+                                      }}>
+                                        {isDateField(field) ? formatDate(currentValue) : 
+                                          (typeof currentValue === 'string' ? 
+                                            currentValue : 
+                                            JSON.stringify(currentValue, null, 2))}
+                                      </Text>
+                                    </div>
+                                  )}
+                                </div>
                               </Space>
-                              
-                              <div style={{ marginTop: '8px' }}>
-                                <div style={{ 
-                                  whiteSpace: 'pre-wrap', 
-                                  display: 'block', 
-                                  background: '#f0f8ff', 
-                                  padding: '12px 16px', 
-                                  borderRadius: '8px', 
-                                  border: '1px solid #d9e8ff',
-                                  fontSize: '14px',
-                                  lineHeight: '1.6',
-                                  color: '#444',
-                                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                }}>
-                                  {isDateField(field) ? formatDate(suggestedValue) : 
-                                    (typeof suggestedValue === 'string' ? 
-                                      suggestedValue : 
-                                      JSON.stringify(suggestedValue, null, 2))}
-                                </div>
-                              </div>
-                              
-                              {currentValueExists && 
-                              currentValue !== null && 
-                              currentValue !== undefined && 
-                              currentValue !== '' && 
-                              !(typeof currentValue === 'object' && Object.keys(currentValue).length === 0) && (
-                                <div style={{ marginTop: '8px' }}>
-                                  <Text type="secondary">Current Value:</Text>
-                                  <Text code type="secondary" style={{ 
-                                    whiteSpace: 'pre-wrap', 
-                                    display: 'block', 
-                                    background: '#f5f5f5', 
-                                    padding: '8px 12px', 
-                                    marginTop: '4px',
-                                    borderRadius: '6px', 
-                                    border: '1px solid #d9d9d9',
-                                    fontFamily: 'inherit',
-                                    fontSize: '14px',
-                                    lineHeight: '1.5'
-                                  }}>
-                                    {isDateField(field) ? formatDate(currentValue) : 
-                                      (typeof currentValue === 'string' ? 
-                                        currentValue : 
-                                        JSON.stringify(currentValue, null, 2))}
-                                  </Text>
-                                </div>
-                              )
-                            }
-                            </div>
-                          </Space>
-                        </Card>
-                      </List.Item>
-                    );
-                  }}
-                />
-              </Collapse.Panel>
-            ))}
-          </Collapse>
+                            </Card>
+                          </List.Item>
+                        );
+                      }}
+                    />
+                  </Collapse.Panel>
+                ))}
+              </Collapse>
+            </div>
+          </div>
         ) : (
           <div style={{ 
             display: 'flex', 
@@ -377,20 +397,41 @@ function SuggestionsTab({ caseDetails, refreshCase, caseId, autoExpand = false, 
             background: '#fafafa',
             borderRadius: '8px'
           }}>
-            <Empty 
-              image={Empty.PRESENTED_IMAGE_SIMPLE} 
-              description={
-                <Space direction="vertical" align="center" size="large">
-                  <Text>No pending suggestions found</Text>
-                  {lastAnalyzedDocId && (
-                    <Text type="secondary">Last analyzed document ID: {lastAnalyzedDocId}</Text>
-                  )}
-                  <Button type="primary" icon={<SearchOutlined />} onClick={onAnalyzeDocuments}>
-                    Analyze Documents
-                  </Button>
-                </Space>
-              }
-            />
+            <div style={{ 
+              textAlign: 'center',
+              maxWidth: '400px',
+              margin: '0 auto'
+            }}>
+              <BulbOutlined style={{ 
+                fontSize: '48px', 
+                color: '#1890ff',
+                marginBottom: '24px',
+                display: 'block'
+              }} />
+              <Text style={{ 
+                fontSize: '18px',
+                display: 'block',
+                marginBottom: '8px'
+              }}>
+                No AI Suggestions Available
+              </Text>
+              <Text type="secondary" style={{ 
+                display: 'block',
+                marginBottom: '24px'
+              }}>
+                {lastAnalyzedDocId 
+                  ? 'No new suggestions from the last document analysis.'
+                  : 'Analyze your documents to get AI-powered suggestions for case details.'}
+              </Text>
+              <Button 
+                type="primary" 
+                size="large"
+                icon={<SearchOutlined />} 
+                onClick={onAnalyzeDocuments}
+              >
+                Analyze Documents
+              </Button>
+            </div>
           </div>
         )}
       </Card>

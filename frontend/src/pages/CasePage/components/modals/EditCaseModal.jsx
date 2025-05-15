@@ -2,15 +2,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Modal, Form, Input, Alert, Row, Col, DatePicker, 
-  Space, Button, Popconfirm, Tooltip, Tag, Spin
+  Space, Button, Popconfirm, Tooltip, Tag, Spin, Typography
 } from 'antd';
 import { 
-  CalendarOutlined, LockOutlined, UnlockOutlined, SyncOutlined
+  CalendarOutlined, LockOutlined, UnlockOutlined, SyncOutlined, SaveOutlined, CloseOutlined
 } from '@ant-design/icons';
 import { caseFieldConfig } from '../../../../config/caseFieldConfig';
 import moment from 'moment';
 import { formatDate } from '../../../../utils/dateUtils';
 import { useSuggestions } from '../../hooks/useSuggestions';
+import { useParams } from 'react-router-dom';
 
 const { TextArea } = Input;
 

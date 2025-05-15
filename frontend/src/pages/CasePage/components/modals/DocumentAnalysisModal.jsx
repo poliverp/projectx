@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Select, Button, Space, Alert, Spin, Typography, Result } from 'antd';
 import { ExperimentOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useDocumentAnalysis } from "../../hooks/useDocumentAnalysis.js";
+import { useDocumentAnalysis } from "../../hooks/useDocumentAnalysis";
 const { Text, Paragraph } = Typography;
 const { Option } = Select;
 

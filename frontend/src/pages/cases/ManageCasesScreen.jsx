@@ -1,7 +1,7 @@
-// frontend/src/pages/ManageCasesScreen.jsx
+// frontend/src/pages/cases/ManageCasesScreen.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 // --- Ant Design Imports ---
 import { Table, Button, Input, Space, Typography, Popconfirm, Alert, Card, Row, Col, Statistic } from 'antd';

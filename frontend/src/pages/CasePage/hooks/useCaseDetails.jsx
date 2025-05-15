@@ -117,7 +117,14 @@ export function useCaseDetails(caseId) {
     if (!caseId) return;
     
     try {
-      await api.updateCase(caseId, updateData);
+      const response = await api.updateCase(caseId, updateData);
+      console.log("Update response in useCaseDetails:", response);
+      
+      // Update local state with the response data
+      if (response?.data) {
+        setCaseDetails(response.data);
+      }
+      
       message.success("Case updated successfully");
       return fetchCaseDetails(); // Refresh data
     } catch (err) {

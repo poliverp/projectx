@@ -97,13 +97,17 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Don't show error toast for 401s (expired sessions)
+      if (error.response?.status !== 401) {
+        toast.error('Logout failed. Please try again.');
+      }
+    } finally {
+      // Always clear the user state, even if the server request fails
       setCurrentUser(null);
       toast.success('Logged out successfully');
       return { success: true };
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Logout failed. Please try again.');
-      return { success: false };
     }
   };
   

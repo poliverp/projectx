@@ -1,7 +1,7 @@
 // src/pages/CreateCasePage.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api'; // Adjust path if needed
+import api from '../../services/api';
 import {
     Form,
     Input,
@@ -9,12 +9,10 @@ import {
     Typography,
     Alert,
     Space,
-    Card // Import Card for layout consistency
+    Card
 } from 'antd';
-import { SaveOutlined, CloseCircleOutlined } from '@ant-design/icons'; // Import relevant icons
-// ---### START CHANGE: Import Config ###---
-import { caseFieldConfig } from '../config/caseFieldConfig'; // Adjust path if needed
-// ---### END CHANGE ###---
+import { SaveOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { caseFieldConfig } from '../../config/caseFieldConfig';
 
 const { Title } = Typography;
 

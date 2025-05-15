@@ -1,6 +1,6 @@
 """Increase field lengths for longer text content
 
-Revision ID: increase_field_lengths
+Revision ID: 8f7d6e5c4b3a
 Revises: 1ce2a18b9480
 Create Date: 2025-05-12 14:52:30.404463
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = 'increase_field_lengths'
+revision = '8f7d6e5c4b3a'
 down_revision = '1ce2a18b9480'
 branch_labels = None
 depends_on = None

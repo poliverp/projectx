@@ -188,66 +188,71 @@ function CasePage() {
           />
           
           {/* Main Content Tabs */}
-          <Card style={{ marginTop: '16px', height: '500px', overflow: 'auto' }}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              size="large"
-              style={{ height: '100%' }}
-              items={[
-                {
-                  label: (
-                    <span>
-                      <FileTextOutlined />
-                      Document Generation
-                    </span>
-                  ),
-                  key: "generate",
-                  children: (
-                    <div style={{ height: 'calc(100% - 54px)', overflowY: 'auto' }}>
-                      <DocumentGenerationTab caseId={caseId} />
-                    </div>
-                  )
-                },
-                {
-                  label: (
-                    <span>
-                      <BulbOutlined />
-                      Suggestions
-                      {suggestionsCount > 0 && (
-                        <Badge count={suggestionsCount} offset={[5, -5]} size="small" />
-                      )}
-                    </span>
-                  ),
-                  key: "suggestions",
-                  children: (
-                    <div style={{ height: 'calc(100% - 54px)', overflowY: 'auto' }}>
-                      <SuggestionsTab
-                        caseDetails={caseDetails}
-                        refreshCase={fetchCaseDetails}
-                        caseId={caseId}
-                        autoExpand={autoExpandSuggestions}
-                        onAnalyzeDocuments={handleOpenAnalysisModal} 
-                      />
-                    </div>
-                  )
-                },
-                {
-                  label: (
-                    <span>
-                      <InfoCircleOutlined />
-                      Discovery Response
-                    </span>
-                  ),
-                  key: "discovery",
-                  children: (
-                    <div style={{ height: 'calc(100% - 54px)', overflowY: 'auto' }}>
-                      <DiscoveryTab caseId={caseId} userId={caseDetails?.user_id} />
-                    </div>
-                  )
-                },
-              ]}
-            />
+          <Card style={{ marginTop: '16px', height: '500px', overflow: 'hidden' }}>
+            <div style={{ 
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              background: '#fff',
+              borderBottom: '1px solid #f0f0f0',
+              padding: '0 16px',
+            }}>
+              <Tabs
+                activeKey={activeTab}
+                onChange={setActiveTab}
+                size="large"
+                items={[
+                  {
+                    label: (
+                      <span>
+                        <FileTextOutlined />
+                        Document Generation
+                      </span>
+                    ),
+                    key: "generate",
+                    children: (
+                      <div style={{ height: 'calc(500px - 54px)', overflowY: 'auto', padding: '16px' }}>
+                        <DocumentGenerationTab caseId={caseId} />
+                      </div>
+                    )
+                  },
+                  {
+                    label: (
+                      <span>
+                        <BulbOutlined />
+                        Suggestions
+                      </span>
+                    ),
+                    key: "suggestions",
+                    children: (
+                      <div style={{ height: 'calc(500px - 54px)', overflowY: 'auto', padding: '16px' }}>
+                        <SuggestionsTab
+                          caseDetails={caseDetails}
+                          refreshCase={fetchCaseDetails}
+                          caseId={caseId}
+                          autoExpand={autoExpandSuggestions}
+                          onAnalyzeDocuments={handleOpenAnalysisModal} 
+                        />
+                      </div>
+                    )
+                  },
+                  {
+                    label: (
+                      <span>
+                        <InfoCircleOutlined />
+                        Discovery Response
+                      </span>
+                    ),
+                    key: "discovery",
+                    children: (
+                      <div style={{ height: 'calc(500px - 54px)', overflowY: 'auto', padding: '16px' }}>
+                        <DiscoveryTab caseId={caseId} userId={caseDetails?.user_id} />
+                      </div>
+                    )
+                  },
+                ]}
+              />
+            </div>
           </Card>
 
           <CaseCalendar caseDetails={caseDetails} />

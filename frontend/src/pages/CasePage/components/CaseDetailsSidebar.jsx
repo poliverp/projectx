@@ -154,14 +154,7 @@ function CaseDetailsSidebar({ caseDetails, onShowAllDetails, hideTitle = false }
                 return {
                   key: fieldName,
                   label: field.label,
-                  children: (
-                    <span style={{
-                      color: field.isDedicated ? '#000' : '#666',
-                      fontWeight: field.isDedicated ? 'normal' : '500'
-                    }}>
-                      {value}
-                    </span>
-                  ),
+                  children: value,
                 };
               })
               .filter(Boolean)}

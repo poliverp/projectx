@@ -12,10 +12,10 @@ import {
 import { useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AdminDashboard from './pages/AdminDashboard';
-import ProfilePage from './pages/ProfilePage';
-import DiscoveryLandingPage from './pages/DiscoveryLandingPage';
-import PropoundingDiscoveryPage from './pages/PropoundingDiscoveryPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ProfilePage from './pages/auth/ProfilePage';
+import DiscoveryLandingPage from './pages/discovery/DiscoveryLandingPage';
+import PropoundingDiscoveryPage from './pages/discovery/PropoundingDiscoveryPage';
 // Ant Design imports
 import { 
   Layout, 
@@ -49,18 +49,18 @@ import {
 } from '@ant-design/icons';
 
 // Import Pages
-import ManageCasesScreen from './pages/ManageCasesScreen';
-import CasePage from './pages/CasePage/index';
-import FilesPage from './pages/FilesPage';
-import DocumentAnalysisPage from './pages/DocumentAnalysisPage';
-import CreateDocumentPage from './pages/CreateDocumentPage';
-import CreateCasePage from './pages/CreateCasePage';
-import RegistrationPage from './pages/RegistrationPage';
-import CreateDiscoveryPage2 from './pages/CreateDiscoveryPage2';
-import LoginPage from './pages/LoginPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import UserProfileDropdown from './components/UserProfileDropdown';
-import { Navigate } from 'react-router-dom'; // If not already imported
+import ManageCasesScreen from './pages/cases/ManageCasesScreen';
+import CasePage from './pages/CasePage';
+import FilesPage from './pages/cases/FilesPage';
+import DocumentAnalysisPage from './pages/documents/DocumentAnalysisPage';
+import CreateDocumentPage from './pages/documents/CreateDocumentPage';
+import CreateCasePage from './pages/cases/CreateCasePage';
+import RegistrationPage from './pages/auth/RegistrationPage';
+import CreateDiscoveryPage2 from './pages/discovery/CreateDiscoveryPage2';
+import LoginPage from './pages/auth/LoginPage';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import UserProfileDropdown from './components/common/UserProfileDropdown';
+import { Navigate } from 'react-router-dom';
 
 // Destructure AntD Layout components
 const { Header, Content, Footer, Sider } = Layout;

@@ -58,7 +58,8 @@ def analyze_text_with_gemini(text_content):
               "defendant_counsel_attorneys": "string with attorney names or null",
               "defendant_counsel_firm": "string with firm name or null",
               "defendant_counsel_address": "string with firm address or null", 
-              "defendant_counsel_contact": "string with contact info (phone/fax/email) or null",
+              "defendant_counsel_email": "string with email address or null",
+              "defendant_counsel_phone": "string with phone/fax numbers or null",
               "case_number": "string identifying case number, will be referred to as Case No. within analyzed doc., or null",
               "county": "string, always caps lock or null",
               "jurisdiction": "string, always caps lock, UNLIMITED JURISDICTION, or null"
@@ -72,13 +73,9 @@ def analyze_text_with_gemini(text_content):
               "incident_location": "string describing location or null",
               "incident_description": "string describing alleged cause/reason for incident or null",
               "general_allegations": "string summarizing general allegations or null",
-              "causes_of_action": [
-                "string cause 1 or null",
-                "string cause 2 or null",]
               "injuries_described": "string describing injuries or list[string] or null",
               "vehicle_details": "string describing relevant vehicle info (make, plate) or null",
               "extracted_value": "number or null (e.g., monetary amount mentioned)",
-              "summary": "A brief summary of the document's core subject matter (string or null)"
               "acting_attorney": "string with current attorney handling case or null",
               "acting_clerk": "string with current clerk, which would be found as the last name signing the document or null"
             }}

@@ -5,14 +5,18 @@ Revises: 779dd956a05a
 Create Date: 2025-05-06 20:44:54.762141
 
 """
-# Example migration file (your file will have a different name)
-# migrations/versions/xxxxxxxxxxxx_add_field_encryption_for_sensitive_data.py
+# revision identifiers, used by Alembic
+revision = '7b695304afbb'
+down_revision = '779dd956a05a'
+branch_labels = None
+depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 from backend.utils.db_types import EncryptedString, EncryptedText, EncryptedJSON
 from backend.utils.encryption import field_encryptor
+from sqlalchemy import text
 
 # Import the Case model to access existing data
 from backend.models import Case
@@ -27,20 +31,14 @@ def upgrade():
     
     # Create a SQLAlchemy binding for data migration
     bind = op.get_bind()
-    session = sa.orm.Session(bind=bind)
     
-    # Get all existing cases
-    cases = session.query(Case).all()
-    
-    # Migrate data from old columns to encrypted columns
-    for case in cases:
-        # The encryption happens automatically through the TypeDecorator
-        case.incident_description_encrypted = case.incident_description
-        case.vehicle_details_encrypted = case.vehicle_details
-        case.case_details_encrypted = case.case_details
-    
-    # Commit the changes
-    session.commit()
+    # Use raw SQL to copy data from old columns to new encrypted columns
+    bind.execute(text("""
+        UPDATE "case"
+        SET incident_description_encrypted = incident_description,
+            vehicle_details_encrypted = vehicle_details,
+            case_details_encrypted = case_details
+    """))
     
     # Drop the old columns
     op.drop_column('case', 'incident_description')

@@ -1,7 +1,6 @@
-// frontend/src/pages/PropoundingDiscoveryPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api from '../../services/api';
 import {
   Typography,
   Card,
@@ -248,127 +247,113 @@ function PropoundingDiscoveryPage() {
                   </div>
                 }
               >
-                {loadingQuestions ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                    <Spin size="large" />
-                    <Text style={{ display: 'block', marginTop: '16px' }}>Loading questions...</Text>
-                  </div>
-                ) : (
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Search
-                      placeholder="Search by question number or text"
-                      allowClear
-                      enterButton
-                      onChange={(e) => setSearchText(e.target.value)}
-                      onSearch={setSearchText}
-                      style={{ marginBottom: '16px' }}
-                    />
-                    {Object.keys(groupedQuestions).length === 0 ? (
-                      <Alert 
-                        message="No questions match your search" 
-                        type="info" 
-                        showIcon 
+                {/* Search Bar */}
+                <div style={{ marginBottom: 16 }}>
+                  <Search
+                    placeholder="Search questions..."
+                    allowClear
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                {/* Questions List */}
+                <div style={{ 
+                  maxHeight: 'calc(100vh - 400px)', 
+                  overflowY: 'auto',
+                  paddingRight: 8
+                }}>
+                  {Object.entries(groupedQuestions).map(([category, questions]) => (
+                    <div key={category} style={{ marginBottom: 24 }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        marginBottom: 8,
+                        padding: '8px 0',
+                        borderBottom: '1px solid #f0f0f0'
+                      }}>
+                        <Checkbox
+                          checked={questions.every(q => selectedQuestions.includes(q.id))}
+                          indeterminate={
+                            questions.some(q => selectedQuestions.includes(q.id)) &&
+                            !questions.every(q => selectedQuestions.includes(q.id))
+                          }
+                          onChange={() => handleSelectCategory(category)}
+                        >
+                          <Text strong>{category}</Text>
+                        </Checkbox>
+                      </div>
+                      <List
+                        dataSource={questions}
+                        renderItem={question => (
+                          <List.Item>
+                            <Checkbox
+                              checked={selectedQuestions.includes(question.id)}
+                              onChange={() => handleCheckboxChange(question.id)}
+                            >
+                              <div>
+                                <Text strong>{question.number}.</Text>
+                                <Text style={{ marginLeft: 8 }}>{question.text}</Text>
+                              </div>
+                            </Checkbox>
+                          </List.Item>
+                        )}
                       />
-                    ) : (
-                      <Tabs defaultActiveKey="0">
-                        {Object.entries(groupedQuestions).map(([category, categoryQuestions], index) => (
-                          <Tabs.TabPane tab={category} key={index}>
-                            <div style={{ marginBottom: '16px' }}>
-                              <Button 
-                                type="default" 
-                                onClick={() => handleSelectCategory(category)}
-                                size="small"
-                              >
-                                {categoryQuestions.every(q => selectedQuestions.includes(q.id)) 
-                                  ? 'Deselect All' 
-                                  : 'Select All'}
-                              </Button>
-                            </div>
-                            <List
-                              dataSource={categoryQuestions}
-                              renderItem={question => (
-                                <List.Item>
-                                  <Checkbox
-                                    checked={selectedQuestions.includes(question.id)}
-                                    onChange={() => handleCheckboxChange(question.id)}
-                                  >
-                                    <Space direction="vertical">
-                                      <Text strong>{question.number}</Text>
-                                      <Text>{question.text}</Text>
-                                    </Space>
-                                  </Checkbox>
-                                </List.Item>
-                              )}
-                            />
-                          </Tabs.TabPane>
-                        ))}
-                      </Tabs>
-                    )}
-                  </Space>
-                )}
+                    </div>
+                  ))}
+                </div>
               </Card>
             </Space>
           </Col>
-          {/* Running Tab of Selected Questions */}
+
+          {/* Right Sidebar */}
           <Col xs={24} md={8}>
-            <Card
-              type="inner"
-              title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Selected Questions</span>
+            <Space direction="vertical" style={{ width: '100%' }} size="large">
+              {/* Language Selection Card */}
+              <Card 
+                ref={languageCardRef}
+                title="Document Settings"
+                type="inner"
+              >
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  <div>
+                    <Text strong>Language</Text>
+                    <Radio.Group 
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                      style={{ marginTop: 8, display: 'block' }}
+                    >
+                      <Radio.Button value="english" style={{ width: '100%', textAlign: 'center', marginBottom: 8 }}>
+                        English
+                      </Radio.Button>
+                      <Radio.Button value="spanish" style={{ width: '100%', textAlign: 'center' }}>
+                        Spanish
+                      </Radio.Button>
+                    </Radio.Group>
+                  </div>
+                </Space>
+              </Card>
+
+              {/* Generate Button Card */}
+              <Card type="inner">
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
                   <Button
-                    type={selectedQuestions.length === 0 ? 'default' : 'primary'}
-                    style={{
-                      backgroundColor: selectedQuestions.length === 0 ? '#d9d9d9' : '#8B4513',
-                      borderColor: selectedQuestions.length === 0 ? '#d9d9d9' : '#8B4513',
-                      color: selectedQuestions.length === 0 ? '#888' : '#fff',
-                      fontWeight: 600,
-                      fontStyle: 'normal',
-                      borderRadius: 3,
-                      boxShadow: selectedQuestions.length === 0 ? 'none' : '0 2px 8px rgba(139,69,19,0.10)',
-                      letterSpacing: '0.5px',
-                      cursor: selectedQuestions.length === 0 ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      padding: '0 8px',
-                      minWidth: 'auto',
-                      height: 24,
-                      lineHeight: '22px',
-                      fontSize: 13,
-                    }}
+                    type="primary"
+                    icon={<DownloadOutlined />}
                     onClick={handleGenerateDocument}
-                    disabled={selectedQuestions.length === 0 || generating}
                     loading={generating}
-                    size="small"
+                    disabled={selectedQuestions.length === 0}
+                    block
                   >
-                    Generate
+                    Generate Document
                   </Button>
-                </div>
-              }
-              style={{ minHeight: 300, maxHeight: 600, overflowY: 'auto' }}
-            >
-              {selectedQuestions.length === 0 ? (
-                <Text type="secondary">No questions selected yet.</Text>
-              ) : (
-                <List
-                  dataSource={questions.filter(q => selectedQuestions.includes(q.id))}
-                  renderItem={q => (
-                    <List.Item style={{ padding: '4px 0', display: 'block' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 24 }}>
-                        <div>
-                          <Text strong style={{ marginRight: 6 }}>{q.number}</Text>
-                          <Text>{q.text}</Text>
-                        </div>
-                        <Checkbox
-                          checked={true}
-                          style={{ marginLeft: 8, marginBottom: 0, transform: 'scale(0.85)' }}
-                          onChange={() => setSelectedQuestions(selectedQuestions.filter(id => id !== q.id))}
-                        />
-                      </div>
-                    </List.Item>
-                  )}
-                />
-              )}
-            </Card>
+                  <Text type="secondary" style={{ textAlign: 'center', display: 'block' }}>
+                    {selectedQuestions.length} question{selectedQuestions.length !== 1 ? 's' : ''} selected
+                  </Text>
+                </Space>
+              </Card>
+            </Space>
           </Col>
         </Row>
       </Card>
@@ -376,4 +361,4 @@ function PropoundingDiscoveryPage() {
   );
 }
 
-export default PropoundingDiscoveryPage;
+export default PropoundingDiscoveryPage; 

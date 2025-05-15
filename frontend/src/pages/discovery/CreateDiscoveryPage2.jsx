@@ -1,4 +1,3 @@
-// frontend/src/pages/CreateDiscoveryPage2.jsx
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -17,10 +16,11 @@ import {
 import { 
   InboxOutlined, 
   CheckCircleOutlined,
-  FileTextOutlined 
+  FileTextOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons';
-import api from '../services/api';
-import DiscoverySelectionStep from '../components/DiscoverySelectionStep';
+import api from '../../services/api';
+import DiscoverySelectionStep from '../../components/discovery/DiscoverySelectionStep';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -220,4 +220,4 @@ function CreateDiscoveryPage() {
   );
 }
 
-export default CreateDiscoveryPage;
+export default CreateDiscoveryPage; 

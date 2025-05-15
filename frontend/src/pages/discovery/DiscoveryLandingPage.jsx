@@ -1,7 +1,6 @@
-// frontend/src/pages/DiscoveryLandingPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api from '../../services/api';
 import {
     Typography,
     Card,
@@ -141,4 +140,4 @@ function DiscoveryLandingPage() {
     );
 }
 
-export default DiscoveryLandingPage;
+export default DiscoveryLandingPage; 

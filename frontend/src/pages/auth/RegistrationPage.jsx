@@ -1,8 +1,8 @@
 // frontend/src/pages/RegistrationPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { Form, Input, Button, Alert, Select, Typography, Card, Space, Divider } from 'antd';
 

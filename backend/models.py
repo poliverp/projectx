@@ -31,7 +31,8 @@ class Case(db.Model):
     defendant_counsel_attorneys = db.Column(db.String(1000), nullable=True)
     defendant_counsel_firm = db.Column(db.String(1000), nullable=True)
     defendant_counsel_address = db.Column(db.String(1000), nullable=True)
-    defendant_counsel_contact = db.Column(db.String(1000), nullable=True)
+    defendant_counsel_email = db.Column(db.String(1000), nullable=True)
+    defendant_counsel_phone = db.Column(db.String(1000), nullable=True)
     acting_attorney = db.Column(db.String(1000), nullable=True)
     acting_clerk = db.Column(db.String(200), nullable=True)
 

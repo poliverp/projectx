@@ -1,7 +1,7 @@
 // src/pages/DocumentAnalysisPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import api from '../services/api';
+import api from '../../services/api';
 import {
     Typography,
     Card,

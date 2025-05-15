@@ -175,6 +175,8 @@ def update_case(case_id, update_data, user_id):
     """
     # Fetch the case using the ownership-checking function
     target_case = get_case_by_id(case_id, user_id)
+    print(f"DEBUG: Retrieved case {case_id} for update")
+    print(f"DEBUG: Current case_details: {target_case.case_details}")
 
     # Get allowed fields from model
     mapper = inspect(Case)
@@ -187,6 +189,7 @@ def update_case(case_id, update_data, user_id):
         locked_fields = update_data['case_details'].get('locked_fields', [])
     elif hasattr(target_case, 'case_details') and isinstance(target_case.case_details, dict):
         locked_fields = target_case.case_details.get('locked_fields', [])
+    print(f"DEBUG: Locked fields: {locked_fields}")
 
     try:
         updated = False
@@ -196,6 +199,7 @@ def update_case(case_id, update_data, user_id):
         if 'case_details' in update_data:
             current_details = target_case.case_details or {}
             new_details = update_data['case_details']
+            print(f"DEBUG: New case_details to merge: {new_details}")
             
             # Ensure new_details is a dict
             if not isinstance(new_details, dict):
@@ -204,6 +208,7 @@ def update_case(case_id, update_data, user_id):
             
             # Merge the new details with existing ones
             merged_details = {**current_details, **new_details}
+            print(f"DEBUG: Merged case_details: {merged_details}")
             
             # Always preserve locked_fields if they exist in new_details
             if 'locked_fields' in new_details:
@@ -214,7 +219,8 @@ def update_case(case_id, update_data, user_id):
                 target_case.case_details = merged_details
                 json_modified = True
                 updated = True
-                print(f"Updated case_details for case {case_id}")
+                print(f"DEBUG: Updated case_details for case {case_id}")
+                print(f"DEBUG: New case_details value: {target_case.case_details}")
 
         # Then handle dedicated fields
         for key, value in update_data.items():
@@ -250,7 +256,8 @@ def update_case(case_id, update_data, user_id):
             if json_modified:
                 flag_modified(target_case, "case_details")
             db.session.commit()
-            print(f"Case {case_id} updated successfully via service by user {user_id}.")
+            print(f"DEBUG: Case {case_id} updated successfully via service by user {user_id}.")
+            print(f"DEBUG: Final case_details after commit: {target_case.case_details}")
         else:
             print(f"No changes detected for case {case_id}. Skipping commit.")
 

@@ -138,21 +138,24 @@ def handle_cases():
 
 # Route for getting ONE specific case
 @bp.route('/cases/<int:case_id>', methods=['GET'])
-@login_required # <-- ADDED: Require user to be logged in
+@login_required
 def get_case_details(case_id):
     """Fetches details for a specific case."""
-    print(f"--- Handling GET /api/cases/{case_id} (AUTH REQUIRED) ---") # <-- MODIFIED: Added print/note
+    print(f"--- Handling GET /api/cases/{case_id} (AUTH REQUIRED) ---")
     try:
         # Use .first_or_404() for slightly cleaner handling
-        target_case = get_case_by_id(case_id, user_id=current_user.id) # <-- MODIFIED: Pass current_user.id
+        target_case = get_case_by_id(case_id, user_id=current_user.id)
         if target_case is None:
             return jsonify({'error': 'Case not found'}), 404
-        # ---### START CHANGE ###---
+            
+        # Add debug prints
+        print(f"DEBUG: Retrieved case {case_id} from database")
+        print(f"DEBUG: Case details: {target_case.case_details}")
+        
         # Serialize the case object using the schema
         result = case_schema.dump(target_case)
+        print(f"DEBUG: Serialized case data: {result}")
         return jsonify(result)
-        # ---### END CHANGE ###---
-        return jsonify(case_data)
     except Forbidden as e: return jsonify({'error': str(e) or 'Permission denied'}), 403
     except Exception as e:
         print(f"Error fetching case {case_id}: {e}")

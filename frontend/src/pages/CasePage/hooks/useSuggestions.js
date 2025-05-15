@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { message } from 'antd';
 import api from '../../../services/api';
+import { caseFieldConfig } from '../../../config/caseFieldConfig';
 
 export function useSuggestions(caseDetails, refreshCase) {
   // State for tracking locked fields - this is the source of truth for UI
@@ -142,12 +143,17 @@ export function useSuggestions(caseDetails, refreshCase) {
     return pendingFieldLocks[fieldName] === true;
   }, [pendingFieldLocks]);
   
-  const handleCheckboxChange = useCallback((docKey, field, suggestedValue, isChecked) => {
+  const handleCheckboxChange = useCallback((docKey, field, suggestedValue, isChecked, shouldLock) => {
     setAcceptedSuggestions(prev => {
       const newAccepted = JSON.parse(JSON.stringify(prev));
       if (isChecked) {
         if (!newAccepted[docKey]) newAccepted[docKey] = {};
-        newAccepted[docKey][field] = suggestedValue;
+        // Store both the value and the lock preference
+        newAccepted[docKey][field] = {
+          value: suggestedValue,
+          applyOnly: !shouldLock,
+          applyAndLock: shouldLock
+        };
       } else {
         if (newAccepted[docKey]?.[field] !== undefined) {
           delete newAccepted[docKey][field];
@@ -190,7 +196,6 @@ export function useSuggestions(caseDetails, refreshCase) {
     setError(null);
     
     try {
-      // Build the update payload
       const updatePayload = {};
       const currentCaseDetailsData = caseDetails?.case_details ?? {};
       const updatedDetails = JSON.parse(JSON.stringify(currentCaseDetailsData));
@@ -210,7 +215,7 @@ export function useSuggestions(caseDetails, refreshCase) {
       for (const [docKey, suggestions] of Object.entries(acceptedSuggestions)) {
         processedDocKeys.add(docKey);
         
-        for (const [field, acceptedValue] of Object.entries(suggestions)) {
+        for (const [field, suggestionData] of Object.entries(suggestions)) {
           // Skip if field is locked
           if (isFieldLocked(field)) {
             console.log(`Field ${field} is locked, skipping...`);
@@ -218,13 +223,15 @@ export function useSuggestions(caseDetails, refreshCase) {
           }
           
           // Determine if this is a dedicated field or case_details field
-          const fieldConfig = window.caseFieldConfig?.find(f => f.name === field);
+          console.log(`Looking up field configuration for: ${field}`);
+          const fieldConfig = caseFieldConfig.find(f => f.name === field);
+          console.log('Found field config:', fieldConfig);
           if (!fieldConfig) {
             console.warn(`No field configuration found for ${field}, skipping...`);
             continue;
           }
           
-          const processedValue = truncateValue(acceptedValue);
+          const processedValue = truncateValue(suggestionData.value);
           
           if (fieldConfig.isDedicated) {
             updatePayload[field] = processedValue;
@@ -234,25 +241,26 @@ export function useSuggestions(caseDetails, refreshCase) {
               caseDetailsChanged = true;
             }
           }
+
+          // If this suggestion should also lock the field
+          if (suggestionData.applyAndLock) {
+            if (!updatedDetails.locked_fields) {
+              updatedDetails.locked_fields = [];
+            }
+            if (!updatedDetails.locked_fields.includes(field)) {
+              updatedDetails.locked_fields.push(field);
+              caseDetailsChanged = true;
+            }
+          }
         }
       }
       
       // Clear processed suggestions from case_details
       if (updatedDetails.pending_suggestions) {
-        for (const docKey of processedDocKeys) {
-          if (updatedDetails.pending_suggestions[docKey]) {
-            delete updatedDetails.pending_suggestions[docKey];
-            caseDetailsChanged = true;
-          }
-        }
-        if (Object.keys(updatedDetails.pending_suggestions).length === 0) {
-          delete updatedDetails.pending_suggestions;
-        }
+        // Clear all suggestions after applying selected ones
+        updatedDetails.pending_suggestions = {};
+        caseDetailsChanged = true;
       }
-      
-      // Include locked_fields in the update
-      updatedDetails.locked_fields = lockedFields;
-      caseDetailsChanged = true;
       
       if (caseDetailsChanged) {
         updatePayload.case_details = updatedDetails;
@@ -269,6 +277,18 @@ export function useSuggestions(caseDetails, refreshCase) {
       
       // Make the API call
       const response = await api.updateCase(caseDetails.id, updatePayload);
+      console.log("Update response:", response);
+      
+      // Update local state with the response data
+      if (response?.data) {
+        // Update case details with the response data
+        if (response.data.case_details) {
+          // Update locked fields from response
+          if (response.data.case_details.locked_fields) {
+            setLockedFields(response.data.case_details.locked_fields);
+          }
+        }
+      }
       
       setApplySuccess(true);
       message.success("Changes applied successfully!");
