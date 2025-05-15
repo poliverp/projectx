@@ -132,21 +132,63 @@ def build_form_interrogatories_prompt(questions: List[DiscoveryQuestion],
         case_details, "Form Interrogatories"
     )
     
-    instructions = GeneralPromptBuilder.build_prompt_instructions(objection_sheet)
+    # Instead of using the general instructions, create specific form interrogatory instructions
+    fi_instructions = """
+    INSTRUCTIONS:
+    For each Form Interrogatory, please follow these specific formatting guidelines:
     
-    formatted_questions = GeneralPromptBuilder.format_questions(
-        questions, "FORM INTERROGATORY NO."
-    )
+    1. Format each interrogatory and response in this exact structure:
+       
+       **FORM INTERROGATORY NO. X:**
+       [Include the full interrogatory text here, indented on first line if possible]
+       
+       **RESPONSE TO FORM INTERROGATORY NO. X:**
+       Objection. [Include each applicable objection from the objection list as its own full sentence, exactly as written in the list]
+       
+       Subject to and without waiving the foregoing objections, Plaintiff responds as follows:
+       [Your response here, maintaining any list formatting (a, b, c, d) that exists in the template]
+    
+    2. Important requirements:
+       - ALWAYS start each response with "Objection." followed by the specific objections
+       - Use the EXACT wording from the objection list provided below - do not combine or paraphrase objections
+       - If no objections apply, write "No objections found."
+       - ALWAYS end each response with: "Subject to and without waiving the foregoing objections, Plaintiff responds as follows:"
+       - Maintain list formatting (a, b, c, d) that exists in the template
+       - For medical records sections (typically 6.4, 6.5, 6.6), format as clear structured lists
+       - For income loss sections (typically 8.1-8.8), format dates and amounts clearly
+    
+    3. Responding party is always the Plaintiff in these responses
+    """
+    
+    # Include the ENTIRE objection sheet instead of truncating it
+    objection_guidance = """
+    OBJECTION LIST (Use these exact objections as written - do not modify or combine them):
+    
+    """ + objection_sheet
+    
+    formatted_questions = ""
+    for question in questions:
+        formatted_questions += f"**FORM INTERROGATORY NO. {question.number}:**\n"
+        formatted_questions += f"            {question.text}\n\n"
     
     return f"""
     {header}
     
-    {instructions}
+    {fi_instructions}
+    
+    {objection_guidance}
+    
+    DISCOVERY REQUESTS TO RESPOND TO:
     
     {formatted_questions}
     
-    For each form interrogatory above, please draft a complete response including any appropriate objections.
-    Start each response with "RESPONSE TO FORM INTERROGATORY NO. X:" and then provide the full response.
+    Remember: 
+    1. For each interrogatory above, provide a response that starts with "**RESPONSE TO FORM INTERROGATORY NO. X:**"
+    2. Always start with "Objection." followed by applicable objections from the list as full sentences
+    3. Always end with "Subject to and without waiving the foregoing objections, Plaintiff responds as follows:"
+    4. Use the EXACT wording from the objection list - do not combine or summarize objections
+    5. Format exactly as shown in the instructions
+    6. Maintain list formatting (a, b, c, d) that exists in the template
     """
 
 

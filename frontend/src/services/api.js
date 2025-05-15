@@ -361,6 +361,25 @@ export const generateInterrogatoryDocument = (caseId, selectedIds, language) => 
     responseType: 'blob'
   });
 };
+
+export const formatFormInterrogatoryResponses = async (caseId, responses) => {
+  try {
+    console.log(`API: Formatting form interrogatory responses for case ${caseId}`);
+    const response = await axios.post(
+      `${API_BASE_URL}/discovery/cases/${caseId}/format-responses`,
+      { responses },
+      {
+        withCredentials: true,
+        timeout: 60000, // 1 minute timeout
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error formatting responses:', error);
+    throw error;
+  }
+};
+
 // Default export combining all functions
 const api = {
   getCases,
@@ -387,6 +406,7 @@ const api = {
   getUserByUsername,
   getInterrogatoryQuestions,
   generateInterrogatoryDocument,
+  formatFormInterrogatoryResponses,
 };
 
 export default api;

@@ -23,35 +23,90 @@ TEMPLATE_CONTEXT_MAP = {
     # --- Configuration for jury_fees_template.docx ---
     'jury_fees_template.docx': {
         # CONTEXT KEY (matches {{placeholder}}) : { CONFIGURATION }
-
-        # --- Read CORE fields from DIRECT columns ---
         'plaintiff':          {'source': 'direct', 'attribute': 'plaintiff',          'default': ''},
         'defendant':          {'source': 'direct', 'attribute': 'defendant',          'default': ''},
         'judge':              {'source': 'direct', 'attribute': 'judge',              'default': ''},
         'case_number':        {'source': 'direct', 'attribute': 'case_number',        'default': ''},
-        # 'official_case_name': {'source': 'direct', 'attribute': 'official_case_name', 'default': ''}, # Uncomment if template needs {{official_case_name}}
-        'jurisdiction':             {'source': 'direct', 'attribute': 'jurisdiction',             'default': ''},
-        'county':                   {'source': 'direct', 'attribute': 'county',                   'default': ''},
-        'filing_date':              {'source': 'direct', 'attribute': 'filing_date',              'default': ''}, 
-        'trial_date':               {'source': 'direct', 'attribute': 'trial_date',               'default': ''}, 
-        'incident_date':            {'source': 'direct', 'attribute': 'incident_date',            'default': ''}, 
-        'incident_location':        {'source': 'direct', 'attribute': 'incident_location',        'default': ''},
-        'incident_description':     {'source': 'direct', 'attribute': 'incident_description',     'default': ''},
-        'case_type':                {'source': 'direct', 'attribute': 'case_type',                'default': ''},
-        'defendant_counsel_info':   {'source': 'direct', 'attribute': 'defendant_counsel_info',   'default': ''},
-        'plaintiff_counsel_info':   {'source': 'direct', 'attribute': 'plaintiff_counsel_info',   'default': ''},
-        'vehicle_details':          {'source': 'direct', 'attribute': 'vehicle_details',          'default': ''},
+        'jurisdiction':       {'source': 'direct', 'attribute': 'jurisdiction',       'default': ''},
+        'county':             {'source': 'direct', 'attribute': 'county',             'default': ''},
+        'filing_date':        {'source': 'direct', 'attribute': 'filing_date',        'default': ''}, 
+        'trial_date':         {'source': 'direct', 'attribute': 'trial_date',         'default': ''}, 
+        'incident_date':      {'source': 'direct', 'attribute': 'incident_date',      'default': ''}, 
+        'incident_location':  {'source': 'direct', 'attribute': 'incident_location',  'default': ''},
+        'incident_description': {'source': 'direct', 'attribute': 'incident_description', 'default': ''},
+        'case_type':          {'source': 'direct', 'attribute': 'case_type',          'default': ''},
+        'plaintiff_counsel_info': {'source': 'direct', 'attribute': 'plaintiff_counsel_info', 'default': ''},
+        'vehicle_details':     {'source': 'direct', 'attribute': 'vehicle_details',    'default': ''},
+        'acting_attorney':     {'source': 'direct', 'attribute': 'acting_attorney',    'default': ''},
+        'acting_clerk':        {'source': 'direct', 'attribute': 'acting_clerk',       'default': ''},
+        # Defendant counsel fields
         'defendant_counsel_attorneys': {'source': 'direct', 'attribute': 'defendant_counsel_attorneys', 'default': ''},
         'defendant_counsel_firm': {'source': 'direct', 'attribute': 'defendant_counsel_firm', 'default': ''},
         'defendant_counsel_address': {'source': 'direct', 'attribute': 'defendant_counsel_address', 'default': ''},
-        'defendant_counsel_contact': {'source': 'direct', 'attribute': 'defendant_counsel_contact', 'default': ''},
-        'acting_attorney':          {'source': 'direct', 'attribute': 'acting_attorney', 'default': ''},
-        'acting_clerk':             {'source': 'direct', 'attribute': 'acting_clerk', 'default': ''},
-        'case_details':             {'source': 'direct', 'attribute': 'case_details', 'default': {}}
-        # Add configuration for any other placeholders in jury_fees_template.docx
-        # Ensure 'key' points to the correct field within your case_details JSON
-        # 'summary':            {'source': 'case_details', 'key': 'summary',           'default': ''},
+        'defendant_counsel_email': {'source': 'direct', 'attribute': 'defendant_counsel_email', 'default': ''},
+        'defendant_counsel_phone': {'source': 'direct', 'attribute': 'defendant_counsel_phone', 'default': ''},
+        'defendant_counsel_info': {'source': 'direct', 'attribute': 'defendant_counsel_info', 'default': ''},
+        'case_details':        {'source': 'direct', 'attribute': 'case_details',       'default': {}}
+    },
 
+    # --- Configuration for FR1_template.docx ---
+    'FR1_template.docx': {
+        'plaintiff':          {'source': 'direct', 'attribute': 'plaintiff',          'default': ''},
+        'defendant':          {'source': 'direct', 'attribute': 'defendant',          'default': ''},
+        'case_number':        {'source': 'direct', 'attribute': 'case_number',        'default': ''},
+        'judge':              {'source': 'direct', 'attribute': 'judge',              'default': ''},
+        'jurisdiction':       {'source': 'direct', 'attribute': 'jurisdiction',       'default': ''},
+        'county':             {'source': 'direct', 'attribute': 'county',             'default': ''},
+        'filing_date':        {'source': 'direct', 'attribute': 'filing_date',        'default': ''}, 
+        'trial_date':         {'source': 'direct', 'attribute': 'trial_date',         'default': ''}, 
+        'incident_date':      {'source': 'direct', 'attribute': 'incident_date',      'default': ''}, 
+        'incident_location':  {'source': 'direct', 'attribute': 'incident_location',  'default': ''},
+        'incident_description': {'source': 'direct', 'attribute': 'incident_description', 'default': ''},
+        'case_type':          {'source': 'direct', 'attribute': 'case_type',          'default': ''},
+        'plaintiff_counsel_info': {'source': 'direct', 'attribute': 'plaintiff_counsel_info', 'default': ''},
+        'vehicle_details':     {'source': 'direct', 'attribute': 'vehicle_details',    'default': ''},
+        'acting_attorney':     {'source': 'direct', 'attribute': 'acting_attorney',    'default': ''},
+        'acting_clerk':        {'source': 'direct', 'attribute': 'acting_clerk',       'default': ''},
+        # Defendant counsel fields
+        'defendant_counsel_attorneys': {'source': 'direct', 'attribute': 'defendant_counsel_attorneys', 'default': ''},
+        'defendant_counsel_firm': {'source': 'direct', 'attribute': 'defendant_counsel_firm', 'default': ''},
+        'defendant_counsel_address': {'source': 'direct', 'attribute': 'defendant_counsel_address', 'default': ''},
+        'defendant_counsel_email': {'source': 'direct', 'attribute': 'defendant_counsel_email', 'default': ''},
+        'defendant_counsel_phone': {'source': 'direct', 'attribute': 'defendant_counsel_phone', 'default': ''},
+        'defendant_counsel_info': {'source': 'direct', 'attribute': 'defendant_counsel_info', 'default': ''},
+        'current_date':        {'source': 'direct', 'attribute': 'current_date',       'default': ''},
+        'current_year':        {'source': 'direct', 'attribute': 'current_year',       'default': ''},
+        'responses':           {'source': 'direct', 'attribute': 'responses',          'default': {}}
+    },
+
+    # --- Configuration for RFP1_template.docx ---
+    'RFP1_template.docx': {
+        'plaintiff':          {'source': 'direct', 'attribute': 'plaintiff',          'default': ''},
+        'defendant':          {'source': 'direct', 'attribute': 'defendant',          'default': ''},
+        'case_number':        {'source': 'direct', 'attribute': 'case_number',        'default': ''},
+        'judge':              {'source': 'direct', 'attribute': 'judge',              'default': ''},
+        'jurisdiction':       {'source': 'direct', 'attribute': 'jurisdiction',       'default': ''},
+        'county':             {'source': 'direct', 'attribute': 'county',             'default': ''},
+        'filing_date':        {'source': 'direct', 'attribute': 'filing_date',        'default': ''}, 
+        'trial_date':         {'source': 'direct', 'attribute': 'trial_date',         'default': ''}, 
+        'incident_date':      {'source': 'direct', 'attribute': 'incident_date',      'default': ''}, 
+        'incident_location':  {'source': 'direct', 'attribute': 'incident_location',  'default': ''},
+        'incident_description': {'source': 'direct', 'attribute': 'incident_description', 'default': ''},
+        'case_type':          {'source': 'direct', 'attribute': 'case_type',          'default': ''},
+        'plaintiff_counsel_info': {'source': 'direct', 'attribute': 'plaintiff_counsel_info', 'default': ''},
+        'vehicle_details':     {'source': 'direct', 'attribute': 'vehicle_details',    'default': ''},
+        'acting_attorney':     {'source': 'direct', 'attribute': 'acting_attorney',    'default': ''},
+        'acting_clerk':        {'source': 'direct', 'attribute': 'acting_clerk',       'default': ''},
+        # Defendant counsel fields
+        'defendant_counsel_attorneys': {'source': 'direct', 'attribute': 'defendant_counsel_attorneys', 'default': ''},
+        'defendant_counsel_firm': {'source': 'direct', 'attribute': 'defendant_counsel_firm', 'default': ''},
+        'defendant_counsel_address': {'source': 'direct', 'attribute': 'defendant_counsel_address', 'default': ''},
+        'defendant_counsel_email': {'source': 'direct', 'attribute': 'defendant_counsel_email', 'default': ''},
+        'defendant_counsel_phone': {'source': 'direct', 'attribute': 'defendant_counsel_phone', 'default': ''},
+        'defendant_counsel_info': {'source': 'direct', 'attribute': 'defendant_counsel_info', 'default': ''},
+        'current_date':        {'source': 'direct', 'attribute': 'current_date',       'default': ''},
+        'current_year':        {'source': 'direct', 'attribute': 'current_year',       'default': ''},
+        'responses':           {'source': 'direct', 'attribute': 'responses',          'default': {}}
     },
 
     # --- Configuration for demand_letter_template.docx (EXAMPLE) ---

@@ -1,4 +1,4 @@
-from flask import request, jsonify, current_app, send_file
+from flask import request, jsonify, current_app, send_file, Blueprint, session, url_for
 from flask_login import login_required, current_user
 import os
 import io
@@ -10,6 +10,7 @@ import re  # Added for regex pattern matching
 from docx import Document
 from docxtpl import DocxTemplate, RichText
 from backend.services.case_service import get_case_by_id
+from backend.schemas import case_schema  # Add this import
 from backend.app.discovery import (
     parse_requests_for_production,
     parse_form_interrogatories,
@@ -24,6 +25,10 @@ from backend.app.discovery import (
 from backend.models import Case
 from backend.extensions import csrf
 from . import bp
+from backend.app.discovery.formatters import format_form_interrogatory_responses, format_medical_records
+import logging
+from datetime import datetime
+from typing import Dict, Any
 
 # Function to strip markdown formatting
 def strip_markdown(text):
@@ -186,153 +191,38 @@ def parse_discovery_document(case_id):
 
 
 @bp.route('/discovery/cases/<int:case_id>/generate-document', methods=['POST'])
-@login_required
 def generate_discovery_document(case_id):
-    """
-    Takes the parsed questions and user selections, and generates a Word document.
-    This is step 2 of the two-step process for discovery document generation.
-    """
-    print(f"DEBUG: Discovery document generation endpoint accessed by user {current_user.id} for case {case_id}")
-    
-    # Get the data from the request
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-    
-    session_key = data.get('session_key')
-    selections = data.get('selections', {})
-    discovery_type = data.get('discovery_type')
-    
-    print(f"DEBUG: Selections received: {selections}")
-    
-    if not session_key or not discovery_type:
-        return jsonify({'error': 'Missing required parameters'}), 400
-    
-    print(f"DEBUG: Session key: {session_key}")
-    print(f"DEBUG: User selections: {selections}")
-    
-    # Retrieve the stored result from the first step
-    result = current_app.config.get(session_key)
-    if not result:
-        return jsonify({'error': 'Session expired or invalid. Please restart the process.'}), 400
-    
+    """Generate a document from the formatted responses stored in the session."""
     try:
-        # Load case details
-        case = get_case_by_id(case_id, user_id=current_user.id)
+        # Get template name from request
+        template_name = request.json.get('template_name', 'form_interrogatory_response.docx')
         
-        # Define the standard responses
-        standard_responses = {
-            'will_provide': "Plaintiff will produce responsive documents.",
-            'none_found': "Plaintiff has no responsive documents to produce.",
-            'no_text': ""  # No additional text
-        }
-        
-        # Define path to the template
-        template_name = 'discovery_responses_template.docx'
-        template_dir = os.path.join(current_app.root_path, 'templates')
-        template_path = os.path.join(template_dir, template_name)
-        
-        print(f"DEBUG: Looking for document template at: {template_path}")
-        if not os.path.exists(template_path):
-            return jsonify({'error': f'Template file "{template_name}" not found'}), 500
-        
-        # Extract questions and AI response from result
-        questions = result.get('questions', [])
-        ai_response = result.get('ai_response', '')
-        
-        # Parse the AI responses
-        responses_dict = {}
-        current_num = None
-        current_text = ""
-        
-        print(f"DEBUG: Parsing AI response text")
-        
-        # Parse AI response to match responses with question numbers
-        for line in ai_response.split('\n'):
-            if "RESPONSE TO REQUEST FOR PRODUCTION NO." in line:
-                # If we were building a response, save it
-                if current_num is not None:
-                    responses_dict[current_num] = current_text.strip()
-                
-                # Extract the question number
-                try:
-                    current_num = line.split("NO.")[1].split(":")[0].strip()
-                    current_text = ""
-                except IndexError:
-                    current_num = None
-                    print(f"DEBUG: Failed to extract number from: {line}")
-            elif "REQUEST FOR PRODUCTION NO." in line:
-                # If we hit a new request, save the current response
-                if current_num is not None:
-                    responses_dict[current_num] = current_text.strip()
-                    current_num = None
-            elif current_num is not None:
-                current_text += line + "\n"
-        
-        # Add the last response if we have one
-        if current_num is not None:
-            responses_dict[current_num] = current_text.strip()
-        
-        # Create RichText object with formatted responses
-        print(f"DEBUG: Creating RichText for responses")
-        responses_rt = RichText()
-        
-        for question in questions:
-            question_number = question.get('number', '')
-            question_text = strip_markdown(question.get('text', ''))
+        # Get formatted responses from session
+        formatted_data = session.get('formatted_responses', {})
+        if not formatted_data:
+            return jsonify({
+                'error': 'No formatted responses found in session. Please format responses first.'
+            }), 400
             
-            # Add request header (bold + underlined)
-            responses_rt.add(f"REQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True)
-            responses_rt.add('\n')
-            
-            # Add request text (indented with spaces)
-            responses_rt.add(f"    {question_text}\n\n")
-            
-            # Add response header (bold + underlined)
-            responses_rt.add(f"RESPONSE TO REQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True)
-            responses_rt.add('\n')
-            
-            # Get response text or use default, and strip markdown
-            response_text = responses_dict.get(question_number, 
-                          "No objections found. Subject to and without waiving the foregoing objections, Plaintiff responds as follows:")
-            response_text = strip_markdown(response_text)
-            
-            # Get the user selection for this question
-            question_id = f"q_{question_number}"
-            selection = selections.get(question_id, 'no_text')
-            standard_response = standard_responses.get(selection, "")
-            
-            print(f"DEBUG: Question ID being looked up: {question_id}")
-            print(f"DEBUG: Selection found: {selection}")
-            print(f"DEBUG: Standard response: {standard_response}")
-            
-            # Add response text with spaces for indentation
-            responses_rt.add(f"    {response_text}")
-            
-            # Add the selected standard response if it's not empty
-            if standard_response:
-                # If the response already ends with a period, add a space
-                if response_text.strip().endswith('.'):
-                    responses_rt.add(f" {standard_response}")
-                else:
-                    # Otherwise add a period then the standard response
-                    responses_rt.add(f". {standard_response}")
-            
-            responses_rt.add("\n\n")
+        # Get case details
+        case = Case.query.get_or_404(case_id)
+        case_details = case.to_dict()
         
-        # Create context with case info and responses
+        # Prepare context for document generation using the template system
         context = {
-            'case_name': case.display_name if hasattr(case, 'display_name') else '',
-            'case_number': case.case_number if hasattr(case, 'case_number') else '',
+            # Core case information
             'plaintiff': case.plaintiff if hasattr(case, 'plaintiff') else '',
             'defendant': case.defendant if hasattr(case, 'defendant') else '',
+            'case_number': case.case_number if hasattr(case, 'case_number') else '',
             'judge': case.judge if hasattr(case, 'judge') else '',
             'jurisdiction': case.jurisdiction if hasattr(case, 'jurisdiction') else '',
             'county': case.county if hasattr(case, 'county') else '',
+            
             # Date fields
             'filing_date': case.filing_date if hasattr(case, 'filing_date') else '',
             'trial_date': case.trial_date if hasattr(case, 'trial_date') else '',
             'incident_date': case.incident_date if hasattr(case, 'incident_date') else '',
+            
             # Other fields
             'incident_location': case.incident_location if hasattr(case, 'incident_location') else '',
             'incident_description': case.incident_description if hasattr(case, 'incident_description') else '',
@@ -346,45 +236,30 @@ def generate_discovery_document(case_id):
             'defendant_counsel_contact': case.defendant_counsel_contact if hasattr(case, 'defendant_counsel_contact') else '',
             'acting_attorney': case.acting_attorney if hasattr(case, 'acting_attorney') else '',
             'acting_clerk': case.acting_clerk if hasattr(case, 'acting_clerk') else '',
-            # Add the responses last
-            'responses': responses_rt
+            
+            # Current date and year
+            'current_date': datetime.now().strftime('%B %d, %Y'),
+            'current_year': datetime.now().year,
+            
+            # Responses from the formatter
+            'responses': formatted_data.get('responses', {})
         }
         
-        # Create and render the document
-        print(f"DEBUG: Creating document from template")
-        doc = DocxTemplate(template_path)
-        doc.render(context)
-        
-        # Save to BytesIO
-        print(f"DEBUG: Saving document to memory stream")
-        output = io.BytesIO()
-        doc.save(output)
-        output.seek(0)
-        
-        # Create filename
-        safe_case_identifier = str(getattr(case, 'case_number', case_id)).replace('/','_').replace('\\','_')
-        output_filename = f"RFP_Responses_{safe_case_identifier}.docx"
-        
-        # Delete the stored session data
-        if session_key in current_app.config:
-            del current_app.config[session_key]
-        
-        # Return the file
-        print(f"DEBUG: Sending file: {output_filename}")
-        return send_file(
-            output,
-            as_attachment=True,
-            download_name=output_filename,
-            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        # Generate document using template system
+        document_path = generate_document(
+            template_name=template_name,
+            context=context,
+            output_filename=f"form_interrogatory_responses_{case_id}.docx"
         )
         
+        return jsonify({
+            'document_url': url_for('static', filename=document_path),
+            'success': True
+        })
+        
     except Exception as e:
-        error_trace = traceback.format_exc()
-        print(f"DEBUG: Error in generate_discovery_document: {str(e)}")
-        print(f"DEBUG: Error traceback: {error_trace}")
-        current_app.logger.error(f"Error generating discovery document for case {case_id}: {e}")
-        current_app.logger.error(f"Traceback: {error_trace}")
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        logger.error(f"Error generating document: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('/discovery/cases/<int:case_id>/respond', methods=['POST'])
 @login_required
@@ -601,6 +476,10 @@ def respond_to_discovery(case_id):
         safe_case_identifier = str(getattr(case, 'case_number', case_id)).replace('/','_').replace('\\','_')
         output_filename = f"RFP_Responses_{safe_case_identifier}.docx"
         
+        # Delete the stored session data
+        if session_key in current_app.config:
+            del current_app.config[session_key]
+        
         # Return the file
         print(f"DEBUG: Sending file: {output_filename}")
         return send_file(
@@ -746,3 +625,58 @@ def generate_interrogatory_document():
         current_app.logger.error(f"Error generating interrogatory document: {e}")
         current_app.logger.error(f"Traceback: {error_trace}")
         return jsonify({'error': f'Failed to generate document: {str(e)}'}), 500
+
+@bp.route('/discovery/cases/<int:case_id>/format-responses', methods=['POST'])
+@login_required
+def format_discovery_responses(case_id: int):
+    """
+    Format form interrogatory responses using AI.
+    
+    Args:
+        case_id: ID of the case
+        
+    Returns:
+        JSON response with formatted responses and metadata
+    """
+    try:
+        # Get request data
+        data = request.get_json()
+        if not data or 'responses' not in data:
+            return jsonify({'error': 'No responses provided'}), 400
+            
+        responses = data['responses']
+        medical_data = data.get('medical_data', {})
+        
+        # Get case details
+        case = Case.query.get_or_404(case_id)
+        if case.user_id != current_user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Convert case to dict for formatting
+        case_dict = case_schema.dump(case)
+        
+        # Format responses using AI
+        formatted_data = format_form_interrogatory_responses(responses, case_dict)
+        
+        # Format medical records if provided
+        if medical_data:
+            medical_formatted = format_medical_records(medical_data, case_dict)
+            formatted_data['responses'].update(medical_formatted['responses'])
+            formatted_data['metadata']['medical_records'] = medical_formatted['metadata']
+        
+        # Store in session for document generation
+        session_key = f'formatted_responses_{case_id}'
+        session[session_key] = {
+            'responses': formatted_data['responses'],
+            'formatted_at': datetime.utcnow().isoformat(),
+            'case_id': case_id
+        }
+        
+        return jsonify(formatted_data)
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error formatting responses: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to format responses'}), 500
