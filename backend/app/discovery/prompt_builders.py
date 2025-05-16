@@ -209,23 +209,67 @@ def build_special_interrogatories_prompt(questions: List[DiscoveryQuestion],
     header = GeneralPromptBuilder.build_common_prompt_header(
         case_details, "Special Interrogatories"
     )
-    
-    instructions = GeneralPromptBuilder.build_prompt_instructions(objection_sheet)
-    
-    formatted_questions = GeneralPromptBuilder.format_questions(
-        questions, "SPECIAL INTERROGATORY NO."
-    )
-    
+
+    # Specific instructions for Special Interrogatories (mirroring RFP logic)
+    si_instructions = """
+INSTRUCTIONS:
+For each Special Interrogatory, please follow these specific formatting guidelines:
+
+1. Format each interrogatory and response in this exact structure:
+   
+   **SPECIAL INTERROGATORY NO. X:**
+   [Include the full interrogatory text here, indented on first line if possible]
+   
+   **RESPONSE TO SPECIAL INTERROGATORY NO. X:**
+   Objection. [Include each applicable objection from the objection list as its own full sentence, exactly as written in the list]
+   
+   Subject to and without waiving the foregoing objections, Plaintiff responds as follows:
+
+2. Important requirements:
+   - ALWAYS start each response with "Objection." followed by the specific objections
+   - Use the EXACT wording from the objection list provided below - do not combine or paraphrase objections
+   - If no objections apply, write "No objections found."
+   - ALWAYS end each response with: "Subject to and without waiving the foregoing objections, Plaintiff responds as follows:"
+   - Do NOT add any substantive response after this closing phrase - that will be added by the user
+
+3. Responding party is always the Plaintiff in these responses
+"""
+
+    # Include the ENTIRE objection sheet
+    objection_guidance = """
+OBJECTION LIST (Use these exact objections as written - do not modify or combine them):
+
+""" + objection_sheet
+
+    formatted_questions = ""
+    for question in questions:
+        formatted_questions += f"**SPECIAL INTERROGATORY NO. {question.number}:**\n"
+        formatted_questions += f"            {question.text}\n\n"
+
+    # Prepend 'special' to user response options (for later editing)
+    user_response_note = """
+Remember: 
+1. For each interrogatory above, provide a response that starts with "**RESPONSE TO SPECIAL INTERROGATORY NO. X:**"
+2. Always start with "Objection." followed by applicable objections from the list as full sentences
+3. Always end with "Subject to and without waiving the foregoing objections, Plaintiff responds as follows:"
+4. Use the EXACT wording from the objection list - do not combine or summarize objections
+5. Format exactly as shown in the instructions
+6. [special] User will add their own substantive response after the objections section. [special]
+"""
+
     return f"""
-    {header}
-    
-    {instructions}
-    
-    {formatted_questions}
-    
-    For each special interrogatory above, please draft a complete response including any appropriate objections.
-    Start each response with "RESPONSE TO SPECIAL INTERROGATORY NO. X:" and then provide the full response.
-    """
+{header}
+
+{si_instructions}
+
+{objection_guidance}
+
+DISCOVERY REQUESTS TO RESPOND TO:
+
+{formatted_questions}
+
+{user_response_note}
+"""
 
 
 def build_requests_for_production_prompt(questions: List[DiscoveryQuestion], 

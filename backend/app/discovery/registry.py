@@ -6,7 +6,7 @@ from .parsers import (
     parse_special_interrogatories,
     parse_requests_for_admission,
 )
-from .ai_parsers import ai_parse_requests_for_production
+from .ai_parsers import ai_parse_requests_for_production, ai_parse_special_interrogatories
 from .prompt_builders import (
     build_form_interrogatories_prompt,
     build_special_interrogatories_prompt,
@@ -24,7 +24,7 @@ DISCOVERY_TYPE_REGISTRY = {
         'response_type': 'Response to Form Interrogatory No.'
     },
     'special_interrogatories': {
-        'parser': parse_special_interrogatories,
+        'parser': ai_parse_special_interrogatories,
         'prompt_builder': build_special_interrogatories_prompt,
         'display_name': 'Special Interrogatories',
         'request_type': 'Special Interrogatory No.',
