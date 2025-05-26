@@ -1,5 +1,7 @@
+# backend/app/discovery/registry.py
 """
 Registry for discovery document types and their related functions.
+Enhanced to include template mapping and data source configuration.
 """
 from .parsers import (
     parse_form_interrogatories,
@@ -21,28 +23,40 @@ DISCOVERY_TYPE_REGISTRY = {
         'prompt_builder': build_form_interrogatories_prompt,
         'display_name': 'Form Interrogatories',
         'request_type': 'Form Interrogatory No.',
-        'response_type': 'Response to Form Interrogatory No.'
+        'response_type': 'Response to Form Interrogatory No.',
+        'template_file': 'FR1_template.docx',
+        'data_source': 'session',  # Uses session.get('formatted_responses')
+        'workflow_type': 'format_responses',  # Uses format-responses endpoint
     },
     'special_interrogatories': {
         'parser': ai_parse_special_interrogatories,
         'prompt_builder': build_special_interrogatories_prompt,
         'display_name': 'Special Interrogatories',
         'request_type': 'Special Interrogatory No.',
-        'response_type': 'Response to Special Interrogatory No.'
+        'response_type': 'Response to Special Interrogatory No.',
+        'template_file': 'special_interrogatory_template.docx',  # To be created
+        'data_source': 'app_config',  # Uses current_app.config[session_key]
+        'workflow_type': 'parse_and_select',  # Uses parse → select → generate
     },
     'requests_for_production': {
         'parser': ai_parse_requests_for_production,
         'prompt_builder': build_requests_for_production_prompt,
         'display_name': 'Requests for Production',
         'request_type': 'Request for Production No.',
-        'response_type': 'Response to Request for Production No.'
+        'response_type': 'Response to Request for Production No.',
+        'template_file': 'discovery_responses_template.docx',  # Rename to rfp_template.docx later
+        'data_source': 'app_config',  # Uses current_app.config[session_key]
+        'workflow_type': 'parse_and_select',  # Uses parse → select → generate
     },
     'requests_for_admission': {
         'parser': parse_requests_for_admission,
         'prompt_builder': build_requests_for_admission_prompt,
         'display_name': 'Requests for Admission',
         'request_type': 'Request for Admission No.',
-        'response_type': 'Response to Request for Admission No.'
+        'response_type': 'Response to Request for Admission No.',
+        'template_file': 'rfa_template.docx',  # To be created
+        'data_source': 'app_config',  # Uses current_app.config[session_key]
+        'workflow_type': 'parse_and_select',  # Uses parse → select → generate
     },
 }
 
@@ -61,5 +75,16 @@ def get_discovery_type_info(discovery_type: str) -> dict:
     """
     if discovery_type not in DISCOVERY_TYPE_REGISTRY:
         raise ValueError(f"Unsupported discovery type: {discovery_type}")
-    
+        
     return DISCOVERY_TYPE_REGISTRY[discovery_type]
+
+def get_supported_discovery_types():
+    """Returns list of all supported discovery types."""
+    return list(DISCOVERY_TYPE_REGISTRY.keys())
+
+def get_discovery_types_by_workflow(workflow_type: str):
+    """Returns discovery types that use a specific workflow."""
+    return [
+        discovery_type for discovery_type, config in DISCOVERY_TYPE_REGISTRY.items()
+        if config.get('workflow_type') == workflow_type
+    ]

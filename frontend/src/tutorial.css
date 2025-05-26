@@ -1,0 +1,20 @@
+/* tutorial.css */
+.tutorial-pulse {
+  box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.25), 0 0 16px 4px #1a73e8;
+  animation: tutorial-pulse-glow 1.2s infinite alternate;
+  border-radius: 8px !important;
+  z-index: 9999 !important;
+}
+
+@keyframes tutorial-pulse-glow {
+  0% {
+    box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.25), 0 0 16px 4px #1a73e8;
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.35), 0 0 32px 8px #1a73e8;
+  }
+}
+
+.tutorial-mask {
+  background: rgba(0,0,0,0.25) !important;
+} 

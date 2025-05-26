@@ -1,5 +1,5 @@
 // frontend/src/pages/cases/ManageCasesScreen.jsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
@@ -10,7 +10,7 @@ import { PlusOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icon
 const { Title, Text } = Typography;
 const { Search } = Input;
 
-function ManageCasesScreen() {
+function ManageCasesScreen({ createCaseBtnRef, tutorialStep, advanceTutorialStep }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -164,6 +164,7 @@ function ManageCasesScreen() {
           icon={<PlusOutlined />}
           onClick={() => navigate('/cases/new')}
           disabled={loading}
+          ref={createCaseBtnRef}
         >
           Create New Case
         </Button>

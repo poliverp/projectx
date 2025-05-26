@@ -27,6 +27,7 @@ class DiscoveryQuestion:
         Convert to dictionary for JSON serialization.
         """
         return {
+            'id': f"q_{self.number}",  # Add this line!
             'number': self.number,
             'text': self.text,
             'subparts': self.subparts

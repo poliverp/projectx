@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BrowserRouter as Router, 
   Routes, 
@@ -30,7 +30,8 @@ import {
   Card,
   Spin,
   Divider,
-  theme
+  theme,
+  Tour
 } from 'antd';
 import { 
   UserOutlined, 
@@ -47,10 +48,11 @@ import {
   FileSearchOutlined,
   AppstoreOutlined
 } from '@ant-design/icons';
+import './tutorial.css';
 
 // Import Pages
 import ManageCasesScreen from './pages/cases/ManageCasesScreen';
-import CasePage from './pages/CasePage';
+import CasePage from './pages/CasePage/CasePage';
 import FilesPage from './pages/cases/FilesPage';
 import DocumentAnalysisPage from './pages/documents/DocumentAnalysisPage';
 import CreateDocumentPage from './pages/documents/CreateDocumentPage';
@@ -61,6 +63,7 @@ import LoginPage from './pages/auth/LoginPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import UserProfileDropdown from './components/common/UserProfileDropdown';
 import { Navigate } from 'react-router-dom';
+import DocumentGenerationTab from './pages/CasePage/components/tabs/DocumentGenerationTab';
 
 // Destructure AntD Layout components
 const { Header, Content, Footer, Sider } = Layout;
@@ -164,6 +167,15 @@ function AppContent() {
   
   // State for collapsed sidebar
   const [collapsed, setCollapsed] = useState(false);
+  const [tutorialActive, setTutorialActive] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  
+  // Refs for tutorial steps
+  const createCaseBtnRef = useRef();
+  const submitCaseBtnRef = useRef();
+  const fileUploadRef = useRef();
+  const analyzeDocBtnRef = useRef();
+  const downloadJuryFeesBtnRef = useRef();
   
   // Handle window resize for responsive sidebar
   useEffect(() => {
@@ -182,6 +194,48 @@ function AppContent() {
     // Clean up
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Track if tutorial has been seen
+  useEffect(() => {
+    if (currentUser && !localStorage.getItem('tutorialSeen')) {
+      localStorage.setItem('pendingTutorialStart', 'true');
+      navigate('/manage-cases');
+    }
+  }, [currentUser, navigate]);
+
+  // Handler to advance tutorial step
+  const advanceTutorialStep = () => setTutorialStep((prev) => prev + 1);
+  const resetTutorial = () => {
+    setTutorialActive(false);
+    setTutorialStep(0);
+    localStorage.removeItem('pendingTutorialStart');
+  };
+
+  // When starting tutorial, always reset to step 0
+  useEffect(() => {
+    if (tutorialActive) setTutorialStep(0);
+  }, [tutorialActive]);
+
+  // Watch for navigation to /manage-cases and pendingTutorialStart
+  useEffect(() => {
+    if (
+      location.pathname === '/manage-cases' &&
+      localStorage.getItem('pendingTutorialStart') === 'true'
+    ) {
+      console.log('[Tutorial] useEffect detected /manage-cases and pendingTutorialStart. Starting tutorial.');
+      setTimeout(() => {
+        setTutorialActive(true);
+        setTutorialStep(0);
+        localStorage.setItem('tutorialSeen', 'true');
+        localStorage.removeItem('pendingTutorialStart');
+        console.log('[Tutorial] Tutorial started from useEffect.');
+      }, 300);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    console.log('[Tutorial] tutorialActive:', tutorialActive, 'tutorialStep:', tutorialStep);
+  }, [tutorialActive, tutorialStep]);
 
   // User dropdown menu items
   const userMenuItems = [
@@ -231,6 +285,56 @@ function AppContent() {
 
   // Determine if we're looking at a specific case
   const isCasePage = location.pathname.match(/^\/case\/[^\/]+/);
+
+  // Tutorial steps
+  const tutorialSteps = [
+    {
+      title: 'Create a New Case',
+      description: 'Click here to start a new case.',
+      target: () => createCaseBtnRef.current,
+      className: 'tutorial-pulse',
+    },
+    {
+      title: 'Submit the Case',
+      description: 'Fill out the form and submit to create your case.',
+      target: () => submitCaseBtnRef.current,
+      className: 'tutorial-pulse',
+    },
+    {
+      title: 'Upload a File',
+      description: 'Upload documents for your case here.',
+      target: () => fileUploadRef.current,
+      className: 'tutorial-pulse',
+    },
+    {
+      title: 'Analyze a Document',
+      description: 'Click here to analyze a document.',
+      target: () => analyzeDocBtnRef.current,
+      className: 'tutorial-pulse',
+    },
+    {
+      title: 'Download Notice of Posting Jury Fees',
+      description: 'Download the template for Notice of Posting Jury Fees here.',
+      target: () => downloadJuryFeesBtnRef.current,
+      className: 'tutorial-pulse',
+    },
+  ];
+
+  // Handler to start tutorial (for Restart Tutorial)
+  const handleRestartTutorial = () => {
+    localStorage.setItem('pendingTutorialStart', 'true');
+    console.log('[Tutorial] Restart clicked. pendingTutorialStart set. Current path:', location.pathname);
+    if (location.pathname === '/manage-cases') {
+      setTutorialActive(true);
+      setTutorialStep(0);
+      localStorage.setItem('tutorialSeen', 'true');
+      localStorage.removeItem('pendingTutorialStart');
+      console.log('[Tutorial] Already on /manage-cases, tutorial started immediately.');
+    } else {
+      navigate('/manage-cases');
+      console.log('[Tutorial] Navigating to /manage-cases to start tutorial.');
+    }
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -442,6 +546,7 @@ function AppContent() {
                   currentUser={currentUser} 
                   logout={logout} 
                   token={token} 
+                  onRestartTutorial={handleRestartTutorial}
                 />
             )}
           </div>
@@ -471,9 +576,9 @@ function AppContent() {
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
-                <Route path="/manage-cases" element={<ManageCasesScreen />} />
-                <Route path="/cases/new" element={<CreateCasePage />} />
-                <Route path="/case/:caseId" element={<CasePage />} />
+                <Route path="/manage-cases" element={<ManageCasesScreen createCaseBtnRef={createCaseBtnRef} tutorialStep={tutorialStep} advanceTutorialStep={advanceTutorialStep} />} />
+                <Route path="/cases/new" element={<CreateCasePage submitCaseBtnRef={submitCaseBtnRef} tutorialStep={tutorialStep} advanceTutorialStep={advanceTutorialStep} />} />
+                <Route path="/case/:caseId" element={<CasePage fileUploadRef={fileUploadRef} analyzeDocBtnRef={analyzeDocBtnRef} downloadJuryFeesBtnRef={downloadJuryFeesBtnRef} tutorialStep={tutorialStep} advanceTutorialStep={advanceTutorialStep} />} />
                 <Route path="/case/:caseId/files" element={<FilesPage />} />
                 <Route path="/case/:caseId/analyze" element={<DocumentAnalysisPage />} />
                 <Route path="/case/:caseId/create-doc" element={<CreateDocumentPage />} />
@@ -513,6 +618,14 @@ function AppContent() {
           ClerkLegal · AI-powered litigation support ©{new Date().getFullYear()}
         </Footer>
       </Layout>
+      <Tour
+        open={tutorialActive}
+        current={tutorialStep}
+        onChange={setTutorialStep}
+        onClose={resetTutorial}
+        steps={tutorialSteps}
+        maskClassName="tutorial-mask"
+      />
     </Layout>
   );
 }

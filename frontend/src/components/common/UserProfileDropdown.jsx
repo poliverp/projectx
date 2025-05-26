@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Avatar, Dropdown, Space, Typography, Button, Popover, Tooltip } from 'antd';
+import { Avatar, Dropdown, Space, Typography, Button, Popover, Tooltip, Modal } from 'antd';
 import { UserOutlined, LogoutOutlined, SettingOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,7 +19,7 @@ const AVATAR_COLORS = [
   '#2f54eb', // Indigo
 ];
 
-const UserProfileDropdown = ({ currentUser, logout, token }) => {
+const UserProfileDropdown = ({ currentUser, logout, token, onRestartTutorial }) => {
   const navigate = useNavigate();
   
   // Get saved color from localStorage or use default
@@ -118,6 +118,23 @@ const UserProfileDropdown = ({ currentUser, logout, token }) => {
         </div>
       ),
       disabled: true,
+    },
+    { type: 'divider' },
+    // Add tutorial restart to menu
+    {
+      key: 'restartTutorial',
+      label: 'Restart Tutorial',
+      onClick: () => {
+        Modal.confirm({
+          title: 'Restart Tutorial?',
+          content: 'Are you sure you want to restart the tutorial? You will be redirected to the Manage Cases page.',
+          okText: 'Yes, restart',
+          cancelText: 'Cancel',
+          onOk: () => {
+            if (onRestartTutorial) onRestartTutorial();
+          },
+        });
+      },
     },
     { type: 'divider' },
     ...menuItemsWithColorPicker

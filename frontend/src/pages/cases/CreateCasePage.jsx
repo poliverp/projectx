@@ -1,5 +1,5 @@
 // src/pages/CreateCasePage.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 import {
@@ -16,7 +16,7 @@ import { caseFieldConfig } from '../../config/caseFieldConfig';
 
 const { Title } = Typography;
 
-function CreateCasePage() {
+function CreateCasePage({ submitCaseBtnRef, tutorialStep, advanceTutorialStep }) {
     const navigate = useNavigate();
     // Ant Design Form instance
     const [form] = Form.useForm();
@@ -24,6 +24,19 @@ function CreateCasePage() {
     // State for loading and errors during submission - Keep these
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (tutorialStep === 1) {
+            // Scroll to the form
+            const formElem = document.querySelector('form');
+            if (formElem) {
+                formElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Focus the first input
+                const firstInput = formElem.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }
+        }
+    }, [tutorialStep]);
 
     // --- Submission Handler (Remains largely the same) ---
     // 'onFinish' is called by Ant Design Form when validation passes
@@ -66,11 +79,13 @@ function CreateCasePage() {
             // Handle Success
             const newCaseId = response.data?.id;
             if (newCaseId) {
-                alert("Case created successfully!"); // Keep alert for now
+                alert("Case created successfully!");
+                if (advanceTutorialStep) advanceTutorialStep();
                 navigate(`/case/${newCaseId}`);
             } else {
                 console.warn("New case ID not found in backend response, navigating to list.");
                 alert("Case created successfully! (ID missing)");
+                if (advanceTutorialStep) advanceTutorialStep();
                 navigate('/manage-cases');
             }
         } catch (err) {
@@ -158,6 +173,7 @@ function CreateCasePage() {
                             htmlType="submit"
                             loading={loading}
                             icon={<SaveOutlined />}
+                            ref={submitCaseBtnRef}
                         >
                             Create Case
                         </Button>

@@ -29,6 +29,17 @@ from backend.app.discovery.formatters import format_form_interrogatory_responses
 import logging
 from datetime import datetime
 from typing import Dict, Any
+# Add these imports to the top of backend/api/discovery.py
+
+# Modify this existing import line:
+from backend.services.case_service import get_case_by_id
+
+# To include CaseNotFoundError:
+from backend.services.case_service import get_case_by_id, CaseNotFoundError
+
+# Add this new import:
+from backend.app.discovery.registry import get_discovery_type_info
+from docx import Document as DocxDocument
 
 # Function to strip markdown formatting
 def strip_markdown(text):
@@ -49,6 +60,19 @@ def test_endpoint():
     """Simple test endpoint to verify the discovery blueprint is working."""
     print("DEBUG: Test endpoint called successfully")
     return jsonify({"message": "Discovery API is working", "authenticated": current_user.is_authenticated}), 200
+
+def get_cached_objection_master():
+    """Load and cache the objection master sheet as plain text."""
+    if not hasattr(current_app, '_objection_master_cache'):
+        objection_path = os.path.join(current_app.root_path, 'templates', 'MASTER SHEET Discovery Objection.docx')
+        try:
+            doc = DocxDocument(objection_path)
+            objection_master = '\n'.join([p.text for p in doc.paragraphs if p.text.strip()])
+            current_app._objection_master_cache = objection_master
+        except Exception as doc_error:
+            print(f"DEBUG: Error loading objection master sheet: {str(doc_error)}")
+            current_app._objection_master_cache = "Error loading objection master sheet"
+    return current_app._objection_master_cache
 
 @bp.route('/discovery/cases/<int:case_id>/parse', methods=['POST'])
 @login_required
@@ -106,19 +130,9 @@ def parse_discovery_document(case_id):
             }
         
         # Load objection master sheet (as plain text)
-        objection_path = os.path.join(current_app.root_path, 'templates', 'MASTER SHEET Discovery Objection.docx')
-        print(f"DEBUG: Looking for objection template at: {objection_path}")
-        print(f"DEBUG: Template file exists? {os.path.exists(objection_path)}")
+        objection_master = get_cached_objection_master()
+        print(f"DEBUG: Successfully loaded objection master sheet, length: {len(objection_master)}")
         
-        try:
-            from docx import Document as DocxDocument
-            doc = DocxDocument(objection_path)
-            objection_master = '\n'.join([p.text for p in doc.paragraphs if p.text.strip()])
-            print(f"DEBUG: Successfully loaded objection master sheet, length: {len(objection_master)}")
-        except Exception as doc_error:
-            print(f"DEBUG: Error loading objection master sheet: {str(doc_error)}")
-            objection_master = "Error loading objection master sheet"  # Provide fallback
-
         # Use the orchestrator service - just to parse, not for full response
         print(f"DEBUG: About to initialize DiscoveryResponseService")
         service = DiscoveryResponseService()
@@ -191,75 +205,286 @@ def parse_discovery_document(case_id):
 
 
 @bp.route('/discovery/cases/<int:case_id>/generate-document', methods=['POST'])
+@login_required
 def generate_discovery_document(case_id):
-    """Generate a document from the formatted responses stored in the session."""
+    """
+    Unified endpoint to generate discovery documents for all types.
+    Uses registry pattern to determine workflow and template.
+    """
+    print(f"DEBUG: Generate discovery document for case {case_id} by user {current_user.id}")
+    
     try:
-        # Get template name from request
-        template_name = request.json.get('template_name', 'form_interrogatory_response.docx')
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        discovery_type = data.get('discovery_type')
+        if not discovery_type:
+            return jsonify({'error': 'discovery_type is required'}), 400
+            
+        print(f"DEBUG: Discovery type: {discovery_type}")
         
-        # Get formatted responses from session
-        formatted_data = session.get('formatted_responses', {})
-        if not formatted_data:
-            return jsonify({
-                'error': 'No formatted responses found in session. Please format responses first.'
-            }), 400
+        # Get configuration from registry
+        try:
+            type_config = get_discovery_type_info(discovery_type)
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
             
-        # Get case details
-        case = Case.query.get_or_404(case_id)
-        case_details = case.to_dict()
+        print(f"DEBUG: Using template: {type_config['template_file']}")
+        print(f"DEBUG: Workflow type: {type_config['workflow_type']}")
         
-        # Prepare context for document generation using the template system
-        context = {
-            # Core case information
-            'plaintiff': case.plaintiff if hasattr(case, 'plaintiff') else '',
-            'defendant': case.defendant if hasattr(case, 'defendant') else '',
-            'case_number': case.case_number if hasattr(case, 'case_number') else '',
-            'judge': case.judge if hasattr(case, 'judge') else '',
-            'jurisdiction': case.jurisdiction if hasattr(case, 'jurisdiction') else '',
-            'county': case.county if hasattr(case, 'county') else '',
-            
-            # Date fields
-            'filing_date': case.filing_date if hasattr(case, 'filing_date') else '',
-            'trial_date': case.trial_date if hasattr(case, 'trial_date') else '',
-            'incident_date': case.incident_date if hasattr(case, 'incident_date') else '',
-            
-            # Other fields
-            'incident_location': case.incident_location if hasattr(case, 'incident_location') else '',
-            'incident_description': case.incident_description if hasattr(case, 'incident_description') else '',
-            'case_type': case.case_type if hasattr(case, 'case_type') else '',
-            'defendant_counsel_info': case.defendant_counsel_info if hasattr(case, 'defendant_counsel_info') else '',
-            'plaintiff_counsel_info': case.plaintiff_counsel_info if hasattr(case, 'plaintiff_counsel_info') else '',
-            'vehicle_details': case.vehicle_details if hasattr(case, 'vehicle_details') else '',
-            'defendant_counsel_attorneys': case.defendant_counsel_attorneys if hasattr(case, 'defendant_counsel_attorneys') else '',
-            'defendant_counsel_firm': case.defendant_counsel_firm if hasattr(case, 'defendant_counsel_firm') else '',
-            'defendant_counsel_address': case.defendant_counsel_address if hasattr(case, 'defendant_counsel_address') else '',
-            'defendant_counsel_contact': case.defendant_counsel_contact if hasattr(case, 'defendant_counsel_contact') else '',
-            'acting_attorney': case.acting_attorney if hasattr(case, 'acting_attorney') else '',
-            'acting_clerk': case.acting_clerk if hasattr(case, 'acting_clerk') else '',
-            
-            # Current date and year
-            'current_date': datetime.now().strftime('%B %d, %Y'),
-            'current_year': datetime.now().year,
-            
-            # Responses from the formatter
-            'responses': formatted_data.get('responses', {})
-        }
+        # Verify case ownership
+        case = get_case_by_id(case_id, user_id=current_user.id)
         
-        # Generate document using template system
-        document_path = generate_document(
-            template_name=template_name,
-            context=context,
-            output_filename=f"form_interrogatory_responses_{case_id}.docx"
+        # Handle different workflows based on registry
+        if type_config['workflow_type'] == 'format_responses':
+            # Form Interrogatories workflow
+            return _generate_form_interrogatory_document(case, type_config, data)
+            
+        elif type_config['workflow_type'] == 'parse_and_select':
+            # RFPs & Special Interrogatories workflow
+            return _generate_parse_and_select_document(case, type_config, data)
+            
+        else:
+            return jsonify({'error': f'Unknown workflow type: {type_config["workflow_type"]}'}), 500
+            
+    except CaseNotFoundError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        print(f"DEBUG: Error generating discovery document: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to generate document: {str(e)}'}), 500
+
+def _generate_form_interrogatory_document(case, type_config, data):
+    """Handle form interrogatory document generation."""
+    print("DEBUG: Processing form interrogatory workflow")
+    
+    # Get formatted responses from session
+    formatted_data = session.get('formatted_responses', {})
+    if not formatted_data:
+        return jsonify({
+            'error': 'No formatted responses found in session. Please format responses first.'
+        }), 400
+        
+    # Prepare context for document generation
+    context = _build_case_context(case)
+    context['responses'] = formatted_data.get('responses', {})
+    
+    # Generate document
+    return _render_and_send_document(
+        template_name=type_config['template_file'],
+        context=context,
+        case_id=case.id,
+        discovery_type='form_interrogatories'
+    )
+
+def _generate_parse_and_select_document(case, type_config, data):
+    """Handle RFPs & Special Interrogatories workflow (parse → select → generate)."""
+    print("DEBUG: Processing parse and select workflow")
+    
+    # Get session key and selections from request
+    session_key = data.get('session_key')
+    selections = data.get('selections', {})
+    
+    if not session_key:
+        return jsonify({'error': 'session_key is required'}), 400
+        
+    # Retrieve stored parsing result
+    stored_result = current_app.config.get(session_key)
+    if not stored_result:
+        return jsonify({
+            'error': 'Session data not found or expired. Please re-upload the document.'
+        }), 400
+        
+    print(f"DEBUG: Found stored result with {len(stored_result.get('questions', []))} questions")
+    
+    # Get questions and AI response
+    questions = stored_result.get('questions', [])
+    ai_response = stored_result.get('ai_response', '')
+    
+    if not questions:
+        return jsonify({'error': 'No questions found in stored result'}), 400
+        
+    # Process AI response and apply user selections
+    combined_responses = _process_ai_responses_with_selections(
+        questions, ai_response, selections, type_config
+    )
+    
+    # Prepare context for document generation
+    context = _build_case_context(case)
+    context['responses'] = combined_responses
+    
+    # Clean up session data
+    if session_key in current_app.config:
+        del current_app.config[session_key]
+        print(f"DEBUG: Cleaned up session key: {session_key}")
+    
+    # Generate document
+    return _render_and_send_document(
+        template_name=type_config['template_file'],
+        context=context,
+        case_id=case.id,
+        discovery_type=data.get('discovery_type', 'unknown')
+    )
+
+def _build_case_context(case):
+    """Build standard case context for template rendering."""
+    return {
+        # Core case information
+        'case_name': getattr(case, 'display_name', ''),
+        'case_number': getattr(case, 'case_number', ''),
+        'plaintiff': getattr(case, 'plaintiff', ''),
+        'defendant': getattr(case, 'defendant', ''),
+        'judge': getattr(case, 'judge', ''),
+        'jurisdiction': getattr(case, 'jurisdiction', ''),
+        'county': getattr(case, 'county', ''),
+        
+        # Date fields
+        'filing_date': getattr(case, 'filing_date', ''),
+        'trial_date': getattr(case, 'trial_date', ''),
+        'incident_date': getattr(case, 'incident_date', ''),
+        
+        # Other fields
+        'incident_location': getattr(case, 'incident_location', ''),
+        'incident_description': getattr(case, 'incident_description', ''),
+        'case_type': getattr(case, 'case_type', ''),
+        'defendant_counsel_info': getattr(case, 'defendant_counsel_info', ''),
+        'plaintiff_counsel_info': getattr(case, 'plaintiff_counsel_info', ''),
+        'vehicle_details': getattr(case, 'vehicle_details', ''),
+        'defendant_counsel_attorneys': getattr(case, 'defendant_counsel_attorneys', ''),
+        'defendant_counsel_firm': getattr(case, 'defendant_counsel_firm', ''),
+        'defendant_counsel_address': getattr(case, 'defendant_counsel_address', ''),
+        'defendant_counsel_email': getattr(case, 'defendant_counsel_email', ''),
+        'defendant_counsel_phone': getattr(case, 'defendant_counsel_phone', ''),
+        'acting_attorney': getattr(case, 'acting_attorney', ''),
+        'acting_clerk': getattr(case, 'acting_clerk', ''),
+        
+        # Current date and year
+        'current_date': datetime.now().strftime('%B %d, %Y'),
+        'current_year': datetime.now().year,
+    }
+
+def _process_ai_responses_with_selections(questions, ai_response, selections, type_config):
+    """Process AI responses and combine with user selections."""
+    from docxtpl import RichText
+    # Standard responses mapping
+    standard_responses = {
+        'will_provide': 'Plaintiff will produce responsive documents.',
+        'none_found': 'Plaintiff has no responsive documents to produce.',
+        'no_text': ''  # No additional text
+    }
+    responses_dict = _parse_ai_response_by_question(ai_response, type_config)
+    combined_responses = RichText()
+    for question in questions:
+        question_number = question.get('number', '')
+        question_id = f"q_{question_number}"
+        ai_response_text = responses_dict.get(question_number, 
+            "No objections found. Subject to and without waiving the foregoing objections, Plaintiff responds as follows:")
+        ai_response_text = strip_markdown(ai_response_text)
+        user_selection = selections.get(question_id, 'no_text')
+        standard_response = standard_responses.get(user_selection, "")
+        # Request header
+        combined_responses.add(f"\nREQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True)
+        # Request text (first-line indent using tab)
+        combined_responses.add(f"\n\t{question.get('text', '').strip()}")
+        # Response header
+        combined_responses.add(f"\nRESPONSE TO REQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True)
+        # Split objection and 'Subject to...' if present
+        objection_part = ai_response_text
+        subject_to_part = ""
+        if "Subject to and without waiving" in ai_response_text:
+            parts = ai_response_text.split("Subject to and without waiving", 1)
+            objection_part = parts[0].strip()
+            subject_to_part = "Subject to and without waiving" + parts[1]
+        # Objection (first-line indent using tab)
+        if objection_part:
+            combined_responses.add(f"\n\t{objection_part}")
+        # 'Subject to and without waiving...' (first-line indent using tab)
+        if subject_to_part:
+            combined_responses.add(f"\n\t{subject_to_part}")
+        # Standard response (first-line indent using tab)
+        if standard_response:
+            combined_responses.add(f"\n\t{standard_response}")
+    return combined_responses
+
+def _parse_ai_response_by_question(ai_response, type_config):
+    """Parse AI response text to extract responses by question number."""
+    responses_dict = {}
+    current_num = None
+    current_text = ""
+    
+    # Determine the response pattern based on discovery type
+    response_pattern = type_config['response_type'].upper()
+    
+    for line in ai_response.split('\n'):
+        if response_pattern in line:
+            # Save previous response if exists
+            if current_num is not None:
+                responses_dict[current_num] = current_text.strip()
+            
+            # Extract question number
+            try:
+                current_num = line.split("NO.")[1].split(":")[0].strip()
+                current_text = ""
+            except (IndexError, ValueError):
+                current_num = None
+                
+        elif type_config['request_type'].upper() in line:
+            # If we hit a new request, save current response
+            if current_num is not None:
+                responses_dict[current_num] = current_text.strip()
+                current_num = None
+                
+        elif current_num is not None:
+            current_text += line + "\n"
+    
+    # Save last response
+    if current_num is not None:
+        responses_dict[current_num] = current_text.strip()
+    
+    print(f"DEBUG: Parsed {len(responses_dict)} AI responses")
+    return responses_dict
+
+def _render_and_send_document(template_name, context, case_id, discovery_type):
+    """Render template and send document for download."""
+    print(f"DEBUG: Rendering template: {template_name}")
+    
+    # Build template path
+    template_dir = os.path.join(current_app.root_path, 'templates')
+    template_path = os.path.join(template_dir, template_name)
+    
+    if not os.path.exists(template_path):
+        print(f"ERROR: Template not found: {template_path}")
+        return jsonify({'error': f'Template file "{template_name}" not found'}), 500
+    
+    try:
+        # Create and render document
+        doc = DocxTemplate(template_path)
+        doc.render(context)
+        
+        # Save to memory
+        output = io.BytesIO()
+        doc.save(output)
+        output.seek(0)
+        
+        # Create filename
+        safe_case_identifier = str(context.get('case_number', case_id)).replace('/', '_').replace('\\', '_')
+        output_filename = f"{discovery_type}_responses_{safe_case_identifier}.docx"
+        
+        print(f"DEBUG: Sending file: {output_filename}")
+        
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=output_filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
         
-        return jsonify({
-            'document_url': url_for('static', filename=document_path),
-            'success': True
-        })
-        
     except Exception as e:
-        logger.error(f"Error generating document: {str(e)}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        print(f"ERROR: Template rendering failed: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to render template: {str(e)}'}), 500
 
 @bp.route('/discovery/cases/<int:case_id>/respond', methods=['POST'])
 @login_required
@@ -317,18 +542,8 @@ def respond_to_discovery(case_id):
             }
         
         # Load objection master sheet (as plain text)
-        objection_path = os.path.join(current_app.root_path, 'templates', 'MASTER SHEET Discovery Objection.docx')
-        print(f"DEBUG: Looking for objection template at: {objection_path}")
-        print(f"DEBUG: Template file exists? {os.path.exists(objection_path)}")
-        
-        try:
-            from docx import Document as DocxDocument
-            doc = DocxDocument(objection_path)
-            objection_master = '\n'.join([p.text for p in doc.paragraphs if p.text.strip()])
-            print(f"DEBUG: Successfully loaded objection master sheet, length: {len(objection_master)}")
-        except Exception as doc_error:
-            print(f"DEBUG: Error loading objection master sheet: {str(doc_error)}")
-            objection_master = "Error loading objection master sheet"  # Provide fallback
+        objection_master = get_cached_objection_master()
+        print(f"DEBUG: Successfully loaded objection master sheet, length: {len(objection_master)}")
 
         # Use the orchestrator service
         print(f"DEBUG: About to initialize DiscoveryResponseService")

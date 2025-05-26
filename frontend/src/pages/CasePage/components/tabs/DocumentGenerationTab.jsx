@@ -17,7 +17,7 @@ const { Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-function DocumentGenerationTab({ caseId }) {
+function DocumentGenerationTab({ caseId, downloadJuryFeesBtnRef, advanceTutorialStep }) {
   // State for AI document generation
   const [docType, setDocType] = useState('');
   const [customInstructions, setCustomInstructions] = useState('');
@@ -120,6 +120,7 @@ function DocumentGenerationTab({ caseId }) {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
           message.success("Document downloaded successfully!");
+          if (selectedTemplate === 'jury_fees_template.docx' && advanceTutorialStep) advanceTutorialStep();
         } 
         // If it's a URL response
         else if (response.data.fileUrl || response.data.url) {
@@ -131,6 +132,7 @@ function DocumentGenerationTab({ caseId }) {
           link.click();
           document.body.removeChild(link);
           message.success("Document downloaded successfully!");
+          if (selectedTemplate === 'jury_fees_template.docx' && advanceTutorialStep) advanceTutorialStep();
         } else {
           console.error("Unexpected response format:", response.data);
           message.warning("Received response but couldn't initiate download");
@@ -312,6 +314,7 @@ function DocumentGenerationTab({ caseId }) {
                 disabled={!selectedTemplate || loadingDownload}
                 loading={loadingDownload}
                 icon={<DownloadOutlined />}
+                ref={selectedTemplate === 'jury_fees_template.docx' ? downloadJuryFeesBtnRef : undefined}
               >
                 Download Selected Template (.docx)
               </Button>

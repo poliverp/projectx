@@ -30,7 +30,7 @@ import DiscoveryTab from './components/tabs/DiscoveryTab';
 
 const { Title } = Typography;
 
-function CasePage() {
+function CasePage({ fileUploadRef, analyzeDocBtnRef, downloadJuryFeesBtnRef, tutorialStep, advanceTutorialStep }) {
   const { caseId } = useParams();
   const navigate = useNavigate();
   
@@ -185,6 +185,8 @@ function CasePage() {
             caseId={caseId}
             onManageFiles={handleOpenFilesModal}
             onAnalyzeDocuments={handleOpenAnalysisModal}
+            fileUploadRef={fileUploadRef}
+            analyzeDocBtnRef={analyzeDocBtnRef}
           />
           
           {/* Main Content Tabs */}
@@ -212,7 +214,7 @@ function CasePage() {
                     key: "generate",
                     children: (
                       <div style={{ height: 'calc(500px - 54px)', overflowY: 'auto', padding: '16px' }}>
-                        <DocumentGenerationTab caseId={caseId} />
+                        <DocumentGenerationTab caseId={caseId} downloadJuryFeesBtnRef={downloadJuryFeesBtnRef} advanceTutorialStep={advanceTutorialStep} />
                       </div>
                     )
                   },

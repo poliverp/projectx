@@ -6,14 +6,16 @@ import {
   FolderOutlined,
   SearchOutlined,
   FileAddOutlined,
-  FileDoneOutlined
+  FileDoneOutlined,
+  UploadOutlined,
+  ExperimentOutlined
 } from '@ant-design/icons';
 
 // Define the brown theme colors
 const BROWN_COLOR = '#8B4513';
 const BROWN_HOVER = '#A0522D';
 
-function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
+function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments, fileUploadRef, analyzeDocBtnRef }) {
   return (
     <Card size="small" className="case-actions-card" style={{ marginTop: '16px' }}>
       <Space wrap size="middle">
@@ -33,6 +35,7 @@ function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
             e.currentTarget.style.backgroundColor = BROWN_COLOR;
             e.currentTarget.style.borderColor = BROWN_COLOR;
           }}
+          ref={fileUploadRef}
         >
           Manage Files
         </Button>
@@ -53,6 +56,7 @@ function CaseActionsBar({ caseId, onManageFiles, onAnalyzeDocuments }) {
             e.currentTarget.style.backgroundColor = BROWN_COLOR;
             e.currentTarget.style.borderColor = BROWN_COLOR;
           }}
+          ref={analyzeDocBtnRef}
         >
           Analyze Documents
         </Button>
