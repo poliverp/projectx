@@ -34,7 +34,7 @@ DISCOVERY_TYPE_REGISTRY = {
         'display_name': 'Special Interrogatories',
         'request_type': 'Special Interrogatory No.',
         'response_type': 'Response to Special Interrogatory No.',
-        'template_file': 'special_interrogatory_template.docx',  # To be created
+        'template_file': 'SR1_template.docx',  # Updated to use correct template name
         'data_source': 'app_config',  # Uses current_app.config[session_key]
         'workflow_type': 'parse_and_select',  # Uses parse → select → generate
     },

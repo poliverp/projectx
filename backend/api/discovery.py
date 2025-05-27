@@ -368,14 +368,28 @@ def _build_case_context(case):
 def _process_ai_responses_with_selections(questions, ai_response, selections, type_config):
     """Process AI responses and combine with user selections."""
     from docxtpl import RichText
-    # Standard responses mapping
+    
+    # Different standard responses based on discovery type
     standard_responses = {
-        'will_provide': 'Plaintiff will produce responsive documents.',
-        'none_found': 'Plaintiff has no responsive documents to produce.',
-        'no_text': ''  # No additional text
+        'requests_for_production': {
+            'will_provide': 'Plaintiff will produce responsive documents.',
+            'none_found': 'Plaintiff has no responsive documents to produce.',
+            'no_text': ''
+        },
+        'special_interrogatories': {
+            'will_answer': 'Plaintiff will answer this interrogatory.',
+            'cannot_answer': 'Plaintiff cannot answer this interrogatory at this time.',
+            'no_text': ''
+        }
     }
+    
     responses_dict = _parse_ai_response_by_question(ai_response, type_config)
     combined_responses = RichText()
+    
+    # Get the appropriate response set based on discovery type
+    is_special_interrogatory = type_config.get('display_name') == 'Special Interrogatories'
+    response_set = standard_responses['special_interrogatories'] if is_special_interrogatory else standard_responses['requests_for_production']
+    
     for question in questions:
         question_number = question.get('number', '')
         question_id = f"q_{question_number}"
@@ -383,13 +397,20 @@ def _process_ai_responses_with_selections(questions, ai_response, selections, ty
             "No objections found. Subject to and without waiving the foregoing objections, Plaintiff responds as follows:")
         ai_response_text = strip_markdown(ai_response_text)
         user_selection = selections.get(question_id, 'no_text')
-        standard_response = standard_responses.get(user_selection, "")
-        # Request header
-        combined_responses.add(f"\nREQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True)
-        # Request text (first-line indent using tab)
-        combined_responses.add(f"\n\t{question.get('text', '').strip()}")
-        # Response header
-        combined_responses.add(f"\nRESPONSE TO REQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True)
+        standard_response = response_set.get(user_selection, "")
+        
+        # Format differently based on discovery type
+        if is_special_interrogatory:
+            # Special Interrogatories formatting
+            combined_responses.add(f"\nSPECIAL INTERROGATORY NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
+            combined_responses.add(f"\n\t{question.get('text', '').strip()}", font='Times New Roman')
+            combined_responses.add(f"\nRESPONSE TO SPECIAL INTERROGATORY NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
+        else:
+            # Original RFP formatting (unchanged)
+            combined_responses.add(f"\nREQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
+            combined_responses.add(f"\n\t{question.get('text', '').strip()}", font='Times New Roman')
+            combined_responses.add(f"\nRESPONSE TO REQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
+        
         # Split objection and 'Subject to...' if present
         objection_part = ai_response_text
         subject_to_part = ""
@@ -397,15 +418,19 @@ def _process_ai_responses_with_selections(questions, ai_response, selections, ty
             parts = ai_response_text.split("Subject to and without waiving", 1)
             objection_part = parts[0].strip()
             subject_to_part = "Subject to and without waiving" + parts[1]
+        
         # Objection (first-line indent using tab)
         if objection_part:
-            combined_responses.add(f"\n\t{objection_part}")
+            combined_responses.add(f"\n\t{objection_part}", font='Times New Roman')
+        
         # 'Subject to and without waiving...' (first-line indent using tab)
         if subject_to_part:
-            combined_responses.add(f"\n\t{subject_to_part}")
+            combined_responses.add(f"\n\t{subject_to_part}", font='Times New Roman')
+        
         # Standard response (first-line indent using tab)
         if standard_response:
-            combined_responses.add(f"\n\t{standard_response}")
+            combined_responses.add(f"\n\t{standard_response}", font='Times New Roman')
+    
     return combined_responses
 
 def _parse_ai_response_by_question(ai_response, type_config):

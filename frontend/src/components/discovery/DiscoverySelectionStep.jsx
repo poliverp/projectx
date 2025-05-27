@@ -16,10 +16,34 @@ import { ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
 
+// Response options for different discovery types
+const RESPONSE_OPTIONS = {
+  'requests_for_production': [
+    { value: 'will_provide', label: 'Plaintiff will produce responsive documents.' },
+    { value: 'none_found', label: 'Plaintiff has no responsive documents to produce.' },
+    { value: 'no_text', label: 'No additional text' }
+  ],
+  'special_interrogatories': [
+    { value: 'will_answer', label: 'Plaintiff will answer this interrogatory.' },
+    { value: 'cannot_answer', label: 'Plaintiff cannot answer this interrogatory at this time.' },
+    { value: 'no_text', label: 'No additional text' }
+  ]
+};
+
+// Display names for different discovery types
+const DISCOVERY_DISPLAY_NAMES = {
+  'requests_for_production': 'Requests for Production',
+  'special_interrogatories': 'Special Interrogatories'
+};
+
 const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onBack, onSubmit, caseId }) => {
   const [selections, setSelections] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Get response options for current discovery type
+  const responseOptions = RESPONSE_OPTIONS[discoveryType] || RESPONSE_OPTIONS['requests_for_production'];
+  const displayName = DISCOVERY_DISPLAY_NAMES[discoveryType] || 'Discovery Requests';
 
   // Initialize selections with default value for each question
   React.useEffect(() => {
@@ -63,7 +87,7 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
         title={
           <Space>
             <FileTextOutlined />
-            <span>Review Requests for Production</span>
+            <span>Review {displayName}</span>
           </Space>
         }
         extra={
@@ -71,7 +95,7 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
         }
       >
         <Paragraph>
-          Select an additional response for each request before generating the document.
+          Select an additional response for each {displayName.toLowerCase()} before generating the document.
         </Paragraph>
 
         {error && (
@@ -90,7 +114,7 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
             <List.Item>
               <Card 
                 size="small" 
-                title={`Request ${question.number}`}
+                title={`${displayName.split(' ')[0]} ${question.number}`}
                 style={{ width: '100%' }}
               >
                 <Paragraph>{question.text}</Paragraph>
@@ -101,9 +125,11 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
                   style={{ width: '100%' }}
                 >
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Radio value="will_provide">Plaintiff will produce responsive documents.</Radio>
-                    <Radio value="none_found">Plaintiff has no responsive documents to produce.</Radio>
-                    <Radio value="no_text">No additional text</Radio>
+                    {responseOptions.map(option => (
+                      <Radio key={option.value} value={option.value}>
+                        {option.label}
+                      </Radio>
+                    ))}
                   </Space>
                 </Radio.Group>
               </Card>

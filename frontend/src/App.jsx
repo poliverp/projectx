@@ -46,7 +46,8 @@ import {
   SearchOutlined,
   FileAddOutlined,
   FileSearchOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  FileWordOutlined
 } from '@ant-design/icons';
 import './tutorial.css';
 
@@ -64,6 +65,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import UserProfileDropdown from './components/common/UserProfileDropdown';
 import { Navigate } from 'react-router-dom';
 import DocumentGenerationTab from './pages/CasePage/components/tabs/DocumentGenerationTab';
+import MedicalSummaryPage from './pages/medical/MedicalSummaryPage';
 
 // Destructure AntD Layout components
 const { Header, Content, Footer, Sider } = Layout;
@@ -267,6 +269,11 @@ function AppContent() {
           key: '/cases/new',
           icon: <PlusOutlined />,
           label: 'New Case',
+        },
+        {
+          key: '/medical',
+          icon: <FileWordOutlined />,
+          label: 'Medical',
         },
         // Can add more main sections here
       ]
@@ -591,6 +598,7 @@ function AppContent() {
                 <Route path="/case/:caseId/discovery" element={<DiscoveryLandingPage />} />
                 <Route path="/case/:caseId/propound-discovery" element={<PropoundingDiscoveryPage />} />
                 <Route path="/case/:caseId/respond-discovery" element={<CreateDiscoveryPage2 />} />
+                <Route path="/medical" element={<MedicalSummaryPage />} />
               </Route>
 
               {/* Not Found Route */}

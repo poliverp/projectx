@@ -380,6 +380,25 @@ export const formatFormInterrogatoryResponses = async (caseId, responses) => {
   }
 };
 
+export const summarizeMedicalRecords = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const response = await axios.post(
+      '/api/medical/summarize-records',
+      formData,
+      {
+        responseType: 'blob',
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Default export combining all functions
 const api = {
   getCases,
@@ -407,6 +426,7 @@ const api = {
   getInterrogatoryQuestions,
   generateInterrogatoryDocument,
   formatFormInterrogatoryResponses,
+  summarizeMedicalRecords,
 };
 
 export default api;

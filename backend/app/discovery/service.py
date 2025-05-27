@@ -43,8 +43,8 @@ class DiscoveryResponseService:
             
             print(f"[DEBUG] Using parser for {discovery_type}: {parser.__name__}")
             
-            # Parse questions
-            if discovery_type == 'requests_for_production':
+            # Parse questions - handle both RFPs and Special Interrogatories consistently
+            if discovery_type in ['requests_for_production', 'special_interrogatories']:
                 # Serialize the full case object
                 serialized_case = case_schema.dump(case_details) if case_details else {}
                 # Pass the full objection sheet as a list of lines (or as a string)
@@ -69,12 +69,12 @@ class DiscoveryResponseService:
                 except Exception as e:
                     print(f"[ERROR] Failed to extract sample text: {e}")
                 
-                # Convert questions to list of dicts for JSON serialization
+                # Convert questions to list of dicts for JSON serialization with type-specific error message
                 return {
                     'questions': [],
                     'prompt': "",
                     'ai_response': None,
-                    'ai_error': f"Failed to parse any questions from the PDF. Check if document format is supported.",
+                    'ai_error': f"Failed to parse any {type_info['display_name'].lower()} from the PDF. Check if document format is supported.",
                     'discovery_type': discovery_type,
                     'display_name': type_info['display_name']
                 }
@@ -102,12 +102,12 @@ class DiscoveryResponseService:
                     ai_response = call_gemini_with_prompt(prompt)
                     print(f"[DEBUG] AI response received, length: {len(ai_response) if ai_response else 0}")
                 else:
-                    ai_error = "Failed to generate prompt from parsed questions"
+                    ai_error = f"Failed to generate prompt for {type_info['display_name'].lower()}"
             except AnalysisServiceError as e:
                 ai_error = str(e)
                 print(f"[ERROR] Analysis service error: {ai_error}")
             except Exception as e:
-                ai_error = f"Unexpected error: {e}"
+                ai_error = f"Unexpected error processing {type_info['display_name'].lower()}: {e}"
                 print(f"[ERROR] Unexpected error: {ai_error}")
             
             return {
@@ -121,7 +121,7 @@ class DiscoveryResponseService:
         
         except Exception as e:
             import traceback
-            error_message = f"Error in DiscoveryResponseService.respond: {str(e)}"
+            error_message = f"Error processing {type_info['display_name'].lower()}: {str(e)}"
             error_trace = traceback.format_exc()
             print(f"[ERROR] {error_message}")
             print(f"[ERROR] {error_trace}")
@@ -132,7 +132,7 @@ class DiscoveryResponseService:
                 'ai_response': None,
                 'ai_error': error_message,
                 'discovery_type': discovery_type,
-                'display_name': discovery_type.replace('_', ' ').title()
+                'display_name': type_info['display_name']
             }
     
     def create_response_document(self, discovery_type: str, questions: List[DiscoveryQuestion], 

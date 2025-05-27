@@ -15,4 +15,8 @@ from . import documents
 from . import generation # <-- ADD THIS LINE
 from . import discovery
 from . import auth
+from . import medical
+from .medical import medical_bp
+
+bp.register_blueprint(medical_bp)
 
