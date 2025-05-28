@@ -199,7 +199,7 @@ function AppContent() {
 
   // Track if tutorial has been seen
   useEffect(() => {
-    if (currentUser && !localStorage.getItem('tutorialSeen')) {
+    if (currentUser && !localStorage.getItem('hasSeenTutorial')) {
       localStorage.setItem('pendingTutorialStart', 'true');
       navigate('/manage-cases');
     }
@@ -207,6 +207,8 @@ function AppContent() {
 
   // Handler to advance tutorial step
   const advanceTutorialStep = () => setTutorialStep((prev) => prev + 1);
+  
+  // Reset tutorial state
   const resetTutorial = () => {
     setTutorialActive(false);
     setTutorialStep(0);
@@ -228,7 +230,7 @@ function AppContent() {
       setTimeout(() => {
         setTutorialActive(true);
         setTutorialStep(0);
-        localStorage.setItem('tutorialSeen', 'true');
+        localStorage.setItem('hasSeenTutorial', 'true');
         localStorage.removeItem('pendingTutorialStart');
         console.log('[Tutorial] Tutorial started from useEffect.');
       }, 300);
@@ -329,12 +331,13 @@ function AppContent() {
 
   // Handler to start tutorial (for Restart Tutorial)
   const handleRestartTutorial = () => {
+    localStorage.removeItem('hasSeenTutorial');
     localStorage.setItem('pendingTutorialStart', 'true');
     console.log('[Tutorial] Restart clicked. pendingTutorialStart set. Current path:', location.pathname);
     if (location.pathname === '/manage-cases') {
       setTutorialActive(true);
       setTutorialStep(0);
-      localStorage.setItem('tutorialSeen', 'true');
+      localStorage.setItem('hasSeenTutorial', 'true');
       localStorage.removeItem('pendingTutorialStart');
       console.log('[Tutorial] Already on /manage-cases, tutorial started immediately.');
     } else {

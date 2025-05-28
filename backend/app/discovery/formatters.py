@@ -65,13 +65,14 @@ def format_form_interrogatory_responses(client_answers: Dict[str, str], case_det
     
     INSTRUCTIONS:
     1. For each question number in the client answers:
-       - Format the response professionally
-       - Maintain any list formatting (a, b, c, d) that exists in the template
+       - Format the response according to the question's built-in format
+       - If the question has subparts (a, b, c), maintain that list format
+       - If no specific format is requested, keep as normal sentences
        - Keep the response clear and concise
-       - Ensure proper spacing and paragraph breaks
     
-    2. Format each response exactly as it should appear in the final document.
-       The response should flow naturally after the objection list.
+    2. Do NOT add any objections or "Subject to and without waiving" clauses
+       - The template already includes these
+       - Just format the substantive response
     
     3. For medical records sections (typically questions 6.4, 6.5, 6.6):
        - Format as a clear, structured list

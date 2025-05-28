@@ -260,16 +260,38 @@ def _generate_form_interrogatory_document(case, type_config, data):
     """Handle form interrogatory document generation."""
     print("DEBUG: Processing form interrogatory workflow")
     
-    # Get formatted responses from session
-    formatted_data = session.get('formatted_responses', {})
-    if not formatted_data:
+    # Get session key from request
+    session_key = data.get('session_key')
+    if not session_key:
+        return jsonify({'error': 'session_key is required'}), 400
+        
+    # Retrieve stored parsing result
+    stored_result = current_app.config.get(session_key)
+    if not stored_result:
         return jsonify({
-            'error': 'No formatted responses found in session. Please format responses first.'
+            'error': 'Session data not found or expired. Please re-upload the document.'
         }), 400
         
+    print(f"DEBUG: Found stored result with {len(stored_result.get('questions', []))} questions")
+    
+    # Get questions and AI response
+    questions = stored_result.get('questions', [])
+    ai_response = stored_result.get('ai_response', '')
+    
+    if not questions:
+        return jsonify({'error': 'No questions found in stored result'}), 400
+        
+    # Process AI response
+    responses_dict = _parse_ai_response_by_question(ai_response, type_config)
+    
     # Prepare context for document generation
     context = _build_case_context(case)
-    context['responses'] = formatted_data.get('responses', {})
+    context['responses'] = responses_dict
+    
+    # Clean up session data
+    if session_key in current_app.config:
+        del current_app.config[session_key]
+        print(f"DEBUG: Cleaned up session key: {session_key}")
     
     # Generate document
     return _render_and_send_document(

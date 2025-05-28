@@ -225,11 +225,7 @@ def update_case(case_id, update_data, user_id):
         # Then handle dedicated fields
         for key, value in update_data.items():
             if key in allowed_fields and key != 'case_details':  # Skip case_details as we handled it above
-                # Skip if field is locked
-                if key in locked_fields:
-                    print(f"Field '{key}' is locked. Skipping update.")
-                    continue
-
+                # Process the value update first, before checking if field is locked
                 current_value = getattr(target_case, key)
                 new_value = value
 
@@ -247,6 +243,11 @@ def update_case(case_id, update_data, user_id):
 
                 # Update if value changed
                 if current_value != new_value:
+                    # Only skip if field is locked AND this is not part of a suggestion application
+                    if key in locked_fields and 'pending_suggestions' not in update_data.get('case_details', {}):
+                        print(f"Field '{key}' is locked. Skipping update.")
+                        continue
+                        
                     setattr(target_case, key, new_value)
                     updated = True
                     print(f"Updated field {key} for case {case_id}")
