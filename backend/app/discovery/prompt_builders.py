@@ -37,6 +37,15 @@ class GeneralPromptBuilder(BasePromptBuilder):
         - Defendant: {defendant}
         """
         
+        # Add multiple defendants if available
+        defendants = case_details.get('defendants', {})
+        active_defendant = case_details.get('active_defendant', '')
+        if defendants:
+            prompt += "\n- Defendants:"
+            for def_id, def_info in defendants.items():
+                is_active = def_id == active_defendant
+                prompt += f"\n  * {def_info.get('name', 'Unknown')} {'(Active)' if is_active else ''}"
+        
         # Add more case details if available
         if case_details.get('court_name'):
             prompt += f"\n- Court: {case_details.get('court_name')}"

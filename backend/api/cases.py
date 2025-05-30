@@ -46,6 +46,9 @@ TEMPLATE_CONTEXT_MAP = {
         'defendant_counsel_email': {'source': 'direct', 'attribute': 'defendant_counsel_email', 'default': ''},
         'defendant_counsel_phone': {'source': 'direct', 'attribute': 'defendant_counsel_phone', 'default': ''},
         'defendant_counsel_info': {'source': 'direct', 'attribute': 'defendant_counsel_info', 'default': ''},
+        # New defendant fields
+        'defendants':          {'source': 'direct', 'attribute': 'defendants',         'default': {}},
+        'active_defendant':    {'source': 'direct', 'attribute': 'active_defendant',   'default': ''},
         'case_details':        {'source': 'direct', 'attribute': 'case_details',       'default': {}}
     },
 
@@ -74,6 +77,9 @@ TEMPLATE_CONTEXT_MAP = {
         'defendant_counsel_email': {'source': 'direct', 'attribute': 'defendant_counsel_email', 'default': ''},
         'defendant_counsel_phone': {'source': 'direct', 'attribute': 'defendant_counsel_phone', 'default': ''},
         'defendant_counsel_info': {'source': 'direct', 'attribute': 'defendant_counsel_info', 'default': ''},
+        # New defendant fields
+        'defendants':          {'source': 'direct', 'attribute': 'defendants',         'default': {}},
+        'active_defendant':    {'source': 'direct', 'attribute': 'active_defendant',   'default': ''},
         'current_date':        {'source': 'direct', 'attribute': 'current_date',       'default': ''},
         'current_year':        {'source': 'direct', 'attribute': 'current_year',       'default': ''},
         'responses':           {'source': 'direct', 'attribute': 'responses',          'default': {}}
@@ -104,6 +110,9 @@ TEMPLATE_CONTEXT_MAP = {
         'defendant_counsel_email': {'source': 'direct', 'attribute': 'defendant_counsel_email', 'default': ''},
         'defendant_counsel_phone': {'source': 'direct', 'attribute': 'defendant_counsel_phone', 'default': ''},
         'defendant_counsel_info': {'source': 'direct', 'attribute': 'defendant_counsel_info', 'default': ''},
+        # New defendant fields
+        'defendants':          {'source': 'direct', 'attribute': 'defendants',         'default': {}},
+        'active_defendant':    {'source': 'direct', 'attribute': 'active_defendant',   'default': ''},
         'current_date':        {'source': 'direct', 'attribute': 'current_date',       'default': ''},
         'current_year':        {'source': 'direct', 'attribute': 'current_year',       'default': ''},
         'responses':           {'source': 'direct', 'attribute': 'responses',          'default': {}}
@@ -118,6 +127,9 @@ TEMPLATE_CONTEXT_MAP = {
          # Read from case_details JSON (ensure keys 'demand_amount', 'demand_deadline_date' exist in your JSON)
         'amount_demanded':    {'source': 'case_details', 'key': 'demand_amount',        'default': '[AMOUNT]'},
         'demand_deadline':    {'source': 'case_details', 'key': 'demand_deadline_date', 'default': '[DATE]'},
+        # New defendant fields
+        'defendants':          {'source': 'direct', 'attribute': 'defendants',         'default': {}},
+        'active_defendant':    {'source': 'direct', 'attribute': 'active_defendant',   'default': ''},
     },
 
      # --- Configuration for case_summary_template.docx (EXAMPLE) ---
@@ -127,6 +139,9 @@ TEMPLATE_CONTEXT_MAP = {
         'case_number':        {'source': 'direct', 'attribute': 'case_number', 'default': 'N/A'},
          # Read summary from case_details JSON (ensure key 'summary' exists in your JSON)
         'summary':            {'source': 'case_details', 'key': 'summary', 'default': 'No summary available.'},
+        # New defendant fields
+        'defendants':          {'source': 'direct', 'attribute': 'defendants',         'default': {}},
+        'active_defendant':    {'source': 'direct', 'attribute': 'active_defendant',   'default': ''},
      }
     # --- Add entries for your other templates here ---
 }

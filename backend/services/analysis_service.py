@@ -49,7 +49,18 @@ def analyze_text_with_gemini(text_content):
             Return the extracted information ONLY as a single JSON object matching the structure below.
             Do not include any explanatory text before or after the JSON object.
             For all date fields, format the output as 'Month day, year' (e.g., "February 24, 2024") or null if not found.
-
+            For acting attorney, you must follow these specific rules:
+                1. Only choose between these two names if found in the document:
+                    - "Arash Nematollahi, ESQ."
+                    - "Astina Shakiyam, ESQ."
+                2. If neither name is found in the document, default to "Arash Nematollahi, ESQ."
+                3. Do not suggest any other names for this field.
+            For acting clerk, you must follow these specific rules:
+                1. Only choose between these two names if found in the document:
+                    - "Oliver Pizarro"
+                    - "Ryan Berry"
+                2. If neither name is found in the document, default to "Oliver Pizarro"
+                3. Do not suggest any other names for this field.
             Desired JSON structure:
             {{
               "plaintiff": "string or null",
@@ -75,7 +86,6 @@ def analyze_text_with_gemini(text_content):
               "general_allegations": "string summarizing general allegations or null",
               "injuries_described": "string describing injuries or list[string] or null",
               "vehicle_details": "string describing relevant vehicle info (make, plate) or null",
-              "extracted_value": "number or null (e.g., monetary amount mentioned)",
               "acting_attorney": "string with current attorney handling case or null",
               "acting_clerk": "string with current clerk, which would be found as the last name signing the document or null"
             }}

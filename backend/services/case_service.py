@@ -157,6 +157,37 @@ def get_case_by_id(case_id, user_id):
         print(f"Error fetching case {case_id} for user {user_id} via service: {e}")
         raise CaseServiceError(f"Failed to fetch case {case_id} from database") from e
 
+def _parse_defendants(defendant_str):
+    """
+    Parse the defendant string into a dictionary of defendants.
+    Ignores "DOES 1-100" and similar patterns.
+    
+    Args:
+        defendant_str (str): The defendant string from the case
+        
+    Returns:
+        dict: Dictionary of defendants with IDs as keys
+    """
+    if not defendant_str:
+        return {}
+        
+    # Split by semicolons and clean up
+    parts = [p.strip() for p in defendant_str.split(';')]
+    
+    # Filter out "DOES" entries and empty strings
+    real_defendants = [p for p in parts if p and not p.lower().startswith('does')]
+    
+    # Create dictionary with IDs as keys
+    defendants = {}
+    for i, name in enumerate(real_defendants):
+        def_id = f"def_{i+1}"
+        defendants[def_id] = {
+            'name': name,
+            'id': def_id
+        }
+    
+    return defendants
+
 # MODIFIED: Added ownership check, refactored allowed fields & update logic
 def update_case(case_id, update_data, user_id):
     """
@@ -251,30 +282,35 @@ def update_case(case_id, update_data, user_id):
                     setattr(target_case, key, new_value)
                     updated = True
                     print(f"Updated field {key} for case {case_id}")
+                    
+                    # If defendant field was updated, also update defendants JSON field
+                    if key == 'defendant':
+                        defendants = _parse_defendants(new_value)
+                        target_case.defendants = defendants
+                        print(f"Updated defendants JSON field with {len(defendants)} defendants")
 
-        # Only commit if changes were made
+        # Save changes if any were made
         if updated:
-            if json_modified:
-                flag_modified(target_case, "case_details")
-            db.session.commit()
-            print(f"DEBUG: Case {case_id} updated successfully via service by user {user_id}.")
-            print(f"DEBUG: Final case_details after commit: {target_case.case_details}")
+            try:
+                db.session.commit()
+                print(f"Successfully committed updates to case {case_id}")
+            except IntegrityError as e:
+                db.session.rollback()
+                print(f"Integrity error updating case {case_id}: {str(e)}")
+                raise DuplicateCaseError(f"Update would create duplicate case: {str(e)}")
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error committing updates to case {case_id}: {str(e)}")
+                raise CaseServiceError(f"Failed to update case: {str(e)}")
         else:
-            print(f"No changes detected for case {case_id}. Skipping commit.")
+            print(f"No changes to commit for case {case_id}")
 
         return target_case
 
-    except IntegrityError as e:
-        db.session.rollback()
-        print(f"IntegrityError updating case {case_id} by user {user_id}: {e}")
-        if 'display_name' in str(e).lower() or ('case' in str(e).lower() and 'unique' in str(e).lower()):
-            raise DuplicateCaseError(f"Case display name '{update_data.get('display_name')}' might already exist for this user or globally.") from e
-        else:
-            raise CaseServiceError(f"Database integrity error updating case {case_id}") from e
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating case {case_id} by user {user_id} via service: {e}")
-        raise CaseServiceError(f"Failed to update case {case_id} in database") from e
+        print(f"Error in update_case: {str(e)}")
+        raise CaseServiceError(f"Failed to update case: {str(e)}")
 
 # MODIFIED: Added ownership check (Keep this logic)
 def delete_case(case_id, user_id):

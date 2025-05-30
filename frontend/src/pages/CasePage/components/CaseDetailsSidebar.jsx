@@ -28,7 +28,7 @@ const fieldGroups = [
   {
     title: 'Parties',
     icon: <TeamOutlined />,
-    fields: ['plaintiff', 'defendant'],
+    fields: ['plaintiff', 'defendant', 'defendants', 'active_defendant'],
   },
   {
     title: 'Case Timeline',

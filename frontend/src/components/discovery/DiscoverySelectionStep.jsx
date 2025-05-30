@@ -1,5 +1,5 @@
 // frontend/src/components/DiscoverySelectionStep.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Typography,
@@ -10,11 +10,15 @@ import {
   Space,
   List,
   message,
-  Divider
+  Divider,
+  Select
 } from 'antd';
 import { ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons';
+import api from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text, Paragraph } = Typography;
+const { Option } = Select;
 
 // Response options for different discovery types
 const RESPONSE_OPTIONS = {
@@ -40,6 +44,32 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
   const [selections, setSelections] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [defendants, setDefendants] = useState([]);
+  const [selectedDefendant, setSelectedDefendant] = useState('');
+
+  // Fetch defendants when component mounts
+  useEffect(() => {
+    const fetchDefendants = async () => {
+      try {
+        const response = await api.getCase(caseId);
+        const caseData = response.data;
+        if (caseData.defendants) {
+          const defendantsList = Object.entries(caseData.defendants).map(([id, info]) => ({
+            id,
+            name: info.name
+          }));
+          setDefendants(defendantsList);
+          if (defendantsList.length > 0) {
+            setSelectedDefendant(defendantsList[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching defendants:', err);
+        setError('Failed to load defendants');
+      }
+    };
+    fetchDefendants();
+  }, [caseId]);
 
   // Get response options for current discovery type
   const responseOptions = RESPONSE_OPTIONS[discoveryType] || RESPONSE_OPTIONS['requests_for_production'];
@@ -62,6 +92,11 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
   };
 
   const handleSubmit = async () => {
+    if (!selectedDefendant) {
+      message.error('Please select a defendant');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -69,7 +104,8 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
       await onSubmit({
         session_key: sessionKey,
         selections: selections,
-        discovery_type: discoveryType
+        discovery_type: discoveryType,
+        defendant_id: selectedDefendant
       });
       message.success('Document generated successfully');
     } catch (err) {
@@ -107,6 +143,21 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
             style={{ marginBottom: 16 }}
           />
         )}
+
+        {/* Defendant Selection */}
+        <div style={{ marginBottom: 24 }}>
+          <Text strong>Select Defendant:</Text>
+          <Select
+            value={selectedDefendant}
+            onChange={setSelectedDefendant}
+            style={{ width: '100%', marginTop: 8 }}
+            placeholder="Select a defendant"
+          >
+            {defendants.map(def => (
+              <Option key={def.id} value={def.id}>{def.name}</Option>
+            ))}
+          </Select>
+        </div>
 
         <List
           dataSource={questions}

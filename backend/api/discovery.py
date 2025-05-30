@@ -308,6 +308,7 @@ def _generate_parse_and_select_document(case, type_config, data):
     # Get session key and selections from request
     session_key = data.get('session_key')
     selections = data.get('selections', {})
+    defendant_id = data.get('defendant_id')
     
     if not session_key:
         return jsonify({'error': 'session_key is required'}), 400
@@ -336,6 +337,15 @@ def _generate_parse_and_select_document(case, type_config, data):
     # Prepare context for document generation
     context = _build_case_context(case)
     context['responses'] = combined_responses
+    
+    # Set the active defendant for this response
+    if defendant_id and hasattr(case, 'defendants'):
+        defendants = getattr(case, 'defendants', {})
+        if defendant_id in defendants:
+            context['defendant'] = defendants[defendant_id].get('name', '')
+            context['defendant_id'] = defendant_id
+        else:
+            return jsonify({'error': 'Selected defendant not found in case'}), 400
     
     # Clean up session data
     if session_key in current_app.config:
@@ -381,6 +391,10 @@ def _build_case_context(case):
         'defendant_counsel_phone': getattr(case, 'defendant_counsel_phone', ''),
         'acting_attorney': getattr(case, 'acting_attorney', ''),
         'acting_clerk': getattr(case, 'acting_clerk', ''),
+        
+        # New defendant fields
+        'defendants': getattr(case, 'defendants', {}),
+        'active_defendant': getattr(case, 'active_defendant', ''),
         
         # Current date and year
         'current_date': datetime.now().strftime('%B %d, %Y'),

@@ -35,7 +35,9 @@ class Case(db.Model):
     defendant_counsel_phone = db.Column(db.String(1000), nullable=True)
     acting_attorney = db.Column(db.String(1000), nullable=True)
     acting_clerk = db.Column(db.String(200), nullable=True)
-
+    # New fields for multiple defendants
+    defendants = db.Column(db.JSON, nullable=True)  # List of defendant objects
+    active_defendant = db.Column(db.String(1000), nullable=True)  # Currently selected defendant
 
     # Relationship: A case can have many documents
     documents = db.relationship('Document', backref='case', lazy=True, cascade="all, delete-orphan")

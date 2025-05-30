@@ -68,6 +68,14 @@ class CaseSchema(SQLAlchemyAutoSchema):
     )   
     documents = fields.Nested(DocumentSchema, many=True, dump_only=True)
     owner = fields.Nested(UserSchema, dump_only=True)
+    # New fields for multiple defendants
+    defendants = fields.Dict(
+        keys=fields.Str(),
+        values=fields.Raw(allow_none=True),
+        required=False,
+        allow_none=True
+    )
+    active_defendant = fields.Str(required=False, allow_none=True)
     class Meta:
         model = Case
         load_instance = True
@@ -115,6 +123,9 @@ class CaseInputBaseSchema(Schema):
     acting_attorney = fields.Str(required=False, allow_none=True)
     acting_clerk = fields.Str(required=False, allow_none=True)
     case_details = fields.Dict(keys=fields.Str(), values=fields.Raw(), required=False, allow_none=True)
+    # New fields for multiple defendants
+    defendants = fields.Dict(keys=fields.Str(), values=fields.Raw(), required=False, allow_none=True)
+    active_defendant = fields.Str(required=False, allow_none=True)
 
 class CaseCreateInputSchema(CaseInputBaseSchema):
     """Schema for VALIDATING Case creation (POST)"""
