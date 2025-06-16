@@ -69,7 +69,8 @@ def get_cached_objection_sheet(discovery_type: str):
         # Map discovery type to file
         file_map = {
             'special_interrogatories': 'SR_Objection_Sheet.docx',
-            'requests_for_production': 'RFP_Objection_Sheet.docx'
+            'requests_for_production': 'RFP_Objection_Sheet.docx',
+            'requests_for_admission': 'RFP_Objection_Sheet.docx'  # Use same objection sheet as RFP
         }
         
         objection_path = os.path.join(current_app.root_path, 'templates', file_map[discovery_type])
@@ -425,6 +426,12 @@ def _process_ai_responses_with_selections(questions, ai_response, selections, ty
             'will_answer': 'Plaintiff will answer this interrogatory.',
             'cannot_answer': 'Plaintiff cannot answer this interrogatory at this time.',
             'no_text': ''
+        },
+        'requests_for_admission': {
+            'admit': 'Admitted.',
+            'deny': 'Denied.',
+            'cannot_admit_or_deny': 'Defendant cannot truthfully admit or deny this request because [reason].',
+            'no_text': ''
         }
     }
     
@@ -433,7 +440,14 @@ def _process_ai_responses_with_selections(questions, ai_response, selections, ty
     
     # Get the appropriate response set based on discovery type
     is_special_interrogatory = type_config.get('display_name') == 'Special Interrogatories'
-    response_set = standard_responses['special_interrogatories'] if is_special_interrogatory else standard_responses['requests_for_production']
+    is_rfa = type_config.get('display_name') == 'Requests for Admission'
+    
+    if is_special_interrogatory:
+        response_set = standard_responses['special_interrogatories']
+    elif is_rfa:
+        response_set = standard_responses['requests_for_admission']
+    else:
+        response_set = standard_responses['requests_for_production']
     
     for question in questions:
         question_number = question.get('number', '')
@@ -450,8 +464,13 @@ def _process_ai_responses_with_selections(questions, ai_response, selections, ty
             combined_responses.add(f"\nSPECIAL INTERROGATORY NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
             combined_responses.add(f"\n\t{question.get('text', '').strip()}", font='Times New Roman')
             combined_responses.add(f"\nRESPONSE TO SPECIAL INTERROGATORY NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
+        elif is_rfa:
+            # Requests for Admission formatting
+            combined_responses.add(f"\nREQUEST FOR ADMISSION NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
+            combined_responses.add(f"\n\t{question.get('text', '').strip()}", font='Times New Roman')
+            combined_responses.add(f"\nRESPONSE TO REQUEST FOR ADMISSION NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
         else:
-            # Original RFP formatting (unchanged)
+            # Original RFP formatting
             combined_responses.add(f"\nREQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True, font='Times New Roman')
             combined_responses.add(f"\n\t{question.get('text', '').strip()}", font='Times New Roman')
             combined_responses.add(f"\nRESPONSE TO REQUEST FOR PRODUCTION NO. {question_number}:", bold=True, underline=True, font='Times New Roman')

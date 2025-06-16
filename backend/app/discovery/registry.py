@@ -8,7 +8,11 @@ from .parsers import (
     parse_special_interrogatories,
     parse_requests_for_admission,
 )
-from .ai_parsers import ai_parse_requests_for_production, ai_parse_special_interrogatories
+from .ai_parsers import (
+    ai_parse_requests_for_production,
+    ai_parse_special_interrogatories,
+    ai_parse_requests_for_admission,
+)
 from .prompt_builders import (
     build_form_interrogatories_prompt,
     build_special_interrogatories_prompt,
@@ -49,12 +53,12 @@ DISCOVERY_TYPE_REGISTRY = {
         'workflow_type': 'parse_and_select',  # Uses parse → select → generate
     },
     'requests_for_admission': {
-        'parser': parse_requests_for_admission,
+        'parser': ai_parse_requests_for_admission,
         'prompt_builder': build_requests_for_admission_prompt,
         'display_name': 'Requests for Admission',
         'request_type': 'Request for Admission No.',
         'response_type': 'Response to Request for Admission No.',
-        'template_file': 'rfa_template.docx',  # To be created
+        'template_file': 'RFA_template.docx',  # Use RFA-specific template
         'data_source': 'app_config',  # Uses current_app.config[session_key]
         'workflow_type': 'parse_and_select',  # Uses parse → select → generate
     },

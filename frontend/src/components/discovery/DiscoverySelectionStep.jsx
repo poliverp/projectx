@@ -31,13 +31,20 @@ const RESPONSE_OPTIONS = {
     { value: 'will_answer', label: 'Plaintiff will answer this interrogatory.' },
     { value: 'cannot_answer', label: 'Plaintiff cannot answer this interrogatory at this time.' },
     { value: 'no_text', label: 'No additional text' }
+  ],
+  'requests_for_admission': [
+    { value: 'admit', label: 'Admitted.' },
+    { value: 'deny', label: 'Denied.' },
+    { value: 'cannot_admit_or_deny', label: 'Defendant cannot truthfully admit or deny this request because [reason].' },
+    { value: 'no_text', label: 'No additional text' }
   ]
 };
 
 // Display names for different discovery types
 const DISCOVERY_DISPLAY_NAMES = {
   'requests_for_production': 'Requests for Production',
-  'special_interrogatories': 'Special Interrogatories'
+  'special_interrogatories': 'Special Interrogatories',
+  'requests_for_admission': 'Requests for Admission'
 };
 
 const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onBack, onSubmit, caseId }) => {
@@ -98,101 +105,92 @@ const DiscoverySelectionStep = ({ questions = [], sessionKey, discoveryType, onB
     }
 
     setLoading(true);
-    setError(null);
-    
     try {
       await onSubmit({
         session_key: sessionKey,
         selections: selections,
-        discovery_type: discoveryType,
-        defendant_id: selectedDefendant
+        defendant_id: selectedDefendant,
+        discovery_type: discoveryType
       });
-      message.success('Document generated successfully');
     } catch (err) {
-      console.error('Error generating document:', err);
       setError(err.message || 'Failed to generate document');
-      message.error('Failed to generate document');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Spin spinning={loading} tip="Generating document...">
-      <Card 
-        title={
-          <Space>
-            <FileTextOutlined />
-            <span>Review {displayName}</span>
-          </Space>
-        }
-        extra={
-          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>Back</Button>
-        }
-      >
-        <Paragraph>
-          Select an additional response for each {displayName.toLowerCase()} before generating the document.
-        </Paragraph>
-
-        {error && (
-          <Alert
-            message="Error Generating Document"
-            description={error}
-            type="error"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        {/* Defendant Selection */}
-        <div style={{ marginBottom: 24 }}>
-          <Text strong>Select Defendant:</Text>
-          <Select
-            value={selectedDefendant}
-            onChange={setSelectedDefendant}
-            style={{ width: '100%', marginTop: 8 }}
-            placeholder="Select a defendant"
-          >
-            {defendants.map(def => (
-              <Option key={def.id} value={def.id}>{def.name}</Option>
-            ))}
-          </Select>
-        </div>
-
-        <List
-          dataSource={questions}
-          renderItem={question => (
-            <List.Item>
-              <Card 
-                size="small" 
-                title={`${displayName.split(' ')[0]} ${question.number}`}
+    <Spin spinning={loading}>
+      <Card>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button 
+              icon={<ArrowLeftOutlined />} 
+              onClick={onBack}
+            >
+              Back
+            </Button>
+            <Title level={4} style={{ margin: 0 }}>Review {displayName}</Title>
+            <div style={{ width: 200 }}>
+              <Select
+                value={selectedDefendant}
+                onChange={setSelectedDefendant}
                 style={{ width: '100%' }}
+                placeholder="Select defendant"
               >
-                <Paragraph>{question.text}</Paragraph>
-                <Divider style={{ margin: '12px 0' }} />
-                <Radio.Group 
-                  value={selections[question.id]} 
-                  onChange={e => handleSelectionChange(question.id, e.target.value)}
+                {defendants.map(def => (
+                  <Option key={def.id} value={def.id}>{def.name}</Option>
+                ))}
+              </Select>
+            </div>
+          </div>
+
+          {error && (
+            <Alert
+              message="Error"
+              description={error}
+              type="error"
+              showIcon
+              closable
+              onClose={() => setError(null)}
+            />
+          )}
+
+          <List
+            dataSource={questions}
+            renderItem={question => (
+              <List.Item>
+                <Card 
+                  size="small" 
+                  title={`${displayName.split(' ')[0]} ${question.number}`}
                   style={{ width: '100%' }}
                 >
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    {responseOptions.map(option => (
-                      <Radio key={option.value} value={option.value}>
-                        {option.label}
-                      </Radio>
-                    ))}
-                  </Space>
-                </Radio.Group>
-              </Card>
-            </List.Item>
-          )}
-        />
+                  <Paragraph>{question.text}</Paragraph>
+                  <Divider style={{ margin: '12px 0' }} />
+                  <Radio.Group 
+                    value={selections[question.id]} 
+                    onChange={e => handleSelectionChange(question.id, e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {responseOptions.map(option => (
+                        <Radio key={option.value} value={option.value}>
+                          {option.label}
+                        </Radio>
+                      ))}
+                    </Space>
+                  </Radio.Group>
+                </Card>
+              </List.Item>
+            )}
+          />
 
-        <div style={{ textAlign: 'right', marginTop: 16 }}>
-          <Button type="primary" onClick={handleSubmit} loading={loading}>
-            Generate Document
-          </Button>
-        </div>
+          <div style={{ textAlign: 'right', marginTop: 16 }}>
+            <Button type="primary" onClick={handleSubmit} loading={loading}>
+              Generate Document
+            </Button>
+          </div>
+        </Space>
       </Card>
     </Spin>
   );
