@@ -61,18 +61,27 @@ def test_endpoint():
     print("DEBUG: Test endpoint called successfully")
     return jsonify({"message": "Discovery API is working", "authenticated": current_user.is_authenticated}), 200
 
-def get_cached_objection_master():
-    """Load and cache the objection master sheet as plain text."""
-    if not hasattr(current_app, '_objection_master_cache'):
-        objection_path = os.path.join(current_app.root_path, 'templates', 'MASTER SHEET Discovery Objection.docx')
+def get_cached_objection_sheet(discovery_type: str):
+    """Load and cache the appropriate objection sheet as plain text."""
+    cache_key = f'_objection_{discovery_type}_cache'
+    
+    if not hasattr(current_app, cache_key):
+        # Map discovery type to file
+        file_map = {
+            'special_interrogatories': 'SR_Objection_Sheet.docx',
+            'requests_for_production': 'RFP_Objection_Sheet.docx'
+        }
+        
+        objection_path = os.path.join(current_app.root_path, 'templates', file_map[discovery_type])
         try:
             doc = DocxDocument(objection_path)
-            objection_master = '\n'.join([p.text for p in doc.paragraphs if p.text.strip()])
-            current_app._objection_master_cache = objection_master
+            objection_text = '\n'.join([p.text for p in doc.paragraphs if p.text.strip()])
+            setattr(current_app, cache_key, objection_text)
         except Exception as doc_error:
-            print(f"DEBUG: Error loading objection master sheet: {str(doc_error)}")
-            current_app._objection_master_cache = "Error loading objection master sheet"
-    return current_app._objection_master_cache
+            print(f"DEBUG: Error loading {discovery_type} objection sheet: {str(doc_error)}")
+            setattr(current_app, cache_key, f"Error loading {discovery_type} objection sheet")
+    
+    return getattr(current_app, cache_key)
 
 @bp.route('/discovery/cases/<int:case_id>/parse', methods=['POST'])
 @login_required
@@ -130,8 +139,8 @@ def parse_discovery_document(case_id):
             }
         
         # Load objection master sheet (as plain text)
-        objection_master = get_cached_objection_master()
-        print(f"DEBUG: Successfully loaded objection master sheet, length: {len(objection_master)}")
+        objection_master = get_cached_objection_sheet(discovery_type)
+        print(f"DEBUG: Successfully loaded {discovery_type} objection sheet, length: {len(objection_master)}")
         
         # Use the orchestrator service - just to parse, not for full response
         print(f"DEBUG: About to initialize DiscoveryResponseService")
@@ -603,8 +612,8 @@ def respond_to_discovery(case_id):
             }
         
         # Load objection master sheet (as plain text)
-        objection_master = get_cached_objection_master()
-        print(f"DEBUG: Successfully loaded objection master sheet, length: {len(objection_master)}")
+        objection_master = get_cached_objection_sheet(discovery_type)
+        print(f"DEBUG: Successfully loaded {discovery_type} objection sheet, length: {len(objection_master)}")
 
         # Use the orchestrator service
         print(f"DEBUG: About to initialize DiscoveryResponseService")
