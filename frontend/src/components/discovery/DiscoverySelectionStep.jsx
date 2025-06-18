@@ -24,12 +24,14 @@ const { Option } = Select;
 const RESPONSE_OPTIONS = {
   'requests_for_production': [
     { value: 'will_provide', label: 'Plaintiff will produce responsive documents.' },
-    { value: 'none_found', label: 'Plaintiff has no responsive documents to produce.' },
+    { value: 'none_found', label: 'Plaintiff is unable to find documents.' },
     { value: 'no_text', label: 'No additional text' }
   ],
   'special_interrogatories': [
-    { value: 'will_answer', label: 'Plaintiff will answer this interrogatory.' },
-    { value: 'cannot_answer', label: 'Plaintiff cannot answer this interrogatory at this time.' },
+    { value: 'will_answer', label: 'Yes' },
+    { value: 'cannot_answer', label: 'No' },
+    { value: 'refer_to_medical', label: 'Refer to medical records.' },
+    { value: 'not_applicable', label: 'Not applicable' },
     { value: 'no_text', label: 'No additional text' }
   ],
   'requests_for_admission': [

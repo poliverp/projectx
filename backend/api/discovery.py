@@ -418,13 +418,15 @@ def _process_ai_responses_with_selections(questions, ai_response, selections, ty
     # Different standard responses based on discovery type
     standard_responses = {
         'requests_for_production': {
-            'will_provide': 'Plaintiff will produce responsive documents.',
-            'none_found': 'Plaintiff has no responsive documents to produce.',
+            'will_provide': 'Plaintiff will produce responsive documents in Plaintiff\'s possession, custody, and control.',
+            'none_found': 'After a due and diligent search, Plaintiff is unable to find any documents pertaining to this request. Discovery is continuous and ongoing.',
             'no_text': ''
         },
         'special_interrogatories': {
-            'will_answer': 'Plaintiff will answer this interrogatory.',
-            'cannot_answer': 'Plaintiff cannot answer this interrogatory at this time.',
+            'will_answer': 'Yes.',
+            'cannot_answer': 'No.',
+            'refer_to_medical': 'Please refer to medical records produced in accordance with Defendant\'s Requests for Production, Set 1.',
+            'not_applicable': 'N/A.',
             'no_text': ''
         },
         'requests_for_admission': {
