@@ -12,7 +12,7 @@ import {
 import { useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import ProfilePage from './pages/auth/ProfilePage';
 import DiscoveryLandingPage from './pages/discovery/DiscoveryLandingPage';
 import PropoundingDiscoveryPage from './pages/discovery/PropoundingDiscoveryPage';
