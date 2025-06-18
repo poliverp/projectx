@@ -41,6 +41,26 @@ from backend.services.case_service import get_case_by_id, CaseNotFoundError
 from backend.app.discovery.registry import get_discovery_type_info
 from docx import Document as DocxDocument
 
+# Helper functions for context building
+def _format_date_for_context(date_value):
+    """Format date values for template context."""
+    if isinstance(date_value, datetime.date) and not isinstance(date_value, datetime.datetime):
+        try:
+            return date_value.strftime('%m/%d/%Y')
+        except ValueError:
+            return date_value
+    return date_value
+
+def _get_judge_doc_from_analysis(case):
+    """Get judge_doc from analysis results if available."""
+    if hasattr(case, 'documents') and case.documents:
+        # Look for the most recently analyzed document
+        for doc in case.documents:
+            if doc.analysis_json and isinstance(doc.analysis_json, dict):
+                if 'judge_doc' in doc.analysis_json and doc.analysis_json['judge_doc']:
+                    return doc.analysis_json['judge_doc']
+    return ''
+
 # Function to strip markdown formatting
 def strip_markdown(text):
     """Remove markdown formatting from text."""
@@ -372,6 +392,27 @@ def _generate_parse_and_select_document(case, type_config, data):
 
 def _build_case_context(case):
     """Build standard case context for template rendering."""
+    import datetime
+    
+    # Helper function to format dates
+    def format_date(date_value):
+        if isinstance(date_value, datetime.date) and not isinstance(date_value, datetime.datetime):
+            try:
+                return date_value.strftime('%m/%d/%Y')
+            except ValueError:
+                return date_value
+        return date_value
+    
+    # Get judge_doc from analysis results if available
+    judge_doc = ''
+    if hasattr(case, 'documents') and case.documents:
+        # Look for the most recently analyzed document
+        for doc in case.documents:
+            if doc.analysis_json and isinstance(doc.analysis_json, dict):
+                if 'judge_doc' in doc.analysis_json and doc.analysis_json['judge_doc']:
+                    judge_doc = doc.analysis_json['judge_doc']
+                    break
+    
     return {
         # Core case information
         'case_name': getattr(case, 'display_name', ''),
@@ -379,13 +420,14 @@ def _build_case_context(case):
         'plaintiff': getattr(case, 'plaintiff', ''),
         'defendant': getattr(case, 'defendant', ''),
         'judge': getattr(case, 'judge', ''),
+        'judge_doc': judge_doc,
         'jurisdiction': getattr(case, 'jurisdiction', ''),
         'county': getattr(case, 'county', ''),
         
-        # Date fields
-        'filing_date': getattr(case, 'filing_date', ''),
-        'trial_date': getattr(case, 'trial_date', ''),
-        'incident_date': getattr(case, 'incident_date', ''),
+        # Date fields - format them properly
+        'filing_date': format_date(getattr(case, 'filing_date', '')),
+        'trial_date': format_date(getattr(case, 'trial_date', '')),
+        'incident_date': format_date(getattr(case, 'incident_date', '')),
         
         # Other fields
         'incident_location': getattr(case, 'incident_location', ''),
@@ -407,8 +449,8 @@ def _build_case_context(case):
         'active_defendant': getattr(case, 'active_defendant', ''),
         
         # Current date and year
-        'current_date': datetime.now().strftime('%B %d, %Y'),
-        'current_year': datetime.now().year,
+        'current_date': datetime.datetime.now().strftime('%m/%d/%Y'),
+        'current_year': datetime.datetime.now().year,
     }
 
 def _process_ai_responses_with_selections(questions, ai_response, selections, type_config):
@@ -744,12 +786,13 @@ def respond_to_discovery(case_id):
             'plaintiff': case.plaintiff if hasattr(case, 'plaintiff') else '',
             'defendant': case.defendant if hasattr(case, 'defendant') else '',
             'judge': case.judge if hasattr(case, 'judge') else '',
+            'judge_doc': _get_judge_doc_from_analysis(case),
             'jurisdiction': case.jurisdiction if hasattr(case, 'jurisdiction') else '',
             'county': case.county if hasattr(case, 'county') else '',
-            # Date fields
-            'filing_date': case.filing_date if hasattr(case, 'filing_date') else '',
-            'trial_date': case.trial_date if hasattr(case, 'trial_date') else '',
-            'incident_date': case.incident_date if hasattr(case, 'incident_date') else '',
+            # Date fields - format them properly
+            'filing_date': _format_date_for_context(case.filing_date if hasattr(case, 'filing_date') else ''),
+            'trial_date': _format_date_for_context(case.trial_date if hasattr(case, 'trial_date') else ''),
+            'incident_date': _format_date_for_context(case.incident_date if hasattr(case, 'incident_date') else ''),
             # Other fields
             'incident_location': case.incident_location if hasattr(case, 'incident_location') else '',
             'incident_description': case.incident_description if hasattr(case, 'incident_description') else '',

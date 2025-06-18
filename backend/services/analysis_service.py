@@ -63,19 +63,19 @@ def analyze_text_with_gemini(text_content):
                 3. Do not suggest any other names for this field.
             Desired JSON structure:
             {{
-              "plaintiff": "string or null",
-              "defendant": "string or null",
-              "plaintiff_address": "string or null",
+              "plaintiff": "string or null, but if found, exclude any text like 'an individual', 'a natural person', or similar variations that typically appear after plaintiff names. Only include the actual plaintiff name(s). Look for plaintiff names that appear directly under or preceding 'Attorneys for Plaintiff:', 'Attorney for Plaintiff:', 'Plaintiff's Attorney:', or similar variations.",
+              "defendant": "string or null, but if found, exclude any text like 'and DOES 100, Inclusive', 'and DOES 1-100', 'and DOES 1 through 100', or similar variations that typically appear at the end of defendant names. Only include the actual defendant name(s).",
+              "plaintiff_address": "string containing plaintiff's address, but ONLY if explicitly identified as plaintiff's address in the document. Must be preceded by clear indicators like 'Plaintiff's Address:', 'Plaintiff resides at:', or similar definitive text. Do not include addresses on La Cienega Blvd or addresses that match the incident location. Return null if no clearly identified plaintiff address is found.",
               "defendant_counsel_attorneys": "string with attorney names or null",
               "defendant_counsel_firm": "string with firm name or null",
               "defendant_counsel_address": "string with firm address or null", 
               "defendant_counsel_email": "string with email address or null",
               "defendant_counsel_phone": "string with phone/fax numbers or null",
-              "case_number": "string identifying case number, will be referred to as Case No. within analyzed doc., or null",
-              "county": "string, always caps lock or null",
+              "case_number": "string identifying case number. search for text following 'Case No.:' or 'Case No.' (with or without the colon). highly important to find ",
+              "county": "string, always caps lock or null. Sometimes, directly after the county/city name, a district will be named. Include this district information in the county string, also in uppercase.",
               "jurisdiction": "string, always caps lock, UNLIMITED JURISDICTION, or null"
               }},
-              "judge_doc": "string name of judge mentioned in doc or null",
+              "judge_doc": "string containing the full block of text about judge assignment. Search specifically for these patterns: 'Case Assigned for All Purposes to:' or 'Assigned for all Purposes to:' followed by the judge's name, and then look for a line starting with 'Department' (e.g., 'Department C-12', 'Department 10'). Format as three lines with 'to:' marking the end of the first line, the judge name on the second line, and the department line on the third line (e.g., 'Case Assigned for All Purposes to:\nHon. Dorothy McLaughlin\nDepartment 10'). Return null if no judge name is found, but if no department is found, return whatever else if found. department is not as important, essentially",
               "case_type": "string or null (e.g., 'Breach of Contract', 'Personal Injury')",
               "filing_date": "Month day, year string or null",
               "incident_date": "Month day, year string or null",
