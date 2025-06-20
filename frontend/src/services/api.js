@@ -52,12 +52,11 @@ export const uploadDocument = async (caseId, file, options = {}) => {
   formData.append('options', JSON.stringify(options)); // Send options like { analyze: true }
 
   try {
-    // Use axios directly for multipart/form-data to ensure correct headers
-    const response = await axios.post(`/api/cases/${caseId}/documents`, formData, {
+    // Use apiClient for consistent base URL
+    const response = await apiClient.post(`/cases/${caseId}/documents`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      withCredentials: true, // <-- Also add here if uploads need authentication later
     });
     return response;
   } catch (error) {
@@ -139,14 +138,13 @@ export const parseDiscoveryDocument = async (caseId, formData) => {
     while (retryCount <= maxRetries) {
         try {
             console.log(`API: Parsing discovery document for case ${caseId}`);
-            const response = await axios.post(
-                `${API_BASE_URL}/discovery/cases/${caseId}/parse`, 
+            const response = await apiClient.post(
+                `/discovery/cases/${caseId}/parse`, 
                 formData, 
                 {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
-                    withCredentials: true,
                     timeout: 120000, // 2 minute timeout
                 }
             );
@@ -186,12 +184,11 @@ export const parseDiscoveryDocument = async (caseId, formData) => {
 export const generateDiscoveryDocument = async (caseId, data) => {
     try {
         console.log(`API: Generating discovery document for case ${caseId}`);
-        const response = await axios.post(
-            `${API_BASE_URL}/discovery/cases/${caseId}/generate-document`,
+        const response = await apiClient.post(
+            `/discovery/cases/${caseId}/generate-document`,
             data,
             {
                 responseType: 'blob', // Tell axios to expect binary file data
-                withCredentials: true,
                 timeout: 60000, // 1 minute timeout
             }
         );
@@ -249,11 +246,10 @@ export const respondToDiscovery = async (caseId, formData) => {
   while (retryCount <= maxRetries) {
       try {
           console.log(`API: Requesting discovery response for case ${caseId}`);
-          const response = await axios.post(`${API_BASE_URL}/discovery/cases/${caseId}/respond`, formData, {
+          const response = await apiClient.post(`/discovery/cases/${caseId}/respond`, formData, {
               headers: {
                   'Content-Type': 'multipart/form-data',
               },
-              withCredentials: true,
               timeout: 120000, // 2 minute timeout
               responseType: 'blob', // Tell axios to expect binary file data
           });
@@ -365,11 +361,10 @@ export const generateInterrogatoryDocument = (caseId, selectedIds, language) => 
 export const formatFormInterrogatoryResponses = async (caseId, responses) => {
   try {
     console.log(`API: Formatting form interrogatory responses for case ${caseId}`);
-    const response = await axios.post(
-      `${API_BASE_URL}/discovery/cases/${caseId}/format-responses`,
+    const response = await apiClient.post(
+      `/discovery/cases/${caseId}/format-responses`,
       { responses },
       {
-        withCredentials: true,
         timeout: 60000, // 1 minute timeout
       }
     );
@@ -384,12 +379,11 @@ export const summarizeMedicalRecords = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   try {
-    const response = await axios.post(
-      '/api/medical/summarize-records',
+    const response = await apiClient.post(
+      '/medical/summarize-records',
       formData,
       {
         responseType: 'blob',
-        withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       }
     );

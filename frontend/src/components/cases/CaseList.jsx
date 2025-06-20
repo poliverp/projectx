@@ -1,6 +1,6 @@
 // Example in a React component (e.g., src/components/CaseList.jsx)
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { getCases } from '../../services/api';
 
 // Use relative URL so Vite proxy works in all environments
 const API_BASE_URL = '/api';
@@ -17,10 +17,7 @@ function CaseList() {
     setLoading(true);
     setError(null); // Clear previous errors
 
-    axios.get(`${API_BASE_URL}/cases`, {
-       // Add headers if your GET endpoint requires the API key
-       // headers: { 'x-api-key': API_KEY }
-    })
+    getCases()
       .then(response => {
         setCases(response.data); // Store the fetched cases in state
         // console.log("Cases fetched:", response.data); // For debugging

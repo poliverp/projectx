@@ -22,7 +22,7 @@ from backend.schemas import document_schema, documents_schema # <<< Import schem
 from backend.services.case_service import get_case_by_id, CaseNotFoundError, CaseServiceError
 from backend.services.document_service import (
     get_documents_for_case, delete_document_record, create_document_and_extract_text,
-    DocumentNotFoundError, DocumentServiceError
+    DocumentNotFoundError, DocumentServiceError, AuthorizationError
 )
 from backend.services.analysis_service import trigger_analysis_and_update, AnalysisServiceError, NoTextToAnalyzeError
 
@@ -54,6 +54,8 @@ def get_case_documents(case_id):
         # ---### END CHANGE ###---
 
     except Forbidden as e:
+        return jsonify({'error': str(e) or 'Permission denied to access case documents'}), 403
+    except AuthorizationError as e:
         return jsonify({'error': str(e) or 'Permission denied to access case documents'}), 403
     except CaseNotFoundError as e:
         return jsonify({'error': str(e)}), 404
@@ -96,6 +98,8 @@ def upload_file_to_case(case_id):
 
     except Forbidden as e:
         return jsonify({'error': str(e) or 'Permission denied to upload to this case'}), 403
+    except AuthorizationError as e:
+        return jsonify({'error': str(e) or 'Permission denied to upload to this case'}), 403
     except CaseNotFoundError as e:
         return jsonify({'error': str(e)}), 404
     except ValueError as e: # Catch specific errors from service
@@ -110,19 +114,6 @@ def upload_file_to_case(case_id):
         return jsonify({'error': str(e)}), 500
     except Exception as e: # Catch unexpected errors
         current_app.logger.error(f"Unexpected error handling POST /api/cases/{case_id}/documents: {e}", exc_info=True)
-        return jsonify({'error': 'An unexpected error occurred during file upload'}), 500
-
-    except Forbidden as e:
-        return jsonify({'error': str(e) or 'Permission denied to upload to this case'}), 403
-    except CaseNotFoundError as e:
-        return jsonify({'error': str(e)}), 404
-    except ValueError as e: # Catch specific errors from service (e.g., invalid file type)
-        return jsonify({'error': str(e)}), 400
-    except DocumentServiceError as e: # Catch generic service errors
-        return jsonify({'error': str(e)}), 500
-    except Exception as e: # Catch unexpected errors
-        current_app.logger.error(f"Unexpected error handling POST /api/cases/{case_id}/documents: {e}", exc_info=True)
-        # Consider db.session.rollback() here if service didn't handle it
         return jsonify({'error': 'An unexpected error occurred during file upload'}), 500
 
 
